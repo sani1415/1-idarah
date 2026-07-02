@@ -6,6 +6,29 @@ const SRC = path.join(ROOT, 'app'); // deployable frontend source lives under ap
 const OUT = path.join(ROOT, 'public');
 const ROOT_CONFIG = path.join(SRC, 'supabase-config.js'); // cache lives with app source (also enables Live Server preview of app/)
 
+function loadEnvFile() {
+  const envPath = path.join(ROOT, '.env');
+  if (!fs.existsSync(envPath)) return;
+  const text = fs.readFileSync(envPath, 'utf8');
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+
+loadEnvFile();
+
 function createBuildVersion() {
   const raw =
     process.env.APP_VERSION ||

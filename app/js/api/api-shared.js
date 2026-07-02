@@ -65,6 +65,12 @@ const MMSharedAPI = (() => {
         p_new_pin: newPin || '',
       });
     },
+    fullDatabaseBackup(actorId, pin) {
+      return rpc('mdr_rel_full_database_backup', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+      });
+    },
     publicSettings() {
       return rpc('mdr_rel_public_settings', {});
     },
