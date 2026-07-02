@@ -86,8 +86,8 @@
   .cc-deck .cc-slide--overall { background:linear-gradient(180deg,#fff,#fffaf1); }
   .cc-deck .cc-slide--accounts { background:linear-gradient(180deg,#f7fbff,#fff); border-color:rgba(14,116,144,.12); }
   .cc-deck .cc-slide--dept { background:linear-gradient(180deg,#f7fff8,#fff); border-color:rgba(20,122,80,.14); }
-  .cc-deck-dots { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; gap:6px; z-index:5; }
-  .cc-deck-dot { width:7px; height:7px; border:none; border-radius:999px; padding:0; background:rgba(26,18,8,.22); cursor:pointer; transition:width .28s ease, background .28s ease; }
+  .cc-deck-dots { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; gap:6px; z-index:5; pointer-events:none; }
+  .cc-deck-dot { width:7px; height:7px; border:none; border-radius:999px; padding:0; background:rgba(26,18,8,.22); cursor:pointer; pointer-events:auto; transition:width .28s ease, background .28s ease; }
   .cc-deck-dot.is-active { width:18px; background:var(--ink); }
   .cc-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:9px; }
   .cc-title { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:800; color:var(--ink); line-height:1.2; }
@@ -954,6 +954,7 @@
 
       wrap.addEventListener('pointerdown', (event) => {
         if (event.button !== undefined && event.button !== 0) return;
+        if (event.target.closest('button, a, input, select, textarea, label')) return;
         pointerId = event.pointerId;
         startX = event.clientX;
         startY = event.clientY;
@@ -963,7 +964,6 @@
         velX = 0;
         dragLocked = false;
         isDragging = false;
-        try { wrap.setPointerCapture(event.pointerId); } catch (_) {}
       }, { passive: true });
 
       wrap.addEventListener('pointermove', (event) => {
@@ -987,6 +987,7 @@
           isDragging = true;
           deck.classList.add('is-dragging');
           wrap.classList.add('is-drag-active');
+          try { wrap.setPointerCapture(event.pointerId); } catch (_) {}
         }
 
         dragX = dx;
