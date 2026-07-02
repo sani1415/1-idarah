@@ -62,7 +62,8 @@
   var path = (g.location.pathname || '').replace(/\\/g, '/');
   var daftarShell = /(?:^|\/)(madrasa-home|madrasa-daftar|madrasa-yearend|madrasa-kormosuchi)\.html$/i.test(path);
   // অ্যাডমিন শেল পেজ — login/nav-এর পর dashboard ফ্ল্যাশ এড়াতে cold লোডে cover।
-  var adminShell = /(?:^|\/)(main-admin-madrasa|main-admin-khedmat|main-admin-dept|main-admin-recent|mdr-admin-accounts)\.html$/i.test(path);
+  var adminShell = /(?:^|\/)admin\/(?:madrasa|khedmat|dept|recent)\.html$/i.test(path) ||
+    /\/madrasa\/admin\/accounts\.html$/i.test(path);
   var navPending = false;
   try {
     navPending = g.sessionStorage.getItem('mm_nav_loading') === '1';

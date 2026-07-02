@@ -1182,7 +1182,7 @@ function kormosuchiHostIsEmbedded() {
 
 function isStandaloneKormosuchiPage() {
   try {
-    return /(?:^|\/)(?:madrasa-kormosuchi|mdr-admin-kormosuchi)\.html$/i.test(
+    return /(?:(?:^|\/)madrasa-kormosuchi|\/admin\/kormosuchi)\.html$/i.test(
       String(window.location.pathname || '').replace(/\\/g, '/')
     );
   } catch (e) {

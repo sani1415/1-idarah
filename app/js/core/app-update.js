@@ -18,7 +18,7 @@
     var script = document.currentScript;
     if (script && script.src) {
       try {
-        return new URL('../app-version.json', script.src).toString();
+        return new URL('/app-version.json', script.src).toString();
       } catch (e) {}
     }
     return new URL('/app-version.json', location.origin).toString();

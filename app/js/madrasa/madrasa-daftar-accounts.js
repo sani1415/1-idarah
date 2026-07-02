@@ -2463,7 +2463,7 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
 
   function isAdminAccountsPage() {
     return !!document.querySelector('.admin-accounts-shell') ||
-      /(^|\/)mdr-admin-accounts\.html$/i.test((typeof location !== 'undefined' && location.pathname) || '');
+      /\/admin\/accounts\.html$/i.test((typeof location !== 'undefined' && location.pathname) || '');
   }
 
   function isAccountsReadOnly() {
