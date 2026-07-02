@@ -156,9 +156,12 @@ html.mm-admin-nav-committing #view-new {
   transition: opacity 90ms ease-out, transform 90ms ease-out;
 }
 
-@view-transition {
-  navigation: auto;
-}
+/* Cross-document (MPA) view transitions disabled: net-negative for this
+   multi-page app with per-page loading covers — the browser holds the old
+   page's snapshot while the next page's ~3s loading cover resolves, which on
+   desktop looks like a click "did nothing" (and logs "Transition was skipped").
+   Same decision was already applied in style.css. The ::view-transition-*
+   rules below are inert without this opt-in and kept only for reference. */
 
 ::view-transition-group(root) {
   animation-duration: 220ms;
