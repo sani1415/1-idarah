@@ -213,21 +213,27 @@ body {
   justify-content: center;
   z-index: 2;
 }
-.mm-review-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  margin-top: 4px;
+.mm-review-btn {
+  position: relative;
+}
+.mm-review-count-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 999px;
   background: var(--red);
   color: #fff;
-  font-size: 11px;
+  border: 2px solid #fff;
+  font-size: 9px;
   font-weight: 800;
-  text-decoration: none;
-  cursor: pointer;
+  line-height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
 .nav-item.active .nav-icon svg,
 .nav-item.active > svg.nav-svg {

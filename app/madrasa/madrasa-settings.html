@@ -77,7 +77,7 @@
     <div class="topbar-name" id="top-name">জিম্মাদার</div>
   </div>
   <div class="topbar-actions">
-    <button type="button" class="topbar-btn" onclick="location.href='/admin/madrasa.html'">← এডমিন</button>
+    <button type="button" class="topbar-btn" onclick="location.replace('/admin/madrasa.html')">← এডমিন</button>
   </div>
 </div>
 
@@ -399,7 +399,7 @@
   function canOpenSettingsPage() {
     return IS_MAIN_ADMIN || hasSettingsPerm('settings_teachers') || hasSettingsPerm('settings_kitab');
   }
-  if (!canOpenSettingsPage()) location.href='/admin/madrasa.html';
+  if (!canOpenSettingsPage()) location.replace('/admin/madrasa.html');
   document.getElementById('top-name').textContent = MMSession.getName()||'জিম্মাদার';
 
   let editingTeacherId = null;

@@ -1,45 +1,10 @@
 /**
- * <head>-এ সিঙ্ক লোড — শুধু প্রথম (কোল্ড) লোডে কন্টেন্ট লুকায়; ক্যাশ ওয়ার্ম নেভে ফ্ল্যাশ এড়ায়।
+ * <head>-এ সিঙ্ক লোড — শেল পেজে প্রথম পেইন্টের আগেই body cover করে, যাতে পুরনো/স্টেল কন্টেন্ট
+ * ফ্ল্যাশ না করে। mm-session.js লোড হওয়ার পর warm হলে দ্রুত cover সরিয়ে দেয়।
  */
 (function (g) {
   'use strict';
   if (!g.document || !g.document.documentElement) return;
-
-  function sessionActorKeyForCache() {
-    try {
-      var role = g.sessionStorage.getItem('mm_role') || '';
-      if (role === 'admin') {
-        return 'admin:' + String(g.sessionStorage.getItem('mm_admin_user_id') || '') + ':' +
-          String(g.sessionStorage.getItem('mm_admin_pin') || '');
-      }
-      return role + ':' + String(g.sessionStorage.getItem('mm_staff_user_id') || '') + ':' +
-        String(g.sessionStorage.getItem('mm_teacher_id') || '') + ':' + String(g.sessionStorage.getItem('mm_dept_id') || '');
-    } catch (e) {
-      return '';
-    }
-  }
-
-  function isSessionDataWarm() {
-    if (g.MMIsAppSessionCacheWarm) return g.MMIsAppSessionCacheWarm();
-    try {
-      var actor = sessionActorKeyForCache();
-      if (!actor) return false;
-      var meta = JSON.parse(g.sessionStorage.getItem('mm_data_cache_meta') || 'null');
-      if (!meta || meta.v !== 1 || meta.actor !== actor) return false;
-      var students = JSON.parse(g.sessionStorage.getItem('mm_sc_mm_students') || '[]');
-      var classes = JSON.parse(g.sessionStorage.getItem('mm_sc_mm_classes') || '[]');
-      if (!Array.isArray(students) || !students.length || !Array.isArray(classes) || !classes.length) return false;
-      var role = g.sessionStorage.getItem('mm_role') || '';
-      if (role !== 'admin') {
-        if (meta && meta.daftar_boot) return true;
-        if (g.sessionStorage.getItem('mm_sc_mm_attendance') == null &&
-            g.sessionStorage.getItem('mm_absent_summary_v1') == null) return false;
-      }
-      return true;
-    } catch (e2) {
-      return false;
-    }
-  }
 
   function injectBootCriticalCss() {
     if (g.document.getElementById('mm-boot-critical')) return;
@@ -69,11 +34,12 @@
     navPending = g.sessionStorage.getItem('mm_nav_loading') === '1';
   } catch (e) {}
   var chatFromNav = /(?:^|\/)chat\.html$/i.test(path) && navPending;
-  var warm = isSessionDataWarm();
-
-  // cold (ওয়ার্ম নয়) লোডে cover: শেল পেজ, অথবা nav থেকে এলে (navPending) —
-  // যাতে নতুন পেজ প্রথম পেইন্ট থেকেই লোডিং দেখায়, পুরনো content ফ্ল্যাশ না করে।
-  if (!warm && (daftarShell || adminShell || chatFromNav || navPending)) {
+  // শেল পেজে সবসময় cover আর্ম করা হয় (warm/cold নির্বিশেষে) — কারণ এই ফাইলের নিজস্ব
+  // isSessionDataWarm() heuristic api.js লোড হওয়ার আগেই চলে, তাই mm-session.js-এর আসল
+  // (বেশি নির্ভুল) warm-check-এর সাথে মাঝেমধ্যে ভিন্ন রায় দেয় — সেই মিসম্যাচেই পুরনো/স্টেল
+  // কন্টেন্ট মুহূর্তের জন্য ফ্ল্যাশ করত। warm হলে mm-session.js-এর releaseBootCoverIfWarm()
+  // প্রায় সাথে সাথেই cover সরিয়ে দেয়, তাই ঝুঁকি নেই।
+  if (daftarShell || adminShell || chatFromNav || navPending) {
     armBootCover();
   }
   try { g.sessionStorage.removeItem('mm_nav_loading'); } catch (e3) {}

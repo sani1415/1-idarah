@@ -51,7 +51,7 @@
         requestAnimationFrame(function () {
           prepareNavCover();
           setTimeout(function () {
-            location.href = href;
+            location.replace(href);
           }, prefersReducedMotion() ? 0 : NAVIGATION_COMMIT_DELAY);
         });
       });
