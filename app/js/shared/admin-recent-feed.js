@@ -6,9 +6,23 @@
 
   const BN = '০১২৩৪৫৬৭৮৯';
   const MAX_ITEMS = 40;
+  const BOOTSTRAP_TIMEOUT_MS = 45000;
+  const PROGRAMS_CACHE_KEY = 'mm_programs_sc_v1';
   const programsState = { programs: [], income: {}, expense: {} };
   let lastBootstrapErrors = [];
   let cachedChatMessages = [];
+  let fullBootstrapDone = false;
+
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise(function (_, reject) {
+        setTimeout(function () {
+          reject(new Error(String(label || 'task') + '_timeout'));
+        }, ms);
+      }),
+    ]);
+  }
 
   const CHAT_THREAD_LABELS = {
     daftar: { name: 'দফতর দায়িত্বশীল', icon: '📋' },
@@ -167,31 +181,82 @@
     return '';
   }
 
-  function allKitabs() {
+  function latestKitabSnapshots(limit) {
     if (!global.API) return [];
-    return API.Classes.getAll().flatMap((c) =>
-      API.KitabProgress.getByClass(c.id).map((k) => ({
-        ...k,
-        className: c.name,
-        classId: c.id,
-      }))
-    );
-  }
-
-  function latestKitabHistory(limit) {
-    return allKitabs()
-      .flatMap((k) =>
-        (k.history || []).map((h) => ({
+    const cap = limit || 12;
+    const rows = [];
+    (API.Classes.getAll() || []).forEach(function (c) {
+      (API.KitabProgress.getByClass(c.id) || []).forEach(function (k) {
+        if (!k.last_updated || !Number(k.pages_done)) return;
+        rows.push({
           category: 'dars',
-          date: h.date,
-          text: `${k.className} — ${k.name}: ${bn(h.pages_done || 0)} পৃষ্ঠা সম্পন্ন`,
-          meta: k.className,
+          date: k.last_updated,
+          text: c.name + ' — ' + k.name + ': ' + bn(k.pages_done) + ' পৃষ্ঠা সম্পন্ন',
+          meta: c.name,
           href: '/madrasa/admin/dars.html',
           color: '#5b4d9a',
-        }))
-      )
-      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-      .slice(0, limit || 12);
+        });
+      });
+    });
+    return rows
+      .sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); })
+      .slice(0, cap);
+  }
+
+  function programsCacheActorKey(actorId, pin) {
+    return String(actorId || '') + ':' + String(pin || '');
+  }
+
+  function hydrateProgramsFromSessionCache(actorId, pin) {
+    try {
+      var raw = sessionStorage.getItem(PROGRAMS_CACHE_KEY);
+      if (!raw) return false;
+      var parsed = JSON.parse(raw);
+      if (!parsed || parsed.actor !== programsCacheActorKey(actorId, pin) || !Array.isArray(parsed.programs)) return false;
+      programsState.programs = parsed.programs || [];
+      programsState.income = parsed.income || {};
+      programsState.expense = parsed.expense || {};
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function hasDeptCache() {
+    return !!(global.DeptAPI && DeptAPI.Departments && DeptAPI.Departments.getAll().length &&
+      DeptAPI.Transactions && DeptAPI.Transactions.getAll().length);
+  }
+
+  function hasKhedmatCache() {
+    return !!(global.KhAPI && KhAPI.Beneficiaries && KhAPI.Beneficiaries.getAll().length);
+  }
+
+  function hasProgramsCache() {
+    return !!(programsState.programs && programsState.programs.length);
+  }
+
+  function seedChatFromLocal() {
+    var chatApi = global.ChatAPI || globalThis.ChatAPI;
+    if (!chatApi || !chatApi.getRecentMessages) return 0;
+    var rows = chatApi.getRecentMessages(50);
+    if (!rows.length) return 0;
+    cachedChatMessages = rows.slice();
+    return cachedChatMessages.length;
+  }
+
+  function prepareLocalCaches(opts) {
+    opts = opts || {};
+    hydrateProgramsFromSessionCache(opts.actorId, opts.pin);
+    seedChatFromLocal();
+  }
+
+  function hasAnyFeedData() {
+    if (global.API && API.Logs && API.Logs.getAll().length) return true;
+    if (hasDeptCache()) return true;
+    if (hasProgramsCache()) return true;
+    if (hasKhedmatCache()) return true;
+    if (cachedChatMessages.length) return true;
+    return false;
   }
 
   function programFinance() {
@@ -205,16 +270,20 @@
     return { incomeRows, expenseRows };
   }
 
-  async function tryTask(label, fn, errors) {
+  async function tryTask(label, fn, errors, timeoutMs) {
     try {
-      await fn();
+      await withTimeout(fn(), timeoutMs || BOOTSTRAP_TIMEOUT_MS, label);
     } catch (e) {
       console.warn('[Recent]', label, e);
-      errors.push({ label, message: (e && e.message) || String(e) });
+      errors.push({ label: label, message: (e && e.message) || String(e) });
     }
   }
 
   async function syncChatForFeed(opts) {
+    return withTimeout(syncChatForFeedInner(opts), 30000, 'chat');
+  }
+
+  async function syncChatForFeedInner(opts) {
     const chatPin = opts.chatPin || opts.pin || '';
     const chatActorId = opts.chatActorId != null ? opts.chatActorId : opts.actorId;
     if (!chatPin) throw new Error('chat_pin_missing');
@@ -252,22 +321,42 @@
     const pin = opts.pin || '';
     const actorId = opts.actorId || null;
     const restricted = !!opts.restricted;
+    const force = !!opts.force;
+    const scope = opts.scope || 'full';
+    const skipMadrasa = !!opts.skipMadrasa;
     const errors = [];
 
-    const tasks = [
-      ['madrasa', async () => {
-        if (!global.MDRSupabaseSync || !pin) return;
-        await MDRSupabaseSync.syncAdminUsers();
-        await MDRSupabaseSync.syncAdminStudents();
-        if (!restricted) await MDRSupabaseSync.syncAdminDars();
-      }],
-    ];
+    hydrateProgramsFromSessionCache(actorId, pin);
+    seedChatFromLocal();
 
-    if (!restricted) {
-      tasks.push(['dept', async () => {
-        if (global.DeptSync) await DeptSync.bootstrapAllData(null, pin);
+    if (scope === 'full' && fullBootstrapDone && !force) {
+      return { errors: lastBootstrapErrors.slice(), programs: programsState };
+    }
+
+    const tasks = [];
+
+    if ((scope === 'minimal' || (scope === 'full' && !skipMadrasa))) {
+      tasks.push(['madrasa', async function () {
+        if (!global.MDRSupabaseSync || !pin) return;
+        if (!force && global.API && API.isSessionCacheWarm && API.isSessionCacheWarm()) return;
+        if (global.MDRSupabaseSync.ensureAdminBootstrap) {
+          await MDRSupabaseSync.ensureAdminBootstrap({ force: force });
+          return;
+        }
+        await MDRSupabaseSync.syncAdminUsers(force ? { force: true } : undefined);
+        await MDRSupabaseSync.syncAdminStudents(force ? { force: true } : undefined);
+        if (!restricted) await MDRSupabaseSync.syncAdminDars(force ? { force: true } : undefined);
       }]);
-      tasks.push(['programs', async () => {
+    }
+
+    if (scope === 'full' && !restricted) {
+      tasks.push(['dept', async function () {
+        if (!global.DeptSync) return;
+        if (!force && hasDeptCache()) return;
+        await DeptSync.bootstrapAllData(null, pin);
+      }]);
+      tasks.push(['programs', async function () {
+        if (!force && hasProgramsCache()) return;
         if (!global.MMSharedAPI || !MMSharedAPI.programsBootstrap) return;
         const res = await MMSharedAPI.programsBootstrap(actorId, pin);
         if (!res || res.ok !== true) throw new Error((res && res.error) || 'program_bootstrap_failed');
@@ -275,19 +364,26 @@
         programsState.income = res.income || {};
         programsState.expense = res.expense || {};
       }]);
-      tasks.push(['khedmat', async () => {
-        if (global.KhAPI) await KhAPI.bootstrapRemote(actorId, pin);
+      tasks.push(['khedmat', async function () {
+        if (!global.KhAPI) return;
+        if (!force && hasKhedmatCache()) return;
+        await KhAPI.bootstrapRemote(actorId, pin);
       }]);
     }
 
-    await Promise.all(tasks.map(([label, fn]) => tryTask(label, fn, errors)));
+    if (tasks.length) {
+      await Promise.all(tasks.map(function (pair) {
+        return tryTask(pair[0], pair[1], errors);
+      }));
+    }
 
-    if (!restricted) {
-      await tryTask('chat', () => syncChatForFeed(opts), errors);
+    if (scope === 'full' && !restricted) {
+      await tryTask('chat', function () { return syncChatForFeedInner(opts); }, errors, 30000);
+      fullBootstrapDone = true;
     }
 
     lastBootstrapErrors = errors;
-    return { errors, programs: programsState };
+    return { errors: errors, programs: programsState };
   }
 
   function buildFeed(options) {
@@ -296,8 +392,14 @@
     const filter = opts.filter || 'all';
     const limit = opts.limit == null ? MAX_ITEMS : opts.limit;
     const items = [];
+    const needMadrasa = filter === 'all' || filter === 'madrasa';
+    const needDept = !restricted && (filter === 'all' || filter === 'dept');
+    const needProgram = !restricted && (filter === 'all' || filter === 'program');
+    const needKhedmat = !restricted && (filter === 'all' || filter === 'khedmat');
+    const needDars = !restricted && (filter === 'all' || filter === 'dars');
+    const needChat = !restricted && (filter === 'all' || filter === 'chat');
 
-    if (global.API) {
+    if (needMadrasa && global.API) {
       API.Logs.getAll()
         .filter(canSeeLog)
         .slice(0, restricted ? 25 : 15)
@@ -316,7 +418,7 @@
         });
     }
 
-    if (!restricted && global.DeptAPI) {
+    if (needDept && global.DeptAPI) {
       sortRecent(DeptAPI.Transactions.getAll())
         .slice(0, 20)
         .forEach((t) => {
@@ -349,7 +451,7 @@
         });
     }
 
-    if (!restricted) {
+    if (needProgram && !restricted) {
       const { incomeRows, expenseRows } = programFinance();
       sortRecent(
         incomeRows.map((r) => ({ ...r, _progKind: 'income' }))
@@ -370,7 +472,7 @@
         });
     }
 
-    if (!restricted && global.KhAPI) {
+    if (needKhedmat && global.KhAPI) {
       KhAPI.DailyLogs.getAll()
         .slice(0, 5)
         .forEach((log) => {
@@ -415,8 +517,8 @@
         });
     }
 
-    if (!restricted) {
-      latestKitabHistory(12).forEach((row) => {
+    if (needDars) {
+      latestKitabSnapshots(12).forEach((row) => {
         items.push({
           id: 'dars_' + uid(),
           category: row.category,
@@ -429,7 +531,7 @@
       });
     }
 
-    if (!restricted && cachedChatMessages.length) {
+    if (needChat && cachedChatMessages.length) {
       const chatLimit = filter === 'chat' ? 30 : 20;
       cachedChatMessages.slice(0, chatLimit).forEach((m) => {
         const line = formatChatLine(m);
@@ -482,6 +584,8 @@
     buildFeed,
     getCategories,
     getLastErrors,
+    prepareLocalCaches,
+    hasAnyFeedData,
     esc,
     bn,
     money,
