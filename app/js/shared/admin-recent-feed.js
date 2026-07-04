@@ -47,6 +47,7 @@
 
   const CATEGORIES = [
     { key: 'all', label: 'সব' },
+    { key: 'review', label: 'রিভিউ বাকি' },
     { key: 'madrasa', label: 'মাদ্রাসা' },
     { key: 'dept', label: 'বিভাগ' },
     { key: 'program', label: 'কর্মসূচি' },
@@ -116,6 +117,10 @@
       return `${who}: ${body}`;
     }
     const req = m.request;
+    if (req && req.kind === 'student_tag') {
+      const status = req.status === 'approved' ? 'সমাধান হয়েছে' : req.status === 'rejected' ? 'বাতিল' : 'অপেক্ষমান';
+      return `${lbl} — 🏷️ ছাত্র ট্যাগ: ${req.studentName || ''} (${status})`;
+    }
     if (req && req.kind) {
       const status = req.status === 'approved' ? 'অনুমোদিত' : req.status === 'rejected' ? 'রিজেক্ট' : 'অপেক্ষমান';
       const kind = String(req.kind).includes('edit') ? 'সম্পাদনা অনুরোধ' : 'মুছে ফেলার অনুরোধ';

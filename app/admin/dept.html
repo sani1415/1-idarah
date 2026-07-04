@@ -533,6 +533,10 @@
     try {
       await DeptSync.bootstrapAllData(null, pin);
       renderOverview();
+      const requestedTab = new URLSearchParams(location.search).get('tab');
+      if (['overview', 'filter', 'requests', 'all-txn'].includes(requestedTab)) {
+        switchTab(requestedTab);
+      }
     } catch (e) {
       showToast('Supabase থেকে বিভাগ ডেটা লোড হয়নি');
       document.getElementById('dept-list').innerHTML = '<div style="text-align:center;color:var(--red);padding:32px 0;font-size:13px;">ডাটাবেজ সংযোগ ব্যর্থ। আবার চেষ্টা করুন।</div>';

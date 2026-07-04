@@ -46,6 +46,18 @@
     এই বার্তা শুধু জিম্মাদারের কাছে যায়। অন্য স্টাফের সাথে এখানে যোগাযোগ নেই।
   </div>
   <div class="chat-msgs" id="chat-msgs"></div>
+  <div class="chat-tag-bar" id="chat-tag-bar" style="display:none;padding:6px 12px 0;">
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);">
+      <input type="checkbox" id="chat-tag-toggle" onchange="onChatTagToggle()"> ছাত্র ট্যাগ করুন
+    </label>
+    <div id="chat-tag-picker" style="display:none;margin-top:6px;">
+      <input type="text" id="chat-tag-student" list="chat-tag-student-list" autocomplete="off"
+        placeholder="ছাত্রের নাম লিখুন" oninput="onChatTagStudentInput()" onchange="onChatTagStudentInput()"
+        style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid rgba(26,18,8,.14);border-radius:8px;font-size:13px;">
+      <input type="hidden" id="chat-tag-student-id">
+      <datalist id="chat-tag-student-list"></datalist>
+    </div>
+  </div>
   <div class="chat-input-bar">
     <textarea class="chat-inp" id="chat-inp" placeholder="বার্তা লিখুন..." rows="1"
       onkeydown="onKey(event)" oninput="resize(this)"></textarea>
@@ -80,6 +92,7 @@
 <script src="js/api/api-shared.js"></script>
 <script src="js/core/mm-sample-data.js"></script>
 <script src="js/api/api.js"></script>
+<script src="js/madrasa/mdr-supabase-sync.js"></script>
 <script src="js/madrasa/mdr-daftar-supabase.js"></script>
 <script src="js/core/mm-session.js"></script>
 <script src="js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
@@ -339,6 +352,14 @@
       await syncChatRemote();
       const inp0 = document.getElementById('chat-inp');
       if (inp0) inp0.placeholder = 'বার্তা লিখুন…';
+      if (myRole === 'teacher') {
+        const tagBar = document.getElementById('chat-tag-bar');
+        if (tagBar) tagBar.style.display = '';
+        if (window.MDRSupabaseSync && MDRSupabaseSync.syncTeacherClass) {
+          try { await MDRSupabaseSync.syncTeacherClass(); } catch (e) {}
+        }
+        populateChatTagStudentList();
+      }
       const lbl = ChatAPI.getLabel(myThread);
       openChat(myThread, myName, lbl.icon, lbl.name);
     } else {
@@ -434,7 +455,22 @@
   /* ── RENDER MESSAGES ── */
   function renderRequestHtml(m) {
     const req = m.request;
-    if (!req || !['account_entry_delete', 'account_entry_edit', 'dept_transaction_edit', 'dept_transaction_delete'].includes(req.kind)) return '';
+    if (!req) return '';
+    if (req.kind === 'student_tag') {
+      const status = req.status || 'pending';
+      const statusLabel = status === 'approved' ? 'সমাধান হয়েছে' : status === 'rejected' ? 'বাতিল' : 'অপেক্ষমান';
+      const buttons = isAdmin && status === 'pending'
+        ? `<div class="msg-request-actions">
+            <button type="button" class="msg-request-btn approve" onclick="resolveStudentTag('${ChatAPI.esc(m.id)}')">ডান করুন</button>
+          </div>`
+        : '';
+      return `<div class="msg-request-card">
+        <span class="msg-request-status ${status}">${statusLabel}</span>
+        <div style="font-size:11px;font-weight:800;margin-bottom:3px;">🏷️ ছাত্র ট্যাগ: ${ChatAPI.esc(req.studentName || '')}</div>
+        ${buttons}
+      </div>`;
+    }
+    if (!['account_entry_delete', 'account_entry_edit', 'dept_transaction_edit', 'dept_transaction_delete'].includes(req.kind)) return '';
     const status = req.status || 'pending';
     const statusLabel = status === 'approved' ? 'অনুমোদিত' : status === 'rejected' ? 'রিজেক্টেড' : 'অপেক্ষমান';
     const isEdit = req.kind === 'account_entry_edit' || req.kind === 'dept_transaction_edit';
@@ -553,6 +589,81 @@
     scrollEnd();
   }
 
+  async function resolveStudentTag(messageId) {
+    if (!isAdmin) return;
+    const msg = ChatAPI.getThread(activeThread).find(m => m.id === messageId);
+    const req = msg && msg.request;
+    if (!req || req.status !== 'pending') return;
+    try {
+      if (ChatAPI.updateRequestRemote) {
+        const res = await ChatAPI.updateRequestRemote(chatActorId(), chatPin(), messageId, 'approved');
+        if (!res || !res.ok) throw new Error((res && res.error) || 'request_update_failed');
+      }
+    } catch (e) {
+      console.warn('Resolve student tag failed', e);
+      alert('ট্যাগ সমাধান করা যায়নি।');
+      return;
+    }
+    const reviewedRequest = { ...req, status: 'approved', reviewedAt: new Date().toISOString(), reviewedBy: 'জিম্মাদার' };
+    ChatAPI.updateMessage(messageId, (m) => ({ ...m, request: reviewedRequest, read_staff: false }));
+    await announceChatRealtime('request', activeThread, { message_id: messageId, status: 'approved' });
+    renderMsgs();
+    if (typeof MMSyncReviewBadge === 'function') MMSyncReviewBadge();
+  }
+
+  /* ── ছাত্র-ট্যাগ পিকার (শুধু শিক্ষক) ── */
+  function chatTagStudents() {
+    if (!window.API || !API.Students || !window.MMSession) return [];
+    const tid = MMSession.getTeacherId && MMSession.getTeacherId();
+    const teacher = MMSession.hydrateTeacherRecord
+      ? MMSession.hydrateTeacherRecord()
+      : (API.Teachers ? API.Teachers.getById(tid) : null);
+    const classId = teacher && teacher.class_id;
+    if (!classId) return [];
+    return API.Students.getByClass(classId).filter(s => s && s.active !== false);
+  }
+  function chatTagStudentLabel(s) {
+    if (!s) return '';
+    return [s.name, s.roll != null && String(s.roll) !== '' ? 'রোল ' + s.roll : ''].filter(Boolean).join(' · ');
+  }
+  function populateChatTagStudentList() {
+    const list = document.getElementById('chat-tag-student-list');
+    if (!list) return;
+    list.innerHTML = chatTagStudents().map(s => `<option value="${API.esc(chatTagStudentLabel(s))}"></option>`).join('');
+  }
+  function onChatTagToggle() {
+    const toggle = document.getElementById('chat-tag-toggle');
+    const picker = document.getElementById('chat-tag-picker');
+    if (picker) picker.style.display = toggle && toggle.checked ? '' : 'none';
+  }
+  function onChatTagStudentInput() {
+    const input = document.getElementById('chat-tag-student');
+    const hidden = document.getElementById('chat-tag-student-id');
+    if (!input || !hidden) return;
+    const raw = (input.value || '').trim();
+    const match = chatTagStudents().find(s => chatTagStudentLabel(s) === raw || String(s.name || '').trim() === raw);
+    hidden.value = match ? match.id : '';
+  }
+  function buildStudentTagRequest() {
+    const toggle = document.getElementById('chat-tag-toggle');
+    if (!toggle || !toggle.checked) return null;
+    const sidField = document.getElementById('chat-tag-student-id');
+    const nameField = document.getElementById('chat-tag-student');
+    const sid = sidField && sidField.value ? sidField.value : '';
+    if (!sid) return null;
+    return { kind: 'student_tag', studentId: sid, studentName: nameField ? nameField.value : '', status: 'pending' };
+  }
+  function resetChatTagPicker() {
+    const toggle = document.getElementById('chat-tag-toggle');
+    if (toggle) toggle.checked = false;
+    const picker = document.getElementById('chat-tag-picker');
+    if (picker) picker.style.display = 'none';
+    const nameField = document.getElementById('chat-tag-student');
+    const sidField = document.getElementById('chat-tag-student-id');
+    if (nameField) nameField.value = '';
+    if (sidField) sidField.value = '';
+  }
+
   /* ── SEND ── */
   async function sendMsg() {
     const inp  = document.getElementById('chat-inp');
@@ -560,10 +671,11 @@
     if (!text || !activeThread) return;
     const fromRole = isAdmin ? 'admin' : (myRole || myDeptRole || 'staff');
     const fromName = isAdmin ? 'জিম্মাদার' : myName;
+    const tagRequest = buildStudentTagRequest();
     let remoteId = '';
     if (ChatAPI.sendRemote) {
       try {
-        const res = await ChatAPI.sendRemote(chatActorId(), chatPin(), activeThread, text, isAdmin);
+        const res = await ChatAPI.sendRemote(chatActorId(), chatPin(), activeThread, text, isAdmin, tagRequest ? { request: tagRequest } : null);
         if (!res || !res.ok) throw new Error((res && res.error) || 'chat_send_failed');
         remoteId = res.id ? String(res.id) : '';
       } catch (e) {
@@ -575,8 +687,12 @@
       alert('ডাটাবেজ সংযোগ নেই। সংযোগ না থাকলে বার্তা পাঠানো যাবে না।');
       return;
     }
-    ChatAPI.send(activeThread, fromRole, fromName, text, remoteId ? { id: remoteId } : null);
+    const localExtra = (remoteId || tagRequest)
+      ? Object.assign({}, remoteId ? { id: remoteId } : null, tagRequest ? { request: tagRequest } : null)
+      : null;
+    ChatAPI.send(activeThread, fromRole, fromName, text, localExtra);
     await announceChatRealtime('message', activeThread, { message_id: remoteId });
+    resetChatTagPicker();
     inp.value = '';
     resize(inp);
     renderMsgs();

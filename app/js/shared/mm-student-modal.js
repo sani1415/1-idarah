@@ -344,6 +344,7 @@
   }
 
   var _openSid = null;
+  var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
   function logAuthorName() {
     if (typeof global.MMSession === 'undefined' || !global.MMSession) return '—';
@@ -358,19 +359,43 @@
     return n && String(n).trim() ? n : 'অ্যাডমিন';
   }
 
-  function submitStudentLog() {
+  async function submitStudentLog() {
     var API = getApi();
     var ta = document.getElementById('st-teacher-log-ta');
+    var reviewCb = document.getElementById('st-teacher-log-review');
     if (!API || !API.Logs || !_openSid || !ta) return;
     var text = (ta.value || '').trim();
     if (!text) {
       toast('লগের বিষয়বস্তু লিখুন');
       return;
     }
-    API.Logs.add('student', _openSid, text, logAuthorName());
+    var reviewRequested = !!(reviewCb && reviewCb.checked);
+    API.Logs.add('student', _openSid, text, logAuthorName(), 'normal', { reviewRequested: reviewRequested });
     ta.value = '';
+    if (reviewCb) reviewCb.checked = false;
     toast('ছাত্রের লগ সংরক্ষিত');
     open(_openSid);
+
+    if (global.MMSharedAPI && global.MMSession && UUID_RE.test(_openSid)) {
+      try {
+        var isAdminActor = global.MMSession.isAdmin && global.MMSession.isAdmin();
+        var actorId = isAdminActor ? global.MMSession.getAdminUserId() : global.MMSession.getStaffUserId();
+        var pin = isAdminActor ? global.MMSession.getAdminPin() : global.MMSession.getStaffPin();
+        var res = await global.MMSharedAPI.saveTeacherLog(actorId, pin, 'student', _openSid, text, reviewRequested);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'log_failed');
+        if (global.MDRSupabaseSync) {
+          if (isAdminActor && global.MDRSupabaseSync.syncAdminStudents) {
+            await global.MDRSupabaseSync.syncAdminStudents({ force: true });
+          } else if (!isAdminActor && global.MDRSupabaseSync.syncTeacherClass) {
+            await global.MDRSupabaseSync.syncTeacherClass();
+          }
+        }
+        open(_openSid);
+      } catch (e) {
+        console.warn('Save teacher log failed', e);
+        toast('লোকালি সংরক্ষিত, ডাটাবেজে হয়নি');
+      }
+    }
   }
 
   function canChangeStatus() {
@@ -653,11 +678,16 @@
 
     var more = '';
     if (canAddStudentLog) {
+      var isAdminRole = false;
+      try { isAdminRole = !!(global.MMSession && global.MMSession.isAdmin && global.MMSession.isAdmin()); } catch (e3) { isAdminRole = false; }
       more +=
         '<div class="st-block st-teacher-log-add">' +
         '<h4>ছাত্রের জন্য নতুন লগ</h4>' +
         '<p class="st-note" style="margin:0 0 8px">বর্ষের সাধারণ লগ বর্ষ ট্যাব থেকে; এটি শুধু এই ছাত্রের নোট (পুরনো অ্যাপের মতো)।</p>' +
         '<textarea class="form-input" id="st-teacher-log-ta" rows="3" placeholder="পর্যবেক্ষণ, আচরণ, বিশেষ ঘটনা…" style="width:100%;box-sizing:border-box;font-size:13px;resize:vertical"></textarea>' +
+        (isAdminRole ? '' :
+          '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--ink2);">' +
+          '<input type="checkbox" id="st-teacher-log-review"> রিভিউর জন্য পাঠান (জিম্মাদারের নজরে আনুন)</label>') +
         '<button type="button" class="submit-btn" style="margin-top:10px;padding:11px 16px;font-size:13px;width:100%" onclick="MMStudentModal.submitStudentLog()">লগ সংরক্ষণ</button>' +
         '</div>';
     }
@@ -714,13 +744,25 @@
         '<div class="st-block"><h4>লগ ও নোট</h4>' +
         logList
           .map(function (L) {
+            var statusPill = '';
+            if (L.reviewRequested) {
+              statusPill = L.reviewedAt
+                ? ' <span class="st-log-reviewed" style="color:var(--green);font-weight:600;">রিভিউড ✓' + (L.reviewedByName ? ' · ' + API.esc(L.reviewedByName) : '') + '</span>'
+                : ' <span class="st-log-pending" style="color:var(--gold);font-weight:600;">রিভিউ বাকি</span>';
+            }
+            var replyLine = L.adminReply
+              ? '<div class="st-log-reply" style="margin-top:4px;font-size:12px;color:var(--ink2);">জিম্মাদারের মন্তব্য: ' + API.esc(L.adminReply) + '</div>'
+              : '';
             return (
               '<div class="st-logline">' +
               API.esc(L.text) +
               '<small>' +
               API.esc(L.date) +
               (L.by ? ' · ' + API.esc(L.by) : '') +
-              '</small></div>'
+              statusPill +
+              '</small>' +
+              replyLine +
+              '</div>'
             );
           })
           .join('') +

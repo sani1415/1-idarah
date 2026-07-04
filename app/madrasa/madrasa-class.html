@@ -429,6 +429,11 @@
         <label class="form-label">লগের বিষয়বস্তু</label>
         <textarea class="form-input" id="log-text" rows="3" placeholder="আজকের বর্ষের কার্যক্রম, অথবা নির্দিষ্ট ছাত্র সম্পর্কে বিবরণ…" style="resize:none;"></textarea>
       </div>
+      <div class="form-group" id="log-review-wrap" hidden>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);">
+          <input type="checkbox" id="log-review"> রিভিউর জন্য পাঠান (জিম্মাদারের নজরে আনুন)
+        </label>
+      </div>
       <button type="button" class="submit-btn" onclick="saveLog()">সংরক্ষণ করুন</button>
       <div class="inline-history-title">পুরনো লগ</div>
       <div id="log-modal-history-wrap" class="modal-history-list inline-history"></div>
@@ -1246,6 +1251,29 @@
     const form = document.getElementById('log-modal-panel-form');
     if (form) form.hidden = false;
   }
+  function logStatusHtml(l) {
+    var pill = '';
+    if (l.reviewRequested) {
+      pill = l.reviewedAt
+        ? ' <span style="color:var(--green);font-weight:600;">রিভিউড ✓' + (l.reviewedByName ? ' · ' + API.esc(l.reviewedByName) : '') + '</span>'
+        : ' <span style="color:var(--gold);font-weight:600;">রিভিউ বাকি</span>';
+    }
+    var reply = l.adminReply
+      ? '<div style="margin-top:4px;font-size:12px;color:var(--ink2);">জিম্মাদারের মন্তব্য: ' + API.esc(l.adminReply) + '</div>'
+      : '';
+    return { pill: pill, reply: reply };
+  }
+  function updateLogReviewVisibility() {
+    const sel = document.getElementById('log-student');
+    const wrap = document.getElementById('log-review-wrap');
+    if (!wrap) return;
+    const sid = sel && sel.value ? sel.value : '';
+    wrap.hidden = !sid || !!logEditId;
+    if (wrap.hidden) {
+      const cb = document.getElementById('log-review');
+      if (cb) cb.checked = false;
+    }
+  }
   function renderModalLogHistory() {
     const wrap = document.getElementById('log-modal-history-wrap');
     const sel = document.getElementById('log-student');
@@ -1256,9 +1284,10 @@
     wrap.innerHTML = logs.length
       ? '<div style="font-size:10px;font-weight:600;color:var(--ink3);margin-bottom:6px;">' + title + ' (' + toBn(logs.length) + ')</div>' +
         logs.slice(0, 60).map(function (l, i) {
+          const st = logStatusHtml(l);
           return '<div class="log-item" style="' + (i ? 'border-top:1px solid var(--cream3);padding-top:8px;' : '') + '">' +
-            '<div class="log-date">' + API.esc(l.date) + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button></div>' +
-            '<div class="log-text">' + API.esc(l.text || '') + '</div></div>';
+            '<div class="log-date">' + API.esc(l.date) + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button>' + st.pill + '</div>' +
+            '<div class="log-text">' + API.esc(l.text || '') + '</div>' + st.reply + '</div>';
         }).join('')
       : '<div class="log-panel-empty">' + title + ' নেই।</div>';
   }
@@ -1277,7 +1306,7 @@
       if (sel) {
         sel.value = logModalFixedStudentId;
         sel.disabled = true;
-        sel.onchange = renderModalLogHistory;
+        sel.onchange = function () { renderModalLogHistory(); updateLogReviewVisibility(); };
       }
     } else {
       if (wrapPick) wrapPick.hidden = false;
@@ -1285,11 +1314,12 @@
       if (sel) {
         sel.disabled = false;
         sel.value = '';
-        sel.onchange = renderModalLogHistory;
+        sel.onchange = function () { renderModalLogHistory(); updateLogReviewVisibility(); };
       }
     }
     document.getElementById('log-text').value = '';
     renderModalLogHistory();
+    updateLogReviewVisibility();
     setLogModalTab('form');
     openModal('modal-log');
   }
@@ -1304,6 +1334,7 @@
       sel.value = log.type === 'student' ? log.ref_id : '';
       sel.disabled = true;
     }
+    updateLogReviewVisibility();
     document.getElementById('log-text').value = log.text || '';
     const headingEl = document.getElementById('log-modal-heading');
     if (headingEl) {
@@ -1330,7 +1361,8 @@
     if (logSubTab === 'class') {
       el.innerHTML = classLogs.length
         ? classLogs.map(function (l) {
-            return '<div class="log-item"><div class="log-date">' + l.date + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button></div><div class="log-text">' + API.esc(l.text) + '</div></div>';
+            const st = logStatusHtml(l);
+            return '<div class="log-item"><div class="log-date">' + l.date + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button>' + st.pill + '</div><div class="log-text">' + API.esc(l.text) + '</div>' + st.reply + '</div>';
           }).join('')
         : '<div class="log-panel-empty">কোনো <strong>শ্রেণী লগ</strong> নেই।<br><span style="font-size:12px;opacity:.95;">＋ বাটনে বর্ষের সাধারণ নোট যোগ করুন (কোনো ছাত্র বেছে না নিলেই হবে)।</span></div>';
       return;
@@ -1359,7 +1391,8 @@
         '<button type="button" class="log-student-expand" aria-expanded="false" aria-label="লগ তালিকা প্রসারিত বা সংকুচিত" onclick="toggleStdLogGroup(this)">' +
         '<svg class="log-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>';
       const body = '<div class="log-student-body" hidden>' + g.logs.map(function (l) {
-        return '<div class="log-item log-item--student"><div class="log-date">' + l.date + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button></div><div class="log-text">' + API.esc(l.text) + '</div></div>';
+        const st = logStatusHtml(l);
+        return '<div class="log-item log-item--student"><div class="log-date">' + l.date + ' · ' + API.esc(l.by || '') + ' <button type="button" class="mini-edit-btn" onclick="editLogEntry(\'' + _jsQuote(l.id) + '\')">এডিট</button>' + st.pill + '</div><div class="log-text">' + API.esc(l.text) + '</div>' + st.reply + '</div>';
       }).join('') + '</div>';
       return '<div class="log-student-block">' + head + body + '</div>';
     }).join('');
@@ -1387,18 +1420,20 @@
       closeLogModal(); renderLog(); renderStats(); showToast('লগ সংশোধন হয়েছে');
       return;
     }
+    const reviewCb = document.getElementById('log-review');
+    const reviewRequested = !!(sid && reviewCb && reviewCb.checked);
     let logType = 'class';
     if (sid) {
       if (!API.Students.getById(sid)) { showToast('অকার্যকর ছাত্র'); return; }
-      API.Logs.add('student', sid, text, teacher.name);
+      API.Logs.add('student', sid, text, teacher.name, 'normal', { reviewRequested });
       logType = 'student';
     } else {
-      API.Logs.add('class', classId, text, teacher.name);
+      API.Logs.add('class', classId, text, teacher.name, 'normal', { reviewRequested: true });
     }
     if (window.MMSharedAPI && (logType === 'class' || UUID_RE.test(sid))) {
       try {
         const actor = teacherActor();
-        const res = await MMSharedAPI.saveTeacherLog(actor.id, actor.pin, logType, logType === 'student' ? sid : null, text);
+        const res = await MMSharedAPI.saveTeacherLog(actor.id, actor.pin, logType, logType === 'student' ? sid : null, text, logType === 'student' ? reviewRequested : true);
         if (!res || !res.ok) throw new Error((res && res.error) || 'log_failed');
         await refreshTeacherData();
       } catch (e) {
@@ -1407,6 +1442,7 @@
       }
     }
     document.getElementById('log-text').value = '';
+    if (reviewCb) reviewCb.checked = false;
     closeLogModal(); renderLog(); renderStats(); showToast('লগ যোগ হয়েছে');
   }
 

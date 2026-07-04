@@ -201,6 +201,80 @@
   text-align: right;
 }
 
+/* ── রিভিউ কিউ কার্ড ── */
+.rv-item {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 8px;
+  border-left: 3px solid var(--gold);
+}
+
+.rv-meta {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rv-text {
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.rv-reply-ta {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(26, 18, 8, 0.14);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: 'Tiro Bangla', serif;
+  color: var(--ink);
+  background: #fafafa;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.rv-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rv-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-family: 'Tiro Bangla', serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  color: inherit;
+}
+
+.rv-btn.reply {
+  background: var(--cream2);
+  color: var(--ink2);
+}
+
+.rv-btn.done {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.rv-btn.goto {
+  background: var(--cream2);
+  color: var(--ink2);
+}
+
 @media (min-width: 960px) {
   .recent-wrap {
     padding: 24px 32px;

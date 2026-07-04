@@ -534,6 +534,46 @@
   global.MMSyncChatBadges = syncChatBadgeRemote;
   global.addEventListener && global.addEventListener('mm-chat-updated', applyChatBadges);
 
+  var reviewPendingCount = 0;
+  function applyReviewBadges() {
+    if (typeof document === 'undefined') return;
+    var count = reviewPendingCount;
+    document.querySelectorAll('.topbar-left').forEach(function (node) {
+      var badge = node.querySelector('.mm-review-badge');
+      if (!count) {
+        if (badge) badge.remove();
+        return;
+      }
+      if (!badge) {
+        badge = document.createElement('a');
+        badge.className = 'mm-review-badge';
+        badge.href = '/admin/recent.html?filter=review';
+        badge.setAttribute('aria-label', 'রিভিউ বাকি');
+        node.appendChild(badge);
+      }
+      badge.textContent = count > 99 ? '৯৯+' : bnNum(count);
+    });
+  }
+  async function syncReviewBadgeRemote() {
+    if (!global.MMSharedAPI || !MMSession.isAdmin() || !MMSession.getAdminPin()) {
+      reviewPendingCount = 0;
+      applyReviewBadges();
+      return false;
+    }
+    try {
+      var res = await global.MMSharedAPI.adminPendingReviewCount(MMSession.getAdminUserId(), MMSession.getAdminPin());
+      if (!res || !res.ok) throw new Error((res && res.error) || 'pending_review_count_failed');
+      reviewPendingCount = Number(res.count || 0);
+      applyReviewBadges();
+      return true;
+    } catch (e) {
+      reviewPendingCount = 0;
+      applyReviewBadges();
+      return false;
+    }
+  }
+  global.MMSyncReviewBadge = syncReviewBadgeRemote;
+
   var settingsSyncInFlight = false;
 
   function readCurrentAcademicYear() {
@@ -621,13 +661,14 @@
   global.MMSyncCurrentAcademicYearSettings = syncCurrentAcademicYearSettings;
   function autoRestrictNav() { if (global.MMSession) global.MMSession.applyAdminNavRestrictions(); }
   if (typeof document !== 'undefined') {
-    var onReady = function () { autoRestrictNav(); renderCurrentAcademicYear(); syncCurrentAcademicYearSettings(); syncChatBadgeRemote(); };
+    var onReady = function () { autoRestrictNav(); renderCurrentAcademicYear(); syncCurrentAcademicYearSettings(); syncChatBadgeRemote(); syncReviewBadgeRemote(); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
     else setTimeout(onReady, 0);
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) {
         renderCurrentAcademicYear();
         syncCurrentAcademicYearSettings();
+        syncReviewBadgeRemote();
       }
     });
     global.addEventListener && global.addEventListener('storage', function (event) {

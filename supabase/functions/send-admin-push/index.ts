@@ -41,11 +41,23 @@ Deno.serve(async (req: Request) => {
   }
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
-  let payloadIn: { from_role?: string; from_name?: string; body?: string; thread_id?: string } = {};
+  let payloadIn: {
+    kind?: string;
+    from_role?: string;
+    from_name?: string;
+    body?: string;
+    thread_id?: string;
+    message_id?: string;
+    request?: { kind?: string; studentName?: string } | null;
+    log_type?: string;
+    log_id?: string;
+  } = {};
   try { payloadIn = await req.json(); } catch (_e) { payloadIn = {}; }
 
-  // admin নিজের পাঠানো বার্তা হলে admin-কে notify করার দরকার নেই।
-  if (String(payloadIn.from_role || "") === "admin") {
+  const isLogReview = payloadIn.kind === "log_review";
+
+  // admin নিজের পাঠানো বার্তা হলে admin-কে notify করার দরকার নেই (log_review payload-এ from_role থাকে না)।
+  if (!isLogReview && String(payloadIn.from_role || "") === "admin") {
     return jsonResponse({ ok: true, skipped: "admin_message" });
   }
 
@@ -65,18 +77,36 @@ Deno.serve(async (req: Request) => {
     .eq("read_admin", false);
   if (typeof unread === "number") count = unread;
 
-  const fromName = String(payloadIn.from_name || "").trim();
-  const preview = String(payloadIn.body || "").trim();
-  const title = fromName ? `${fromName} — নতুন বার্তা` : "নতুন বার্তা";
-  const body = preview
-    ? (preview.length > 80 ? preview.slice(0, 80) + "…" : preview)
-    : "আপনাকে একটি নতুন বার্তা পাঠানো হয়েছে।";
+  let title: string;
+  let body: string;
+  let url: string;
+  let tag: string;
 
-  // নোটিফিকেশনে ক্লিক করলে সরাসরি সংশ্লিষ্ট thread-এ নিয়ে যায়।
-  const threadId = String(payloadIn.thread_id || "").trim();
-  const url = threadId ? `/chat.html?thread=${encodeURIComponent(threadId)}` : "/chat.html";
+  if (isLogReview) {
+    const logType = String(payloadIn.log_type || "");
+    title = "🔔 রিভিউ প্রয়োজন";
+    body = (logType === "class" ? "নতুন শ্রেণি লগ" : "নতুন ছাত্র লগ") + " রিভিউর অপেক্ষায়।";
+    url = "/admin/recent.html?filter=review";
+    tag = "admin-review";
+  } else {
+    const fromName = String(payloadIn.from_name || "").trim();
+    const preview = String(payloadIn.body || "").trim();
+    const taggedStudent = payloadIn.request && payloadIn.request.kind === "student_tag"
+      ? String(payloadIn.request.studentName || "").trim()
+      : "";
+    title = taggedStudent
+      ? `${fromName || "শিক্ষক"} — ছাত্র ট্যাগ: ${taggedStudent}`
+      : (fromName ? `${fromName} — নতুন বার্তা` : "নতুন বার্তা");
+    body = preview
+      ? (preview.length > 80 ? preview.slice(0, 80) + "…" : preview)
+      : "আপনাকে একটি নতুন বার্তা পাঠানো হয়েছে।";
+    // নোটিফিকেশনে ক্লিক করলে সরাসরি সংশ্লিষ্ট thread-এ নিয়ে যায়।
+    const threadId = String(payloadIn.thread_id || "").trim();
+    url = threadId ? `/chat.html?thread=${encodeURIComponent(threadId)}` : "/chat.html";
+    tag = "admin-chat";
+  }
 
-  const payload = JSON.stringify({ title, body, url, tag: "admin-chat", count });
+  const payload = JSON.stringify({ title, body, url, tag, count });
 
   let sent = 0, removed = 0;
   await Promise.all((subs ?? []).map(async (s) => {

@@ -246,13 +246,14 @@ const MMSharedAPI = (() => {
         p_student_id: studentId,
       });
     },
-    saveTeacherLog(actorId, pin, type, studentId, content) {
+    saveTeacherLog(actorId, pin, type, studentId, content, reviewRequested) {
       return rpc('mdr_rel_save_teacher_log', {
         p_actor_id: actorId,
         p_pin: pin,
         p_type: type,
         p_student_id: studentId || null,
         p_content: content || '',
+        p_review_requested: !!reviewRequested,
       });
     },
     updateTeacherLog(actorId, pin, logId, content) {
@@ -261,6 +262,20 @@ const MMSharedAPI = (() => {
         p_pin: pin,
         p_log_id: logId,
         p_content: content || '',
+      });
+    },
+    adminReviewLog(actorId, pin, logId, reply) {
+      return rpc('mdr_rel_admin_review_log', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_log_id: logId,
+        p_reply: reply || null,
+      });
+    },
+    adminPendingReviewCount(actorId, pin) {
+      return rpc('mdr_rel_admin_pending_review_count', {
+        p_actor_id: actorId,
+        p_pin: pin,
       });
     },
     saveBookProgress(actorId, pin, bookId, pagesDone, note) {

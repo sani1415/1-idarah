@@ -9,7 +9,13 @@
       "Bash(npm run *)",
       "Bash(node --check js/mm-student-modal.js)",
       "Bash(node --check api-shared.js)",
-      "Bash(node --check \"d:/programming/11-idarah/js/madrasa-kormosuchi.js\")"
+      "Bash(node --check \"d:/programming/11-idarah/js/madrasa-kormosuchi.js\")",
+      "Bash(node \"C:/Users/sanim/AppData/Local/Temp/claude/d--programming-11-idarah/c4b5513c-b4a1-443a-bcf5-9df68b6db813/scratchpad/check-inline-scripts.js\" app/chat.html app/admin/recent.html app/admin/dept.html app/admin/madrasa.html app/madrasa/madrasa-class.html)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__get_edge_function",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "mcp__claude_ai_Supabase__execute_sql"
     ]
   }
 }

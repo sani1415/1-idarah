@@ -1106,9 +1106,15 @@ const API = (() => {
     getByClass: cid => load(KEYS.logs).filter(l => l.type === 'class' && l.ref_id === cid).sort((a,b) => b.date.localeCompare(a.date)),
     getByStudent: sid => load(KEYS.logs).filter(l => l.type === 'student' && l.ref_id === sid).sort((a,b) => b.date.localeCompare(a.date)),
     getByTeacher: tid => load(KEYS.logs).filter(l => l.type === 'teacher' && l.ref_id === tid).sort((a,b) => b.date.localeCompare(a.date)),
-    add(type, ref_id, text, by, tag = 'normal') {
+    add(type, ref_id, text, by, tag = 'normal', extra) {
       const list = load(KEYS.logs);
-      const entry = { id: uid(), type, ref_id, text, date: today(), by, tag };
+      const entry = {
+        id: uid(), type, ref_id, text, date: today(), by, tag,
+        reviewRequested: !!(extra && extra.reviewRequested),
+        reviewedAt: null,
+        reviewedByName: '',
+        adminReply: '',
+      };
       list.push(entry);
       save(KEYS.logs, list);
       return entry;

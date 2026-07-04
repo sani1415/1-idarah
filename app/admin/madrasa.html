@@ -720,10 +720,10 @@
       ccCard('বিভাগ আয়', ccMoney(totalIncome), 'সব সময়ের মোট', totalIncome ? 'is-good' : '', "location.href='/admin/dept.html'"),
       ccCard('বিভাগ ব্যয়', ccMoney(totalExpense), 'সব সময়ের মোট', totalExpense ? 'is-danger' : '', "location.href='/admin/dept.html'"),
       ccCard('নেট লাভ', ccMoney(totalNet), 'আয় - ব্যয়', totalNet < 0 ? 'is-danger' : 'is-good', "location.href='/admin/dept.html'"),
-      ccCard('লেনদেন', toBn(txns.length), 'মোট লেনদেন', txns.length ? '' : 'is-warn', "location.href='/admin/dept.html'"),
+      ccCard('লেনদেন', toBn(txns.length), 'মোট লেনদেন', txns.length ? '' : 'is-warn', "location.href='/admin/dept.html?tab=all-txn'"),
       ccCard('পণ্য', toBn(products.length), 'সক্রিয় পণ্য', products.length ? 'is-good' : '', "location.href='/admin/dept.html'"),
       ccCard('স্টক সারি', toBn(inventory), 'ইনভেন্টরি', inventory ? '' : 'is-warn', "location.href='/admin/dept.html'"),
-      ccCard('সংশোধন অনুরোধ', toBn(pending.length), 'অনুমোদন বাকি', pending.length ? 'is-warn' : 'is-good', "location.href='/admin/dept.html'"),
+      ccCard('সংশোধন অনুরোধ', toBn(pending.length), 'অনুমোদন বাকি', pending.length ? 'is-warn' : 'is-good', "location.href='/admin/dept.html?tab=requests'"),
     ];
     ccSetGrid('cc-dept-grid', cards);
 
@@ -731,7 +731,7 @@
     if (!ready) {
       alerts.push(ccAlert('watch', 'বিভাগ cache পাওয়া যায়নি', 'বিভাগ পেজ খুললে data refresh হবে', '—', 'is-warn', "location.href='/admin/dept.html'"));
     } else {
-      if (pending.length) alerts.push(ccAlert('watch', 'সংশোধন অনুরোধ', 'অনুমোদনের অপেক্ষায়', toBn(pending.length), 'is-warn', "location.href='/admin/dept.html'"));
+      if (pending.length) alerts.push(ccAlert('watch', 'সংশোধন অনুরোধ', 'অনুমোদনের অপেক্ষায়', toBn(pending.length), 'is-warn', "location.href='/admin/dept.html?tab=requests'"));
       if (lossCount) alerts.push(ccAlert('absent', 'লোকসানে থাকা বিভাগ', 'সব সময়ের হিসাব', toBn(lossCount), 'is-danger', "location.href='/admin/dept.html'"));
       if (best && best.net > 0) alerts.push(ccAlert('ok', 'সেরা বিভাগ', deptDisplayName(best.dept.name), ccMoney(best.net), 'is-good', "location.href='/admin/dept.html'"));
     }

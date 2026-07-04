@@ -183,6 +183,10 @@
         date: String(l.date || '').slice(0, 10) || API.today(),
         by: l.by || '',
         tag: 'normal',
+        reviewRequested: !!l.review_requested,
+        reviewedAt: l.reviewed_at || null,
+        reviewedByName: l.reviewed_by_name || '',
+        adminReply: l.admin_reply || '',
       };
     });
     mergeScopedArray('mm_logs', function (l) {
@@ -340,6 +344,10 @@
           date: String(l.date || '').slice(0, 10) || API.today(),
           by: l.by || '',
           tag: 'normal',
+          reviewRequested: !!l.review_requested,
+          reviewedAt: l.reviewed_at || null,
+          reviewedByName: l.reviewed_by_name || '',
+          adminReply: l.admin_reply || '',
         };
       }).filter(function (l) { return l.id && l.ref_id; });
       mergeScopedArray('mm_logs', function (l) {
