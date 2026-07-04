@@ -268,7 +268,7 @@
     if (!statsEl) return;
     const depts = DeptAPI.Departments.getAll();
     let totalIn=0, totalEx=0;
-    depts.forEach(d => { const s=DeptAPI.Transactions.getSummary(d.id,curMonth); totalIn+=s.income; totalEx+=s.expense; });
+    depts.forEach(d => { const s=DeptAPI.Transactions.getSummary(d.id); totalIn+=s.income; totalEx+=s.expense; });
     statsEl.innerHTML =
       `<div class="stat-card"><span class="stat-num">${toBn(depts.length)}</span><span class="stat-label">বিভাগ</span></div>
        <div class="stat-card"><span class="stat-num" style="color:var(--green)">${fmtAmt(totalIn)}</span><span class="stat-label">মোট আয়</span></div>
@@ -297,7 +297,7 @@
         </thead>
         <tbody>
           ${depts.map(d => {
-      const s = DeptAPI.Transactions.getSummary(d.id, curMonth);
+      const s = DeptAPI.Transactions.getSummary(d.id);
       const profit = s.income - s.expense;
       const profitClass = profit >= 0 ? 'pos' : 'neg';
       return `<tr class="dept-row" onclick="openDeptDetail('${d.id}')">

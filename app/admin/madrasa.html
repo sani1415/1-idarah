@@ -291,7 +291,7 @@
           <div>
             <div class="cc-title" id="cc-dept-title">বিভাগ</div>
           </div>
-          <div class="cc-live">চলতি মাস</div>
+          <div class="cc-live">সব সময়</div>
         </div>
         <div class="cc-health-grid" id="cc-dept-grid"></div>
         <div class="cc-attention">
@@ -659,10 +659,6 @@
     return '৳' + toBn(Math.round(n).toLocaleString('en-US'));
   }
 
-  function getCommandMonth() {
-    return new Date().toISOString().slice(0, 7);
-  }
-
   function renderAccountsSlide() {
     const ready = !!(window.MdrAccAPI && MdrAccAPI.Summary);
     const summary = ready ? MdrAccAPI.Summary.get(null) : null;
@@ -704,28 +700,27 @@
   }
 
   function renderDepartmentSlide() {
-    const month = getCommandMonth();
     const ready = !!(window.DeptAPI && DeptAPI.Departments && DeptAPI.Transactions);
     const depts = ready ? DeptAPI.Departments.getAll() : [];
     const rows = ready ? depts.map(d => {
-      const s = DeptAPI.Transactions.getSummary(d.id, month);
+      const s = DeptAPI.Transactions.getSummary(d.id);
       return { dept: d, income: Number(s.income || 0), expense: Number(s.expense || 0), net: Number(s.net || 0) };
     }) : [];
     const totalIncome = rows.reduce((sum, r) => sum + r.income, 0);
     const totalExpense = rows.reduce((sum, r) => sum + r.expense, 0);
     const totalNet = totalIncome - totalExpense;
     const pending = ready && DeptAPI.EditRequests ? DeptAPI.EditRequests.getPending() : [];
-    const txns = ready ? DeptAPI.Transactions.getAll().filter(t => String(t.date || t.txn_date || '').startsWith(month)) : [];
+    const txns = ready ? DeptAPI.Transactions.getAll() : [];
     const products = ready && DeptAPI.Products ? DeptAPI.Products.getAll().filter(p => p.is_active !== false) : [];
     const inventory = ready && DeptAPI.Inventory ? depts.reduce((sum, d) => sum + DeptAPI.Inventory.getByDept(d.id).length, 0) : 0;
     const best = rows.slice().sort((a, b) => b.net - a.net)[0];
     const lossCount = rows.filter(r => r.net < 0).length;
     const cards = [
       ccCard('সক্রিয় বিভাগ', toBn(depts.length), 'বিভাগ মেনু', '', "location.href='/admin/dept.html'"),
-      ccCard('বিভাগ আয়', ccMoney(totalIncome), 'চলতি মাস', totalIncome ? 'is-good' : '', "location.href='/admin/dept.html'"),
-      ccCard('বিভাগ ব্যয়', ccMoney(totalExpense), 'চলতি মাস', totalExpense ? 'is-danger' : '', "location.href='/admin/dept.html'"),
+      ccCard('বিভাগ আয়', ccMoney(totalIncome), 'সব সময়ের মোট', totalIncome ? 'is-good' : '', "location.href='/admin/dept.html'"),
+      ccCard('বিভাগ ব্যয়', ccMoney(totalExpense), 'সব সময়ের মোট', totalExpense ? 'is-danger' : '', "location.href='/admin/dept.html'"),
       ccCard('নেট লাভ', ccMoney(totalNet), 'আয় - ব্যয়', totalNet < 0 ? 'is-danger' : 'is-good', "location.href='/admin/dept.html'"),
-      ccCard('লেনদেন', toBn(txns.length), 'চলতি মাস', txns.length ? '' : 'is-warn', "location.href='/admin/dept.html'"),
+      ccCard('লেনদেন', toBn(txns.length), 'মোট লেনদেন', txns.length ? '' : 'is-warn', "location.href='/admin/dept.html'"),
       ccCard('পণ্য', toBn(products.length), 'সক্রিয় পণ্য', products.length ? 'is-good' : '', "location.href='/admin/dept.html'"),
       ccCard('স্টক সারি', toBn(inventory), 'ইনভেন্টরি', inventory ? '' : 'is-warn', "location.href='/admin/dept.html'"),
       ccCard('সংশোধন অনুরোধ', toBn(pending.length), 'অনুমোদন বাকি', pending.length ? 'is-warn' : 'is-good', "location.href='/admin/dept.html'"),
@@ -737,7 +732,7 @@
       alerts.push(ccAlert('watch', 'বিভাগ cache পাওয়া যায়নি', 'বিভাগ পেজ খুললে data refresh হবে', '—', 'is-warn', "location.href='/admin/dept.html'"));
     } else {
       if (pending.length) alerts.push(ccAlert('watch', 'সংশোধন অনুরোধ', 'অনুমোদনের অপেক্ষায়', toBn(pending.length), 'is-warn', "location.href='/admin/dept.html'"));
-      if (lossCount) alerts.push(ccAlert('absent', 'লোকসানে থাকা বিভাগ', 'চলতি মাসের হিসাব', toBn(lossCount), 'is-danger', "location.href='/admin/dept.html'"));
+      if (lossCount) alerts.push(ccAlert('absent', 'লোকসানে থাকা বিভাগ', 'সব সময়ের হিসাব', toBn(lossCount), 'is-danger', "location.href='/admin/dept.html'"));
       if (best && best.net > 0) alerts.push(ccAlert('ok', 'সেরা বিভাগ', deptDisplayName(best.dept.name), ccMoney(best.net), 'is-good', "location.href='/admin/dept.html'"));
     }
     ccSetAlerts('cc-dept-list', 'cc-dept-meta', alerts, 'বিভাগের বড় কোনো সতর্কতা নেই।');
@@ -1018,7 +1013,7 @@
       const khState = data.khAvg == null ? 'is-warn' : data.khAvg >= 80 ? 'is-good' : data.khAvg >= 60 ? 'is-warn' : 'is-danger';
       const cards = [
         ccCard('আজ উপস্থিতি', toBn(data.attendancePct) + '%', toBn(data.att.present) + '/' + toBn(data.total) + ' উপস্থিত', attendanceState, ''),
-        ccCard('আজ অনুপস্থিত', toBn(data.att.absent), data.att.absent ? 'তালিকা দেখুন' : 'আজ কোনো রেকর্ড নেই', data.att.absent ? 'is-danger' : 'is-good', 'goAbsentList()'),
+        ccCard('অনুপস্থিত তালিকা', toBn(data.anyAbsent), data.anyAbsent ? 'তালিকা দেখুন' : 'কোনো রেকর্ড নেই', data.anyAbsent ? 'is-danger' : 'is-good', 'goAbsentList()'),
         ccCard('নজর দরকার', toBn(data.watchLoad), 'অনুপস্থিত + পর্যবেক্ষণ + কম খুলুক', data.watchLoad ? 'is-warn' : 'is-good', 'goSpecialWatch()'),
         ccCard('খুলুক গড়', data.khAvg !== null ? toBn(data.khAvg) : '—', toBn(data.bands.none.length) + ' জনের রেকর্ড নেই', khState, 'openKhulukPanel()'),
         ccCard('মোট ছাত্র', toBn(data.total), scope, '', "openDeptRoute('/madrasa/admin/students.html')"),

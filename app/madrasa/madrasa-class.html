@@ -393,9 +393,15 @@
     <p id="bp-latest-summary" class="kh-latest-summary" style="display:none;margin-top:0;"></p>
     <div class="modal-panel" id="bp-panel-form">
       <input type="hidden" id="bp-book-id" value="">
-      <div class="form-group">
+      <input type="hidden" id="bp-total-pages" value="">
+      <div class="form-group" id="bp-pct-wrap" style="display:none;">
+        <label class="form-label">অগ্রগতি (শতাংশ)</label>
+        <input class="form-input" id="bp-pct" type="number" min="0" max="100" step="1" placeholder="যেমন: ৪৫">
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;">মোট পৃষ্ঠা সেট থাকলে শতাংশ দিলেই হবে — পৃষ্ঠা নম্বর আলাদা লিখতে হবে না।</div>
+      </div>
+      <div class="form-group" id="bp-pages-wrap">
         <label class="form-label">পঠিত পৃষ্ঠা</label>
-        <input class="form-input" id="bp-pages" type="number" min="0" placeholder="যেমন: 45">
+        <input class="form-input" id="bp-pages" type="number" min="0" placeholder="যেমন: ৪৫">
       </div>
       <div class="form-group">
         <label class="form-label">নোট (ঐচ্ছিক)</label>
@@ -1134,7 +1140,22 @@
     if (!book) { showToast('কিতাব পাওয়া যায়নি'); return; }
     document.getElementById('bp-book-label').textContent = book.name || '—';
     document.getElementById('bp-book-id').value = book.id;
-    document.getElementById('bp-pages').value = book.pages_done != null ? book.pages_done : '';
+    var totalPages = Number(book.total_pages) || 0;
+    document.getElementById('bp-total-pages').value = totalPages > 0 ? totalPages : '';
+    var pctWrap = document.getElementById('bp-pct-wrap');
+    var pagesWrap = document.getElementById('bp-pages-wrap');
+    if (pctWrap) pctWrap.style.display = totalPages > 0 ? '' : 'none';
+    if (pagesWrap) pagesWrap.style.display = totalPages > 0 ? 'none' : '';
+    var done = Number(book.pages_done);
+    if (totalPages > 0) {
+      document.getElementById('bp-pct').value = Number.isFinite(done) && done >= 0
+        ? Math.min(100, Math.round((done / totalPages) * 100))
+        : '';
+      document.getElementById('bp-pages').value = '';
+    } else {
+      document.getElementById('bp-pages').value = Number.isFinite(done) && done >= 0 ? done : '';
+      document.getElementById('bp-pct').value = '';
+    }
     document.getElementById('bp-note').value = '';
     fillBookProgSummary(book);
     fillBookProgHistory(book);
@@ -1148,37 +1169,52 @@
     if (hintEl) hintEl.style.display = books.length ? '' : 'none';
     document.getElementById('kitab-list').innerHTML = books.length
       ? books.map(b => {
-          const pct = b.total_pages ? Math.min(100, Math.round((b.pages_done / b.total_pages) * 100)) : 0;
+          const pct = b.total_pages ? Math.min(100, Math.round((Number(b.pages_done) / Number(b.total_pages)) * 100)) : null;
           return `<button type="button" class="book-row book-row--clickable" data-book-id="${_attrId(b.id)}" onclick="openBookProgModal('${_jsQuote(b.id)}')" aria-label="কিতাব অগ্রগতি: ${API.esc(b.name)}">
             <div class="book-name">${API.esc(b.name)}</div>
             <div class="prog-wrap">
-              <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
-              <span class="prog-pct">${toBn(pct)}%</span>
+              <div class="prog-track"><div class="prog-fill" style="width:${pct != null ? pct : 0}%"></div></div>
+              <span class="prog-pct">${pct != null ? toBn(pct) + '%' : '—'}</span>
             </div>
-            <div class="prog-pages">${toBn(b.pages_done)} / ${b.total_pages ? toBn(b.total_pages) : '?'} পৃষ্ঠা${b.last_updated ? ' · ' + b.last_updated : ''}</div>
+            <div class="prog-pages">${pct != null ? toBn(pct) + '% অগ্রগতি' : toBn(b.pages_done) + ' পৃষ্ঠা'}${b.last_updated ? ' · ' + b.last_updated : ''}</div>
           </button>`;
         }).join('')
       : '<div style="text-align:center;padding:36px;color:var(--ink3);font-size:13px;">কোনো কিতাব নেই<br>সেটিংস থেকে কিতাব যোগ করুন</div>';
   }
   async function saveBookProg() {
     const book_id = document.getElementById('bp-book-id').value;
-    const pages = parseInt(document.getElementById('bp-pages').value, 10);
+    const totalPages = parseInt(document.getElementById('bp-total-pages').value, 10);
+    let pages = parseInt(document.getElementById('bp-pages').value, 10);
+    if (totalPages > 0) {
+      const pct = parseInt(document.getElementById('bp-pct').value, 10);
+      if (isNaN(pct) || pct < 0 || pct > 100) { showToast('০–১০০ এর মধ্যে শতাংশ দিন'); return; }
+      pages = Math.round(totalPages * pct / 100);
+    }
     const note = document.getElementById('bp-note').value.trim();
     if (!book_id) { showToast('কিতাব নির্বাচিত নেই'); return; }
-    if (isNaN(pages) || pages < 0) { showToast('সঠিক পৃষ্ঠা সংখ্যা দিন'); return; }
-    API.KitabProgress.update(book_id, classId, pages, note);
+    if (isNaN(pages) || pages < 0) { showToast('সঠিক অগ্রগতি দিন'); return; }
     if (window.MMSharedAPI && UUID_RE.test(book_id)) {
       try {
         const actor = teacherActor();
         const res = await MMSharedAPI.saveBookProgress(actor.id, actor.pin, book_id, pages, note);
         if (!res || !res.ok) throw new Error((res && res.error) || 'book_progress_failed');
         await refreshTeacherData();
+        closeModal('modal-book-prog');
+        renderKitab();
+        renderStats();
+        showToast('অগ্রগতি সংরক্ষিত হয়েছে');
+        return;
       } catch (e) {
         console.warn('Save book progress failed', e);
-        showToast('লোকালি আপডেট হয়েছে, ডাটাবেজে হয়নি');
+        showToast('ডাটাবেজে সংরক্ষণ হয়নি — আবার চেষ্টা করুন');
+        return;
       }
     }
-    closeModal('modal-book-prog'); renderKitab(); renderStats(); showToast('অগ্রগতি আপডেট হয়েছে');
+    API.KitabProgress.update(book_id, classId, pages, note);
+    closeModal('modal-book-prog');
+    renderKitab();
+    renderStats();
+    showToast('অগ্রগতি আপডেট হয়েছে (লোকাল)');
   }
 
   /* ── LOG (বর্ষ + নির্দিষ্ট ছাত্র — API.Logs type class | student) ── */

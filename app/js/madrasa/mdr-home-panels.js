@@ -366,6 +366,10 @@
       .abs-rank-home{font-family:'Tiro Bangla',serif;font-size:18px;font-weight:800;color:var(--gold);min-width:34px;text-align:center}
       .abs-info-home{flex:1;min-width:0}.abs-name-home{font-size:14px;font-weight:700;color:var(--ink)}
       .abs-days-home{font-family:'Tiro Bangla',serif;font-size:17px;font-weight:800;color:var(--red);white-space:nowrap}
+      .abs-section-title{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 8px}
+      .abs-section-title:first-child{margin-top:0}
+      .abs-section-sub{font-size:11px;color:var(--ink3);margin:-4px 0 8px;line-height:1.45}
+      .abs-section-empty{font-size:12px;color:var(--ink3);padding:10px 0 4px}
       #modal-absent-home .modal-title,#modal-absent-home .kh-meta{flex-shrink:0}
       #modal-absent-home #abs-home-list{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;padding-right:2px}
       @media(max-width:520px){.kh-grid{grid-template-columns:1fr}#kh-list{grid-template-columns:1fr}}
@@ -435,7 +439,7 @@
     abs.id = 'modal-absent-home';
     abs.innerHTML = `<div class="modal">
       <div class="modal-title">অনুপস্থিত তালিকা <button class="modal-close" onclick="MDRHomePanels.closeAbsent()">✕</button></div>
-      <div class="kh-meta" style="margin-bottom:12px">যাদের কমপক্ষে এক দিন অনুপস্থিত রেকর্ড আছে। বেশি দিন থেকে কম — সাজানো।</div>
+      <div class="kh-meta" style="margin-bottom:12px">আজকের অনুপস্থিত ও মোট অনুপস্থিত রেকর্ড — আলাদা তালিকা।</div>
       <div id="abs-home-list"></div>
     </div>`;
     document.body.appendChild(abs);
@@ -741,34 +745,75 @@
       .sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
   }
 
+  function todayAbsentRows() {
+    const depts = getAbsentDepts();
+    if (!global.API || !API.Attendance || !API.Students || !API.Classes) return [];
+    const iso = API.today ? API.today() : new Date().toISOString().slice(0, 10);
+    const out = [];
+    const seen = Object.create(null);
+    depts.forEach((dept) => {
+      (API.Classes.getByDept(dept) || []).forEach((cls) => {
+        (API.Attendance.getByClassDate(cls.id, iso) || []).forEach((rec) => {
+          if (API.Attendance.statusOf(rec) !== 'absent') return;
+          const sid = String(rec.student_id || '');
+          const student = (API.Students.getAll() || []).find((s) =>
+            s && s.active !== false && (String(s.id) === sid || String(s.supabase_id || '') === sid)
+          );
+          if (!student || seen[student.id]) return;
+          seen[student.id] = true;
+          out.push({ student, dept, absentDays: 1 });
+        });
+      });
+    });
+    out.sort((a, b) => String(a.student.name || '').localeCompare(String(b.student.name || ''), 'bn'));
+    return out;
+  }
+
+  function renderAbsentRow(x, i, showDays, showDeptTag, depts) {
+    const cls = API.Classes.getById(x.student.class_id);
+    const deptLabel = x.dept === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
+    const metaLine = esc(cls ? cls.name : '—') + (showDeptTag ? ' · ' + esc(deptLabel) : '') + ' · রোল ' + helpers.toBn(esc(x.student.roll || '—'));
+    const daysHtml = showDays
+      ? `<div class="abs-days-home">${helpers.toBn(x.absentDays)} দিন</div>`
+      : '<div class="abs-days-home" style="color:var(--ink3);font-size:12px;">আজ</div>';
+    return `<div class="abs-row-home">
+      <div class="abs-rank-home">${helpers.toBn(i + 1)}</div>
+      <div class="abs-info-home">
+        <div class="abs-name-home"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600" onclick="MMStudentModal.open('${jsSingleQuote(x.student.id)}')">${esc(x.student.name)}</button></div>
+        <div class="abs-meta-home">${metaLine}</div>
+      </div>
+      ${daysHtml}
+    </div>`;
+  }
+
   function renderAbsent() {
     const depts = getAbsentDepts();
-    const rows = absentRows();
+    const todayRows = todayAbsentRows();
+    const totalRows = absentRows();
     const meta = document.querySelector('#modal-absent-home .kh-meta');
     if (meta) {
       const label = absentScopeLabel(depts);
-      meta.textContent = (label ? label + ' — ' : '') + 'যাদের কমপক্ষে এক দিন অনুপস্থিত রেকর্ড আছে। বেশি দিন থেকে কম — সাজানো।';
+      meta.textContent = (label ? label + ' — ' : '') + 'উপরে আজকের অনুপস্থিত, নিচে মোট অনুপস্থিত (বেশি দিন থেকে কম)।';
     }
     const el = document.getElementById('abs-home-list');
     if (!el) return;
-    if (!rows.length) {
-      el.innerHTML = '<div class="empty-state"><span class="empty-icon">✓</span><div class="empty-text">কোনো ছাত্রের অনুপস্থিত রেকর্ড নেই</div></div>';
-      return;
-    }
     const showDeptTag = depts.length > 1;
-    el.innerHTML = rows.map((x, i) => {
-      const cls = API.Classes.getById(x.student.class_id);
-      const deptLabel = x.dept === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
-      const metaLine = esc(cls ? cls.name : '—') + (showDeptTag ? ' · ' + esc(deptLabel) : '') + ' · রোল ' + helpers.toBn(esc(x.student.roll || '—'));
-      return `<div class="abs-row-home">
-        <div class="abs-rank-home">${helpers.toBn(i + 1)}</div>
-        <div class="abs-info-home">
-          <div class="abs-name-home"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600" onclick="MMStudentModal.open('${x.student.id}')">${esc(x.student.name)}</button></div>
-          <div class="abs-meta-home">${metaLine}</div>
-        </div>
-        <div class="abs-days-home">${helpers.toBn(x.absentDays)} দিন</div>
-      </div>`;
-    }).join('');
+    const parts = [];
+    parts.push('<div class="abs-section-title">আজ অনুপস্থিত</div>');
+    parts.push('<div class="abs-section-sub">' + helpers.toBn(todayRows.length) + ' জন</div>');
+    if (todayRows.length) {
+      parts.push(todayRows.map((x, i) => renderAbsentRow(x, i, false, showDeptTag, depts)).join(''));
+    } else {
+      parts.push('<div class="abs-section-empty">আজ কোনো অনুপস্থিত রেকর্ড নেই</div>');
+    }
+    parts.push('<div class="abs-section-title">মোট অনুপস্থিত (রেকর্ড অনুযায়ী)</div>');
+    parts.push('<div class="abs-section-sub">' + helpers.toBn(totalRows.length) + ' জন · বেশি দিন থেকে কম</div>');
+    if (totalRows.length) {
+      parts.push(totalRows.map((x, i) => renderAbsentRow(x, i, true, showDeptTag, depts)).join(''));
+    } else {
+      parts.push('<div class="abs-section-empty">কোনো ছাত্রের অনুপস্থিত রেকর্ড নেই</div>');
+    }
+    el.innerHTML = parts.join('');
   }
 
   function updateCards() {

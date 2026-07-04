@@ -1006,9 +1006,24 @@ const API = (() => {
       const kitabs = load(KEYS.kitabs).filter(k => k.class_id === cid);
       const prog = load(KEYS.kitab_prog);
       return kitabs.map(k => {
-        const entries = prog.filter(p => p.kitab_id === k.id).sort((a,b) => b.date.localeCompare(a.date) || (b.id||'').localeCompare(a.id||''));
-        const latest = entries[0];
-        return { ...k, pages_done: latest ? latest.pages_done : 0, last_updated: latest ? latest.date : null, history: entries };
+        const entries = prog.filter(p => String(p.kitab_id) === String(k.id));
+        const teacherEntries = entries.filter(p => !String(p.id || '').endsWith('_current'));
+        const snapshot = entries.find(p => String(p.id || '').endsWith('_current'));
+        const sorted = teacherEntries.slice().sort((a, b) =>
+          String(b.date || '').localeCompare(String(a.date || '')) ||
+          String(b.id || '').localeCompare(String(a.id || ''))
+        );
+        const latestTeacher = sorted[0] || null;
+        const pagesFromTeacher = latestTeacher ? Number(latestTeacher.pages_done) : NaN;
+        const pagesFromSnap = snapshot ? Number(snapshot.pages_done) : NaN;
+        const pages_done = Number.isFinite(pagesFromTeacher)
+          ? pagesFromTeacher
+          : (Number.isFinite(pagesFromSnap) ? pagesFromSnap : 0);
+        const last_updated = latestTeacher
+          ? latestTeacher.date
+          : (snapshot ? snapshot.date : null);
+        const history = teacherEntries.length ? teacherEntries : entries;
+        return { ...k, pages_done, last_updated, history };
       });
     },
     update(kitab_id, class_id, pages_done, note = '') {

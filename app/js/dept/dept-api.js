@@ -150,9 +150,12 @@ const DeptAPI = (() => {
     unlock(id) { this.update(id, { locked:false }); },
     getSummary(dept_id, month) {
       const txns = month ? this.getByMonth(dept_id, month) : this.getByDept(dept_id);
-      const income  = txns.filter(t=>t.type==='income') .reduce((a,t)=>a+t.amount,0);
-      const expense = txns.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
-      return { income, expense, net: income-expense };
+      const sumType = (type) => txns
+        .filter((t) => t.type === type)
+        .reduce((a, t) => a + (Number(t.amount) || 0), 0);
+      const income = sumType('income');
+      const expense = sumType('expense');
+      return { income, expense, net: income - expense };
     },
     getAllSummary(month) {
       return load(KEYS.departments).filter(d=>d.is_active).map(d => ({
