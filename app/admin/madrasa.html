@@ -1280,7 +1280,7 @@
     const pin = MMSession.getAdminPin && MMSession.getAdminPin();
     try {
       if (window.MdrAccAPI && MdrAccAPI.bootstrapRemote) {
-        await MdrAccAPI.bootstrapRemote({ force: true });
+        await MdrAccAPI.bootstrapRemote();
       }
     } catch (e) {
       console.warn('accounts dashboard cache failed', e);

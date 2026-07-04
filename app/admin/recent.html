@@ -86,6 +86,7 @@
   const initialFilterParam = new URLSearchParams(location.search).get('filter');
   let activeFilter = initialFilterParam || 'all';
   let isLoading = false;
+  let feedBootstrapStarted = false;
 
   const esc = (s) => AdminRecentFeed.esc(s);
   const bn = (v) => AdminRecentFeed.bn(v);
@@ -117,6 +118,9 @@
           }
         }
         await renderActiveView();
+        if (activeFilter !== 'review' && !feedBootstrapStarted) {
+          loadAllData({ silent: true });
+        }
       };
     });
   }
@@ -127,9 +131,21 @@
     if (activeFilter === 'review') {
       await loadReviewItems();
       renderReviewQueue();
+      const total = (reviewItems.logs || []).length + (reviewItems.tags || []).length;
+      setSyncStatus(total ? 'রিভিউ তালিকা লোড হয়েছে।' : 'রিভিউ বাকি নেই।', 'ok');
     } else {
       renderFeed();
     }
+  }
+
+  async function refreshCurrentView(options) {
+    options = options || {};
+    if (activeFilter === 'review') {
+      if (!options.silent) setSyncStatus('রিভিউ তালিকা আপডেট হচ্ছে…');
+      await renderActiveView();
+      return;
+    }
+    await loadAllData(options);
   }
 
   async function loadReviewItems() {
@@ -257,10 +273,13 @@
 
   async function loadAllData(options) {
     options = options || {};
+    if (activeFilter === 'review') return;
     if (isLoading && !options.force) return;
     isLoading = true;
+    feedBootstrapStarted = true;
     const btn = document.getElementById('recent-refresh-btn');
     if (btn) btn.disabled = true;
+    const scope = activeFilter === 'madrasa' ? 'minimal' : 'full';
     const bootOpts = {
       pin: khPin,
       actorId: khActorId,
@@ -268,12 +287,13 @@
       chatActorId,
       restricted,
       force: !!options.force,
+      scope,
     };
     try {
       if (!options.silent) {
         setSyncStatus(options.force ? 'সব উৎস থেকে রিফ্রেশ…' : 'সর্বশেষ আপডেট চলছে…');
       }
-      const res = await AdminRecentFeed.bootstrapAll(Object.assign({}, bootOpts, { scope: 'full' }));
+      const res = await AdminRecentFeed.bootstrapAll(bootOpts);
       const errs = res.errors || [];
       if (errs.length) {
         const detail = errs.map((x) => x.label + (x.message ? ' (' + x.message + ')' : '')).join(', ');
@@ -294,7 +314,7 @@
 
   async function initRecent() {
     renderFilters();
-    document.getElementById('recent-refresh-btn').onclick = () => loadAllData({ force: true });
+    document.getElementById('recent-refresh-btn').onclick = () => refreshCurrentView({ force: true });
     AdminRecentFeed.prepareLocalCaches({
       actorId: khActorId,
       pin: khPin,
@@ -303,6 +323,7 @@
       restricted,
     });
     await renderActiveView();
+    if (activeFilter === 'review') return;
     const warm = window.MMSession && MMSession.isAppDataWarm && MMSession.isAppDataWarm();
     if (warm || AdminRecentFeed.hasAnyFeedData()) {
       setSyncStatus('ক্যাশ দেখানো হচ্ছে — আপডেট চলছে…');
@@ -312,7 +333,9 @@
   }
 
   MMLoading.run(initRecent).finally(function () {
-    loadAllData({ silent: true });
+    if (activeFilter !== 'review' && !feedBootstrapStarted) {
+      loadAllData({ silent: true });
+    }
   });
 </script>
 <script src="../js/shared/admin-nav.js"></script>
