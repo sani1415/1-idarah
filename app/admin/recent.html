@@ -116,14 +116,27 @@
             console.warn('[Recent] chat resync', e);
           }
         }
-        renderActiveView();
+        await renderActiveView();
       };
     });
   }
 
-  function renderActiveView() {
-    if (activeFilter === 'review') renderReviewQueue();
-    else renderFeed();
+  async function refreshReviewSources() {
+    if (window.MDRSupabaseSync && MDRSupabaseSync.syncAdminStudents) {
+      try { await MDRSupabaseSync.syncAdminStudents({ force: true }); } catch (e) { console.warn('[Recent] force refresh review logs', e); }
+    }
+    if (!restricted) {
+      try { await AdminRecentFeed.syncChatForFeed({ pin: khPin, actorId: khActorId, chatPin, chatActorId }); } catch (e) { console.warn('[Recent] force refresh review tags', e); }
+    }
+  }
+
+  async function renderActiveView() {
+    if (activeFilter === 'review') {
+      await refreshReviewSources();
+      renderReviewQueue();
+    } else {
+      renderFeed();
+    }
   }
 
   function pendingReviewLogs() {
@@ -280,11 +293,11 @@
       } else {
         setSyncStatus('সর্বশেষ ডাটা লোড হয়েছে। ' + bn(AdminRecentFeed.MAX_ITEMS) + ' টি পর্যন্ত দেখানো হয়।', 'ok');
       }
-      renderActiveView();
+      await renderActiveView();
     } catch (err) {
       console.error('[Recent]', err);
       setSyncStatus('ডাটা লোড ব্যর্থ। আবার রিফ্রেশ চেষ্টা করুন।', 'warn');
-      renderActiveView();
+      await renderActiveView();
     } finally {
       isLoading = false;
       if (btn) btn.disabled = false;
