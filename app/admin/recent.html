@@ -87,6 +87,7 @@
   let activeFilter = initialFilterParam || 'all';
   let isLoading = false;
   let feedBootstrapStarted = false;
+  const REVIEW_ITEMS_TIMEOUT_MS = 12000;
 
   const esc = (s) => AdminRecentFeed.esc(s);
   const bn = (v) => AdminRecentFeed.bn(v);
@@ -126,13 +127,30 @@
   }
 
   let reviewItems = { logs: [], tags: [] };
+  let reviewLoadError = '';
+
+  function withReviewTimeout(promise) {
+    let timer = null;
+    const timeout = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        reject(new Error('review_items_timeout'));
+      }, REVIEW_ITEMS_TIMEOUT_MS);
+    });
+    return Promise.race([promise, timeout]).finally(function () {
+      if (timer) clearTimeout(timer);
+    });
+  }
 
   async function renderActiveView() {
     if (activeFilter === 'review') {
       await loadReviewItems();
       renderReviewQueue();
       const total = (reviewItems.logs || []).length + (reviewItems.tags || []).length;
-      setSyncStatus(total ? 'রিভিউ তালিকা লোড হয়েছে।' : 'রিভিউ বাকি নেই।', 'ok');
+      if (reviewLoadError) {
+        setSyncStatus('রিভিউ তালিকা লোড হয়নি — আবার রিফ্রেশ চেষ্টা করুন।', 'warn');
+      } else {
+        setSyncStatus(total ? 'রিভিউ তালিকা লোড হয়েছে।' : 'রিভিউ বাকি নেই।', 'ok');
+      }
     } else {
       renderFeed();
     }
@@ -149,12 +167,17 @@
   }
 
   async function loadReviewItems() {
+    reviewLoadError = '';
     try {
-      const res = await MMSharedAPI.adminPendingReviewItems(khActorId, khPin);
+      if (!window.MMSharedAPI || !MMSharedAPI.adminPendingReviewItems) {
+        throw new Error('review_api_missing');
+      }
+      const res = await withReviewTimeout(MMSharedAPI.adminPendingReviewItems(khActorId, khPin));
       if (!res || !res.ok) throw new Error((res && res.error) || 'review_items_failed');
       reviewItems = { logs: res.logs || [], tags: res.tags || [] };
     } catch (e) {
       console.warn('[Recent] load review items', e);
+      reviewLoadError = (e && e.message) || String(e);
       reviewItems = { logs: [], tags: [] };
     }
   }

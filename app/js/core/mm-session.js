@@ -740,6 +740,12 @@
 
   function releaseBootCoverIfWarm() {
     if (!isAppSessionCacheWarm()) return;
+    var el = document.getElementById(LOADING_OVERLAY_ID);
+    if (el) {
+      el.classList.add('is-hidden');
+      el.setAttribute('aria-busy', 'false');
+    }
+    loadingVisible = false;
     setBootCoverActive(false);
     clearNavLoadingFlag();
   }
