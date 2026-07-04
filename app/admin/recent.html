@@ -121,46 +121,35 @@
     });
   }
 
-  async function refreshReviewSources() {
-    if (window.MDRSupabaseSync && MDRSupabaseSync.syncAdminStudents) {
-      try { await MDRSupabaseSync.syncAdminStudents({ force: true }); } catch (e) { console.warn('[Recent] force refresh review logs', e); }
-    }
-    if (!restricted) {
-      try { await AdminRecentFeed.syncChatForFeed({ pin: khPin, actorId: khActorId, chatPin, chatActorId }); } catch (e) { console.warn('[Recent] force refresh review tags', e); }
-    }
-  }
+  let reviewItems = { logs: [], tags: [] };
 
   async function renderActiveView() {
     if (activeFilter === 'review') {
-      await refreshReviewSources();
+      await loadReviewItems();
       renderReviewQueue();
     } else {
       renderFeed();
     }
   }
 
-  function pendingReviewLogs() {
-    if (!window.API || !API.Logs) return [];
-    return API.Logs.getAll().filter((l) => !l.reviewedAt && (l.type === 'class' || l.reviewRequested));
-  }
-
-  function pendingReviewTags() {
-    if (!window.ChatAPI) return [];
-    return ChatAPI.getAllMessages().filter((m) => m.request && m.request.kind === 'student_tag' && (m.request.status || 'pending') === 'pending');
+  async function loadReviewItems() {
+    try {
+      const res = await MMSharedAPI.adminPendingReviewItems(khActorId, khPin);
+      if (!res || !res.ok) throw new Error((res && res.error) || 'review_items_failed');
+      reviewItems = { logs: res.logs || [], tags: res.tags || [] };
+    } catch (e) {
+      console.warn('[Recent] load review items', e);
+      reviewItems = { logs: [], tags: [] };
+    }
   }
 
   function logContextLabel(l) {
-    if (l.type === 'class') return 'শ্রেণি লগ';
-    if (window.API && API.Students) {
-      const s = API.Students.getById(l.ref_id);
-      if (s) return 'ছাত্র — ' + s.name;
-    }
-    return 'ছাত্র লগ';
+    return l.type === 'class' ? 'শ্রেণি লগ — ' + (l.context || '') : 'ছাত্র — ' + (l.context || '');
   }
 
   function renderReviewQueue() {
-    const logs = pendingReviewLogs();
-    const tags = pendingReviewTags();
+    const logs = reviewItems.logs;
+    const tags = reviewItems.tags;
     const countEl = document.getElementById('recent-count');
     const total = logs.length + tags.length;
     if (countEl) {
@@ -176,7 +165,7 @@
     logs.forEach((l) => {
       html += `<div class="rv-item" data-log-id="${esc(l.id)}">
         <div class="rv-meta"><span>${esc(logContextLabel(l))} · ${esc(l.by || '')}</span><span>${esc(AdminRecentFeed.dateLabel(l.date))}</span></div>
-        <div class="rv-text">${esc(l.text)}</div>
+        <div class="rv-text">${esc(l.content)}</div>
         <textarea class="rv-reply-ta" rows="2" placeholder="মন্তব্য/নির্দেশনা লিখুন (ঐচ্ছিক)…"></textarea>
         <div class="rv-actions">
           <button type="button" class="rv-btn reply" onclick="submitLogReview('${esc(l.id)}', true)">রিপ্লাই পাঠান</button>
@@ -187,10 +176,10 @@
     tags.forEach((m) => {
       html += `<div class="rv-item" data-msg-id="${esc(m.id)}">
         <div class="rv-meta"><span>চ্যাট ট্যাগ · ${esc(m.from_name || '')}</span><span>${esc(AdminRecentFeed.dateLabel(m.ts))}</span></div>
-        <div class="rv-text">🏷️ ${esc(m.request.studentName || '')} সম্পর্কে: ${esc(m.text || '')}</div>
+        <div class="rv-text">🏷️ ${esc(m.student_name || '')} সম্পর্কে: ${esc(m.text || '')}</div>
         <div class="rv-actions">
           <a class="rv-btn goto" href="/chat.html?thread=${encodeURIComponent(m.thread_id || '')}">চ্যাটে যান</a>
-          <button type="button" class="rv-btn done" onclick="resolveTagFromQueue('${esc(m.id)}', '${esc(m.thread_id || '')}')">ডান করুন</button>
+          <button type="button" class="rv-btn done" onclick="resolveTagFromQueue('${esc(m.id)}')">ডান করুন</button>
         </div>
       </div>`;
     });
@@ -204,9 +193,7 @@
     try {
       const res = await MMSharedAPI.adminReviewLog(khActorId, khPin, logId, reply || null);
       if (!res || !res.ok) throw new Error((res && res.error) || 'review_failed');
-      if (window.API && API.Logs) {
-        API.Logs.update(logId, { reviewedAt: new Date().toISOString(), reviewedByName: MMSession.getName ? MMSession.getName() : 'জিম্মাদার', adminReply: reply || '' });
-      }
+      reviewItems.logs = reviewItems.logs.filter((l) => l.id !== logId);
       renderReviewQueue();
       if (typeof MMSyncReviewBadge === 'function') MMSyncReviewBadge();
     } catch (e) {
@@ -215,15 +202,11 @@
     }
   }
 
-  async function resolveTagFromQueue(messageId, threadId) {
+  async function resolveTagFromQueue(messageId) {
     try {
       const res = await ChatAPI.updateRequestRemote(chatActorId, chatPin, messageId, 'approved');
       if (!res || !res.ok) throw new Error((res && res.error) || 'request_update_failed');
-      ChatAPI.updateMessage(messageId, (m) => ({
-        ...m,
-        request: { ...m.request, status: 'approved', reviewedAt: new Date().toISOString(), reviewedBy: 'জিম্মাদার' },
-        read_staff: false,
-      }));
+      reviewItems.tags = reviewItems.tags.filter((m) => m.id !== messageId);
       renderReviewQueue();
       if (typeof MMSyncReviewBadge === 'function') MMSyncReviewBadge();
     } catch (e) {

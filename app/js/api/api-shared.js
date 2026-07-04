@@ -278,6 +278,12 @@ const MMSharedAPI = (() => {
         p_pin: pin,
       });
     },
+    adminPendingReviewItems(actorId, pin) {
+      return rpc('mdr_rel_admin_pending_review_items', {
+        p_actor_id: actorId,
+        p_pin: pin,
+      });
+    },
     saveBookProgress(actorId, pin, bookId, pagesDone, note) {
       return rpc('mdr_rel_save_book_progress', {
         p_actor_id: actorId,
