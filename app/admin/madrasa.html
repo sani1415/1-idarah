@@ -947,9 +947,16 @@
         setTimeout(onEnd, SNAP_MS + 90);
       };
 
+      wrap.addEventListener('click', (event) => {
+        if (wrap.dataset.ccSuppressClick === '1') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      }, true);
+
       wrap.addEventListener('pointerdown', (event) => {
         if (event.button !== undefined && event.button !== 0) return;
-        if (event.target.closest('button, a, input, select, textarea, label')) return;
+        if (event.target.closest('input, select, textarea')) return;
         pointerId = event.pointerId;
         startX = event.clientX;
         startY = event.clientY;
@@ -980,6 +987,7 @@
           }
           dragLocked = true;
           isDragging = true;
+          wrap.dataset.ccSuppressClick = '1';
           deck.classList.add('is-dragging');
           wrap.classList.add('is-drag-active');
           try { wrap.setPointerCapture(event.pointerId); } catch (_) {}
