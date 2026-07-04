@@ -6,8 +6,11 @@
 <title>Idarah Admin — জিম্মাদার প্যানেল</title>
 <script>
   // Persistent admin login: আগের session থাকলে login না দেখিয়ে সরাসরি ড্যাশবোর্ডে।
+  // dashboard ফ্ল্যাশ এড়াতে redirect-এর আগেই nav-loading flag সেট করি (checkPin()-এর
+  // সফল লগইন পথের মতোই), যাতে madrasa.html প্রথম পেইন্ট থেকেই কভার করা থাকে।
   try {
     if (/^admin\./i.test(location.hostname) && localStorage.getItem('mm_admin_persist_v1')) {
+      try { sessionStorage.setItem('mm_nav_loading', '1'); } catch (e2) {}
       location.replace('/admin/madrasa.html');
     }
   } catch (e) {}
