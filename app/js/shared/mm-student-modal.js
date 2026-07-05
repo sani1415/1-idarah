@@ -461,6 +461,9 @@
 
   function close() {
     _openSid = null;
+    if (global.MMStudentDocuments && global.MMStudentDocuments.invalidate) {
+      global.MMStudentDocuments.invalidate();
+    }
     closePhotoPreview();
     var el = document.getElementById(MODAL_ID);
     if (el) el.classList.remove('open');
@@ -480,6 +483,49 @@
     root.querySelectorAll('.st-tab-panel').forEach(function (p) {
       p.classList.toggle('st-tab-panel--on', p.getAttribute('data-panel') === key);
     });
+    if (key === 'docs' && _openSid) {
+      ensureDocumentsModule(function () {
+        if (global.MMStudentDocuments && global.MMStudentDocuments.onTabOpen) {
+          global.MMStudentDocuments.onTabOpen(_openSid);
+        }
+      });
+    }
+  }
+
+  function ensureDocumentsModule(done) {
+    if (global.MMStudentDocuments) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    if (ensureDocumentsModule._loading) {
+      ensureDocumentsModule._queue = ensureDocumentsModule._queue || [];
+      if (typeof done === 'function') ensureDocumentsModule._queue.push(done);
+      return;
+    }
+    ensureDocumentsModule._loading = true;
+    ensureDocumentsModule._queue = typeof done === 'function' ? [done] : [];
+    var scripts = document.getElementsByTagName('script');
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      var src = scripts[i].src || '';
+      if (src.indexOf('mm-student-modal') < 0) continue;
+      var base = src.replace(/mm-student-modal\.js(?:\?.*)?$/, '');
+      var el = document.createElement('script');
+      el.src = base + 'mm-student-documents.js?v=20260705';
+      el.async = false;
+      el.onload = function () {
+        ensureDocumentsModule._loading = false;
+        var q = ensureDocumentsModule._queue || [];
+        ensureDocumentsModule._queue = [];
+        q.forEach(function (fn) { try { fn(); } catch (e) { /* ignore */ } });
+      };
+      el.onerror = function () {
+        ensureDocumentsModule._loading = false;
+        ensureDocumentsModule._queue = [];
+        console.warn('mm-student-documents.js load failed');
+      };
+      document.head.appendChild(el);
+      break;
+    }
   }
 
   function open(sid) {
@@ -499,6 +545,7 @@
     _openSid = sid;
 
     ensureModal();
+    ensureDocumentsModule();
 
     var cls = API.Classes.getById(s.class_id);
     var clsName = cls ? cls.name : '—';
@@ -795,6 +842,9 @@
         '<button type="button" class="st-tab" data-tab="waj" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'waj\')">ওয়াযিফা</button>' +
+        '<button type="button" class="st-tab" data-tab="docs" role="tab" aria-selected="false" onclick="' +
+        escTab +
+        '(\'docs\')">ডকুমেন্ট</button>' +
         '<button type="button" class="st-tab" data-tab="more" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'more\')">মূল্যায়ন</button>' +
@@ -807,6 +857,9 @@
         '</div>' +
         '<div class="st-tab-panel" data-panel="waj" id="st-panel-waj">' +
         wajPanel +
+        '</div>' +
+        '<div class="st-tab-panel" data-panel="docs" id="st-panel-docs">' +
+        '<div class="st-note" style="padding:8px 0;">ডকুমেন্ট ট্যাব খুললে তালিকা লোড হবে।</div>' +
         '</div>' +
         '<div class="st-tab-panel" data-panel="more" id="st-panel-more">' +
         more +

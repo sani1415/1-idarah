@@ -137,6 +137,27 @@ const MMSharedAPI = (() => {
         p_book_id: bookId,
       });
     },
+    studentDocumentsList(actorId, pin, studentId) {
+      return rpc('mdr_rel_student_documents_list', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_student_id: studentId,
+      });
+    },
+    addStudentDocument(actorId, pin, payload) {
+      return rpc('mdr_rel_student_document_add', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_payload: payload || {},
+      });
+    },
+    deleteStudentDocument(actorId, pin, documentId) {
+      return rpc('mdr_rel_student_document_delete', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_document_id: documentId,
+      });
+    },
     settingsBooksBootstrap(actorId, pin) {
       return rpc('mdr_rel_settings_books_bootstrap', {
         p_actor_id: actorId || null,
