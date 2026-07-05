@@ -148,27 +148,40 @@
   /* class table */
   .class-table-wrap { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:12px; overflow:hidden; }
   .class-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .class-table { width:100%; table-layout:fixed; border-collapse:collapse; font-family:'Tiro Bangla',serif; font-size:11px; }
+  .class-table { width:100%; min-width:640px; table-layout:auto; border-collapse:separate; border-spacing:0; font-family:'Tiro Bangla',serif; font-size:11px; }
   .class-table thead th { background:var(--ink); color:var(--gold2); font-weight:600; padding:7px 4px; text-align:left; white-space:nowrap; font-size:10px; }
-  .class-table thead th:nth-child(1), .class-table tbody td.td-name { width:18%; }
-  .class-table thead th:nth-child(2), .class-table tbody td.td-teacher { width:22%; }
-  .class-table thead th.col-num, .class-table tbody td.col-num { width:12%; }
+  .class-table thead th.col-sticky,
+  .class-table tbody td.td-name {
+    position:sticky;
+    left:0;
+    z-index:2;
+    min-width:72px;
+    max-width:92px;
+    width:80px;
+  }
+  .class-table thead th.col-sticky { z-index:3; }
+  .class-table tbody td.td-name {
+    background:#fff;
+    box-shadow:2px 0 6px rgba(26,18,8,.08);
+  }
+  .class-table tbody tr.class-row:hover td.td-name { background:rgba(0,0,0,.03); }
+  .class-table thead th.col-num, .class-table tbody td.td-num { min-width:52px; width:52px; }
   .class-table thead th.col-num { text-align:center; font-size:9px; padding-left:2px; padding-right:2px; }
-  .class-table thead th.col-hk { white-space:normal; line-height:1.2; font-size:8px; }
+  .class-table thead th.col-hk { white-space:normal; line-height:1.2; font-size:8px; min-width:56px; }
   .class-table tbody td { padding:7px 4px; border-bottom:1px solid var(--cream2); vertical-align:middle; color:var(--ink2); }
   .class-table tbody tr:last-child td { border-bottom:none; }
   .class-table tbody tr.class-row { cursor:pointer; transition:background .12s; }
   .class-table tbody tr.class-row:hover { background:rgba(0,0,0,.03); }
   .class-table tbody tr.class-row:active { background:rgba(0,0,0,.06); }
-  .class-table tbody tr.dept-section-row td { background:var(--cream2); color:var(--ink2); font-size:10px; font-weight:700; padding:6px 8px; border-bottom:1px solid var(--cream3); }
+  .class-table tbody tr.dept-section-row td { background:var(--cream2); color:var(--ink2); font-size:10px; font-weight:700; padding:6px 8px; border-bottom:1px solid var(--cream3); position:static; box-shadow:none; }
   .class-table .td-name { font-family:'Tiro Bangla',serif; font-size:12px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .class-table .td-teacher { font-size:10px; color:var(--ink3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .class-table .td-teacher--tch { color: var(--ink2); text-decoration: underline; text-decoration-color: rgba(14, 165, 233, 0.5); cursor: pointer; }
-  .class-table .td-teacher--tch:active { opacity: 0.85; }
   .class-table .td-num { font-family:'Tiro Bangla',serif; font-size:12px; font-weight:700; text-align:center; white-space:nowrap; }
   .class-table .td-num.n-in { color:var(--ink); }
   .class-table .td-num.n-pr { color:var(--green); }
   .class-table .td-num.n-ab { color:var(--red); }
+  .class-table .td-num.n-shokr { color:var(--gold); }
+  .class-table .td-num.n-watch { color:#c2410c; }
+  .class-table .td-num.n-wd { color:var(--ink3); }
   .class-table .td-num.n-kh { color:#7c3aed; }
 
   /* class detail overlay */
@@ -222,7 +235,6 @@
     .class-table thead th.col-num { font-size: 10px; }
     .class-table thead th.col-hk { font-size: 9px; }
     .class-table .td-name { font-size: 13px; }
-    .class-table .td-teacher { font-size: 11px; }
     .class-table .td-num { font-size: 13px; }
     .cls-ov-body { padding: 18px 24px 32px; }
     .kh-ov-body { padding: 18px 24px 32px; }
@@ -351,12 +363,14 @@
       <table class="class-table">
         <thead>
           <tr>
-            <th>বর্ষ</th>
-            <th>শ্রেণি শিক্ষক</th>
+            <th class="col-sticky">বর্ষ</th>
             <th class="col-num">মোট</th>
-            <th class="col-num">উপস্থিত</th>
+            <th class="col-num">হাজিরা %</th>
             <th class="col-num">অনুপস্থিত</th>
-            <th class="col-num col-hk">হুসনুল খুলুক</th>
+            <th class="col-num">শোকর</th>
+            <th class="col-num">নজর</th>
+            <th class="col-num">বিদায়ী</th>
+            <th class="col-num col-hk">হুসনুল<br>খুলুক</th>
           </tr>
         </thead>
         <tbody id="class-list-body"></tbody>
@@ -1240,40 +1254,95 @@
     return API.Classes.getByDept(dept).map(c => ({ ...c, dept }));
   }
 
+  function getSessionStartIso() {
+    const s = API.Settings.get();
+    const sd = s && s.session_start_date != null ? String(s.session_start_date).trim().slice(0, 10) : '';
+    return sd || null;
+  }
+
+  function getCurrentHijriYear() {
+    return (API.Settings.get().hijri_year || '').trim() || null;
+  }
+
+  function studentIdSetForClass(classId) {
+    const set = new Set();
+    API.Students.getByClass(classId).forEach((s) => {
+      set.add(String(s.id || ''));
+      if (s.supabase_id) set.add(String(s.supabase_id));
+    });
+    return set;
+  }
+
+  function classYearAttendancePct(classId, startIso, endIso) {
+    const sidSet = studentIdSetForClass(classId);
+    if (!sidSet.size) return null;
+    const all = API.Attendance.getAll ? API.Attendance.getAll() : [];
+    let present = 0;
+    let absent = 0;
+    all.forEach((a) => {
+      const d = String(a.date || '').slice(0, 10);
+      if (!sidSet.has(String(a.student_id || ''))) return;
+      if (startIso && d < startIso) return;
+      if (endIso && d > endIso) return;
+      const st = API.Attendance.statusOf(a);
+      if (st === 'present') present++;
+      else if (st === 'absent') absent++;
+    });
+    const total = present + absent;
+    return total ? Math.round(present / total * 100) : null;
+  }
+
+  function classLatestAbsentCount(classId) {
+    const sidSet = studentIdSetForClass(classId);
+    if (!sidSet.size) return null;
+    const all = (API.Attendance.getAll ? API.Attendance.getAll() : []).filter((a) =>
+      sidSet.has(String(a.student_id || ''))
+    );
+    if (!all.length) return null;
+    let latest = '';
+    all.forEach((a) => {
+      const d = String(a.date || '').slice(0, 10);
+      if (d > latest) latest = d;
+    });
+    if (!latest) return null;
+    return all.filter((a) =>
+      String(a.date || '').slice(0, 10) === latest && API.Attendance.statusOf(a) === 'absent'
+    ).length;
+  }
+
   function renderClassList() {
     const iso = new Date().toISOString().split('T')[0];
+    const sessionStart = getSessionStartIso();
+    const hijriYear = getCurrentHijriYear();
     const classes = getClassesForScope(currentDept);
-    const teachers = getScopeDepts().flatMap(dept => API.Teachers.getByDept(dept))
-      .filter(t => t.is_active !== false);
-    const teacherMap = {};
-    teachers.forEach(t => { teacherMap[t.class_id] = t.name; });
 
     let lastDept = '';
     const rows = classes.map(cls => {
       const students = API.Students.getByClass(cls.id);
-      const attRecs = API.Attendance.getByClassDate(cls.id, iso);
-      const present = attRecs.filter(a => API.Attendance.statusOf(a) === 'present').length;
-      const absent  = attRecs.filter(a => API.Attendance.statusOf(a) === 'absent').length;
+      const attPct = classYearAttendancePct(cls.id, sessionStart, iso);
+      const latestAbsent = classLatestAbsentCount(cls.id);
+      const shokr = students.filter(s => s.alhamdulillah).length;
+      const nazor = students.filter(s => s.special_watch).length;
+      const bidayi = API.Students.getWithdrawalsFromClass(cls.id, hijriYear).length;
       const khAvg   = API.Khuluk.getClassAvg(cls.id);
-      const teacherName = teacherMap[cls.id] || '—';
-      const tObj = teachers.find(t => t.class_id === cls.id);
-      const tid = tObj && tObj.id ? tObj.id : '';
       const section = currentDept === 'all' && cls.dept !== lastDept
-        ? `<tr class="dept-section-row"><td colspan="6">${deptLabel(cls.dept)}</td></tr>`
+        ? `<tr class="dept-section-row"><td colspan="8">${deptLabel(cls.dept)}</td></tr>`
         : '';
       lastDept = cls.dept;
       return section + `<tr class="class-row" onclick="openClassOverlay('${cls.id}')">
         <td class="td-name">${API.esc(cls.name)}</td>
-        <td class="td-teacher${tid ? ' td-teacher--tch' : ''}" ${tid ? `onclick="event.stopPropagation();MMTeacherModal.open('${tid}')"` : ''} title="${tid ? 'শিক্ষকের সারাংশ' : ''}">${API.esc(teacherName)}</td>
         <td class="td-num n-in">${toBn(students.length)}</td>
-        <td class="td-num n-pr">${toBn(present)}</td>
-        <td class="td-num n-ab">${toBn(absent)}</td>
+        <td class="td-num n-pr">${attPct !== null ? toBn(attPct) + '%' : '—'}</td>
+        <td class="td-num n-ab">${latestAbsent !== null ? toBn(latestAbsent) : '—'}</td>
+        <td class="td-num n-shokr">${toBn(shokr)}</td>
+        <td class="td-num n-watch">${toBn(nazor)}</td>
+        <td class="td-num n-wd">${toBn(bidayi)}</td>
         <td class="td-num n-kh">${khAvg !== null ? toBn(khAvg) : '—'}</td>
       </tr>`;
     }).join('');
 
     document.getElementById('class-list-body').innerHTML = rows ||
-      `<tr><td colspan="6" style="text-align:center;color:var(--ink3);padding:24px;">কোনো বর্ষ নেই</td></tr>`;
+      `<tr><td colspan="8" style="text-align:center;color:var(--ink3);padding:24px;">কোনো বর্ষ নেই</td></tr>`;
   }
 
   async function hydrateCommandDeckSources() {

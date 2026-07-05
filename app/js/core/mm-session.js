@@ -616,7 +616,7 @@
         label.className = 'mm-monitor-topbar-label';
         topbar.appendChild(label);
       }
-      label.textContent = year + ' \u09b9\u09bf\u099c\u09b0\u09c0 \u09b6\u09bf\u0995\u09cd\u09b7\u09be\u09ac\u09b0\u09cd\u09b7';
+      label.textContent = year + ' \u09b9\u09bf\u099c\u09b0\u09bf';
     });
   }
 
