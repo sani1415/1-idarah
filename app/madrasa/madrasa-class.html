@@ -338,11 +338,11 @@
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>লগ</span>
   </button>
-  <button type="button" class="nav-item" onclick="location.href='madrasa-class-exams.html'" aria-label="পরীক্ষা ও ফল">
+  <button type="button" class="nav-item" id="nav-exams" onclick="goClassExams()" aria-label="পরীক্ষা ও ফল">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     <span>পরীক্ষা</span>
   </button>
-  <button class="nav-item" onclick="location.href='../chat.html'">
+  <button type="button" class="nav-item" id="nav-chat" onclick="goClassChat()">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>বার্তা</span>
   </button>
@@ -512,6 +512,7 @@
 <script src="../js/core/mm-session.js?v=20260521-teacher-class"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/madrasa/mdr-class-duty-alerts.js?v=20260624-duty3"></script>
+<script src="../js/madrasa/mdr-class-duty-gate.js?v=20260705-duty-gate"></script>
 <script>
   if (MMSession.getRole() !== 'teacher') location.href = '../index.html';
 
@@ -567,6 +568,7 @@
   function _attrId(id) { return String(id).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
   function _jsQuote(id) { return String(id).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
   function openLogFromRowBtn(el) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('student-log')) return;
     const sid = el.getAttribute('data-std-sid');
     if (sid) openLogModal(sid);
   }
@@ -593,11 +595,23 @@
     const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2200);
   }
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function openModal(id) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockModal(id)) return;
+    document.getElementById(id).classList.add('open');
+  }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+  function goClassExams() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockExternalNav('exams')) return;
+    location.href = 'madrasa-class-exams.html';
+  }
+  function goClassChat() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockExternalNav('chat')) return;
+    location.href = '../chat.html';
+  }
+
   /* ── TAB ── */
-  function switchTab(name) {
+  function switchTabCore(name) {
     ['std','kitab','log'].forEach(p => {
       document.getElementById('panel-'+p).style.display = p===name ? '' : 'none';
       document.getElementById('nav-'+p).classList.toggle('active', p===name);
@@ -606,9 +620,14 @@
     if (name==='kitab') renderKitab();
     if (name==='log') renderLog();
   }
+  function switchTab(name) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockTab(name)) return;
+    switchTabCore(name);
+  }
 
   function setLogSubTab(which) {
     if (which !== 'class' && which !== 'student') return;
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockLogSubTab(which)) return;
     logSubTab = which;
     document.querySelectorAll('#panel-log .log-tab').forEach(function (btn) {
       const on = btn.getAttribute('data-log-tab') === which;
@@ -680,8 +699,10 @@
     if (result.ok) {
       wrap.innerHTML = '';
       dutyPanelOpen = false;
+      if (window.MDRClassDutyGate) MDRClassDutyGate.refresh();
       return;
     }
+    dutyPanelOpen = true;
     var n = toBn(String(result.overdueCount));
     var itemsHtml = result.items.map(function (item) {
       if (item.id === 'khuluk' && item.meta && item.meta.students) {
@@ -703,6 +724,7 @@
       '<svg class="duty-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
       '</button>' +
       '<div class="duty-body"><div class="duty-list">' + itemsHtml + '</div></div></section>';
+    if (window.MDRClassDutyGate) MDRClassDutyGate.refresh();
   }
 
   function dutyGoKitab() {
@@ -767,6 +789,7 @@
   }
 
   function openClassAbsentListModal() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('absent')) return;
     if (!classId) return;
     const body = document.getElementById('class-absent-list-body');
     const sub = document.getElementById('class-absent-list-sub');
@@ -809,6 +832,7 @@
     renderKhulukCatList();
   }
   function openKhulukCatModal() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('khcat')) return;
     if (!classId) return;
     khulukCatTab = 'high';
     setKhulukCatTab('high');
@@ -847,6 +871,7 @@
   }
 
   function openWatchListModal() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('watch')) return;
     if (!classId) return;
     const body = document.getElementById('watch-list-body');
     const sub = document.getElementById('watch-list-sub');
@@ -870,6 +895,7 @@
   }
 
   function openAhListModal() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('ah')) return;
     if (!classId) return;
     const body = document.getElementById('ah-list-body');
     const sub = document.getElementById('ah-list-sub');
@@ -948,6 +974,7 @@
       : '<div style="text-align:center;padding:40px;color:var(--ink3);font-size:13px;">এই বর্ষে কোনো ছাত্র নেই</div>';
   }
   async function toggleSpecialWatchFromRowBtn(btn) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('watch-toggle')) return;
     const sid = btn && btn.getAttribute('data-std-sid');
     const stu = sid ? API.Students.getById(sid) : null;
     if (!stu) { showToast('ছাত্র পাওয়া যায়নি'); return; }
@@ -975,6 +1002,7 @@
   }
 
   async function toggleAlhamdulillahFromRowBtn(btn) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('ah-toggle')) return;
     const sid = btn && btn.getAttribute('data-std-sid');
     const stu = sid ? API.Students.getById(sid) : null;
     if (!stu) { showToast('ছাত্র পাওয়া যায়নি'); return; }
@@ -1447,10 +1475,26 @@
   }
 
   async function initClassPage() {
+    if (window.MDRClassDutyGate) {
+      MDRClassDutyGate.bind({
+        getClassId: function () { return classId; },
+        notify: showToast,
+        forceSwitchTab: switchTabCore,
+        openDutyPanel: function () {
+          dutyPanelOpen = true;
+          var panel = document.getElementById('duty-panel');
+          if (!panel) return;
+          panel.classList.add('is-open');
+          var btn = panel.querySelector('.duty-hd');
+          if (btn) btn.setAttribute('aria-expanded', 'true');
+        },
+      });
+    }
     await refreshTeacherData();
     refreshTopbarClass();
     renderStats();
     initTabFromUrl();
+    if (window.MDRClassDutyGate) MDRClassDutyGate.refresh();
   }
 
   function initTabFromUrl() {
@@ -1460,7 +1504,10 @@
     else switchTab('std');
   }
 
-  function openPinChangeModal(){document.getElementById('pc-cur').value='';document.getElementById('pc-new').value='';document.getElementById('pc-conf').value='';document.getElementById('pc-err').textContent='';document.getElementById('modal-pin-change').classList.add('open');}
+  function openPinChangeModal() {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('pin')) return;
+    document.getElementById('pc-cur').value='';document.getElementById('pc-new').value='';document.getElementById('pc-conf').value='';document.getElementById('pc-err').textContent='';document.getElementById('modal-pin-change').classList.add('open');
+  }
   function closePinChangeModal(){document.getElementById('modal-pin-change').classList.remove('open');}
   async function saveOwnPin(){
     var c=document.getElementById('pc-cur').value,n=document.getElementById('pc-new').value,f=document.getElementById('pc-conf').value,e=document.getElementById('pc-err');
