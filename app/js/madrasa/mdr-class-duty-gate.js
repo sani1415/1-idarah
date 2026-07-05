@@ -135,6 +135,10 @@
       if (el) el.remove();
       return;
     }
+    var parts = [];
+    if (state.pending.kitab) parts.push('কিতাব');
+    if (state.pending.khuluk) parts.push('খুলুক');
+    if (state.pending.log) parts.push('লগ');
     var html = 'বর্ষের দায়িত্ব বাকি — <strong>' + toBn(state.overdueCount) + '</strong>টি · ' +
       parts.join(', ') + ' সম্পন্ন করুন · অন্য মেনু বন্ধ';
     if (!el) {

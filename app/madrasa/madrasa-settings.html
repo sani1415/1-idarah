@@ -232,6 +232,22 @@
   <div class="pb-safe"></div>
 </div>
 
+<!-- EDIT KITAB MODAL -->
+<div class="modal-bg" id="modal-kitab-edit">
+  <div class="modal">
+    <div class="modal-title">কিতাব সম্পাদনা <button class="modal-close" onclick="closeModal('kitab-edit')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">কিতাবের নাম</label>
+      <input class="form-input" id="kitab-edit-name" placeholder="কিতাবের পূর্ণ নাম">
+    </div>
+    <div class="form-group">
+      <label class="form-label">মোট পৃষ্ঠা সংখ্যা</label>
+      <input class="form-input" id="kitab-edit-pages" type="number" placeholder="যেমন: ২৫০">
+    </div>
+    <button class="submit-btn" onclick="saveKitabEdit()">সংরক্ষণ করুন</button>
+  </div>
+</div>
+
 <!-- ADD TEACHER MODAL -->
 <div class="modal-bg" id="modal-add-teacher">
   <div class="modal">
@@ -407,6 +423,7 @@
   let editingStaffId = null;
   let editingAdminId = null;
   let editingClassId = null;
+  let editingKitabId = null;
   let supabaseUsers = null;
   let settingsLoadedFromDb = false;
 
@@ -1238,10 +1255,55 @@
     showToast('কিতাব যোগ হয়েছে ✓');
     renderKitabList();
   }
+  function openKitabModal(id) {
+    const cid = document.getElementById('kitab-view-class')?.value;
+    if (!canUseClassId(cid)) { showToast('এই বিভাগের অনুমতি নেই'); return; }
+    const kitab = API.KitabProgress.getKitabsByClass(cid).find(k => String(k.id) === String(id));
+    if (!kitab) { showToast('কিতাব পাওয়া যায়নি'); return; }
+    editingKitabId = id;
+    document.getElementById('kitab-edit-name').value = kitab.name || '';
+    document.getElementById('kitab-edit-pages').value = kitab.total_pages ? String(kitab.total_pages) : '';
+    openModal('kitab-edit');
+  }
+  async function saveKitabEdit() {
+    const name = document.getElementById('kitab-edit-name').value.trim();
+    const pages = parseInt(document.getElementById('kitab-edit-pages').value, 10) || 0;
+    if (!name) { showToast('কিতাবের নাম দিন'); return; }
+    if (!editingKitabId) return;
+    const cid = document.getElementById('kitab-view-class')?.value;
+    if (!canUseClassId(cid)) { showToast('এই বিভাগের অনুমতি নেই'); return; }
+    const kitab = API.KitabProgress.getKitabsByClass(cid).find(k => String(k.id) === String(editingKitabId));
+    if (!kitab) { showToast('কিতাব পাওয়া যায়নি'); return; }
+    if (window.MMSharedAPI && MMSharedAPI.upsertBook && MMSession.getAdminPin()) {
+      const res = await MMSharedAPI.upsertBook(settingsActorId(), MMSession.getAdminPin(), {
+        id: editingKitabId,
+        class_code: classCodeForLocalId(cid),
+        name,
+        total_pages: pages,
+        sort_order: Number(kitab.sort_order) || 0,
+      });
+      if (!res || !res.ok) { showToast(userSaveErrorMessage(res && res.error)); return; }
+      await loadSettingsBooks();
+    } else if (IS_MAIN_ADMIN) {
+      API.KitabProgress.updateKitab(editingKitabId, { name, total_pages: pages });
+    } else {
+      showToast('কিতাব সংরক্ষণে Supabase সংযোগ লাগবে');
+      return;
+    }
+    editingKitabId = null;
+    closeModal('kitab-edit');
+    showToast('কিতাব আপডেট হয়েছে ✓');
+    renderKitabList();
+  }
   async function deleteKitab(id) {
     const cid = document.getElementById('kitab-view-class')?.value;
     if (!canUseClassId(cid)) { showToast('এই বিভাগের অনুমতি নেই'); return; }
-    if (!confirm('এই কিতাবটি মুছে ফেলবেন?')) return;
+    const entryCount = API.KitabProgress.countProgressEntries(id);
+    let msg = 'এই কিতাবটি মুছে ফেলবেন?';
+    if (entryCount > 0) {
+      msg = `এই কিতাবে ${entryCount}টি অগ্রগতি রেকর্ড আছে। মুছলে কিতাব ও সংশ্লিষ্ট অগ্রগতি চলে যাবে।\n\nনিশ্চিত?`;
+    }
+    if (!confirm(msg)) return;
     if (window.MMSharedAPI && MMSharedAPI.deleteBook && MMSession.getAdminPin()) {
       const res = await MMSharedAPI.deleteBook(settingsActorId(), MMSession.getAdminPin(), id);
       if (!res || !res.ok) { showToast(userSaveErrorMessage(res && res.error)); return; }
@@ -1256,13 +1318,17 @@
   function renderKitabList() {
     const cid   = document.getElementById('kitab-view-class')?.value;
     const kitabs= API.KitabProgress.getKitabsByClass(cid);
-    document.getElementById('kitab-list').innerHTML = kitabs.map(k=>
-      `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--cream2);font-size:13px;">
+    document.getElementById('kitab-list').innerHTML = kitabs.map(k=>{
+      const safeId = String(k.id).replace(/'/g, "\\'");
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--cream2);font-size:13px;">
         <span style="font-weight:600;min-width:0;flex:1;">${API.esc(k.name)}</span>
         <span style="color:var(--ink3);white-space:nowrap;">${k.total_pages?k.total_pages+' পৃষ্ঠা':'—'}</span>
-        <button type="button" class="small-btn" onclick="deleteKitab('${String(k.id).replace(/'/g, "\\'")}')">মুছুন</button>
-      </div>`
-    ).join('')||'<div style="color:var(--ink3);font-size:13px;">কোনো কিতাব নেই</div>';
+        <span style="display:flex;gap:6px;flex-shrink:0;">
+          <button type="button" class="small-btn" onclick="openKitabModal('${safeId}')">সম্পাদন</button>
+          <button type="button" class="small-btn" onclick="deleteKitab('${safeId}')">মুছুন</button>
+        </span>
+      </div>`;
+    }).join('')||'<div style="color:var(--ink3);font-size:13px;">কোনো কিতাব নেই</div>';
   }
 
   function openModal(id) { document.getElementById('modal-'+id).classList.add('open'); }

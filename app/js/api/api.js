@@ -1039,6 +1039,15 @@ const API = (() => {
       save(KEYS.kitabs, list);
       return k;
     },
+    updateKitab(id, data) {
+      const list = load(KEYS.kitabs).map(k => String(k.id) === String(id) ? { ...k, ...data } : k);
+      save(KEYS.kitabs, list);
+    },
+    countProgressEntries(kitabId) {
+      return load(KEYS.kitab_prog).filter(p =>
+        String(p.kitab_id) === String(kitabId) && !String(p.id || '').endsWith('_current')
+      ).length;
+    },
     getKitabsByClass: cid => load(KEYS.kitabs).filter(k => k.class_id === cid),
     /** নতুন শিক্ষাবর্ষে সব progress রিসেট */
     resetAllProgress() { save(KEYS.kitab_prog, []); },
