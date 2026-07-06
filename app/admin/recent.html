@@ -207,8 +207,7 @@
         <div class="rv-text">${esc(l.content)}</div>
         <textarea class="rv-reply-ta" rows="2" placeholder="মন্তব্য/নির্দেশনা লিখুন (ঐচ্ছিক)…"></textarea>
         <div class="rv-actions">
-          <button type="button" class="rv-btn reply" onclick="submitLogReview('${esc(l.id)}', true)">রিপ্লাই পাঠান</button>
-          <button type="button" class="rv-btn done" onclick="submitLogReview('${esc(l.id)}', false)">ডান করুন</button>
+          <button type="button" class="rv-btn done" onclick="submitLogReview('${esc(l.id)}')">ডান</button>
         </div>
       </div>`;
     });
@@ -225,10 +224,10 @@
     document.getElementById('recent-feed').innerHTML = html;
   }
 
-  async function submitLogReview(logId, withReply) {
+  async function submitLogReview(logId) {
     const item = document.querySelector('.rv-item[data-log-id="' + logId + '"]');
     const ta = item ? item.querySelector('.rv-reply-ta') : null;
-    const reply = withReply && ta ? ta.value.trim() : '';
+    const reply = ta ? ta.value.trim() : '';
     try {
       const res = await MMSharedAPI.adminReviewLog(khActorId, khPin, logId, reply || null);
       if (!res || !res.ok) throw new Error((res && res.error) || 'review_failed');

@@ -260,11 +260,6 @@
   color: inherit;
 }
 
-.rv-btn.reply {
-  background: var(--cream2);
-  color: var(--ink2);
-}
-
 .rv-btn.done {
   background: var(--green-light);
   color: var(--green);
