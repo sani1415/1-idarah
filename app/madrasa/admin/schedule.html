@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>নিজাম — জিম্মাদার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/main-admin-nav.css">
+<style>
+  .sched-lead { font-size:12px; color:var(--ink3); line-height:1.5; margin:0 0 12px; }
+  .sched-tabs { display:flex; gap:8px; margin-bottom:10px; }
+  .sched-tab { flex:1; padding:10px 6px; background:#fff; border:1.5px solid var(--cream3); border-radius:var(--radius-sm); text-align:center; cursor:pointer; font-size:12px; color:var(--ink3); }
+  .sched-tab.active { border-color:var(--ink); background:var(--ink); color:var(--gold2); font-weight:600; }
+  .sched-class-select-wrap { margin:0 0 12px; }
+  .sched-class-select-label { display:block; font-size:11px; color:var(--ink3); margin-bottom:5px; }
+  .sched-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; border:1px solid rgba(26,18,8,.06); margin-bottom:10px; }
+  .sched-class-h { padding:10px 12px; background:var(--cream2); font-family:'Tiro Bangla',serif; font-size:14px; font-weight:700; color:var(--ink2); }
+  .sched-class-sub { font-size:10px; font-weight:500; color:var(--ink3); margin-top:2px; }
+  .sched-slot { display:flex; gap:10px; padding:10px 12px; border-top:1px solid var(--cream2); }
+  .sched-slot-time { font-size:11px; font-weight:800; color:var(--ink2); white-space:nowrap; min-width:108px; }
+  .sched-slot-label { font-size:13px; font-weight:700; color:var(--ink); }
+  .sched-empty { text-align:center; color:var(--ink3); padding:20px; font-size:12px; }
+  .sched-badge { display:inline-block; margin-left:6px; font-size:9px; font-weight:800; color:var(--green); background:#d1fae5; padding:1px 6px; border-radius:6px; }
+  .sched-versions { padding:10px 12px 12px; border-top:1px solid var(--cream2); background:#fff; }
+  .sched-versions-hd { font-size:11px; font-weight:800; color:var(--ink2); margin-bottom:8px; }
+  .sched-version-btn { width:100%; text-align:left; border:1.5px solid var(--cream3); background:#fff; border-radius:10px; padding:9px 10px; margin-bottom:7px; cursor:pointer; font-family:'Tiro Bangla',serif; }
+  .sched-version-btn.is-active { border-color:var(--ink2); background:var(--cream2); }
+  .sched-version-meta { display:block; font-size:10px; color:var(--ink3); margin-top:2px; }
+  .sched-note { font-size:11px; color:var(--ink3); padding:8px 12px; background:var(--cream2); border-top:1px solid var(--cream2); }
+  .sched-readonly { font-size:11px; color:var(--gold); background:#fffbeb; border-top:1px solid #fde68a; padding:8px 12px; }
+  .content { padding-bottom:var(--app-content-pad-bottom); }
+  @media (min-width: 960px) {
+    html body .content { max-width: 1100px !important; }
+    .sched-tab { font-size: 13px; padding: 12px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-role">জিম্মাদার</div>
+    <div class="topbar-name">নিজাম</div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" class="topbar-btn" onclick="location.replace('/admin/madrasa.html')">← এডমিন</button>
+  </div>
+</div>
+
+<div class="content" style="max-width:640px; margin:0 auto;">
+  <p class="sched-lead">উপরে <strong>বর্ষ</strong> বেছে নিন—নিচে ওই বর্ষের চলমান নিজাম দেখাবে। পুরনো ভার্সনও দেখা যাবে (শুধু পড়া)।</p>
+  <div class="sched-tabs">
+    <button type="button" class="sched-tab active" id="stab-a" onclick="setDept('all')">সামগ্রিক</button>
+    <button type="button" class="sched-tab" id="stab-k" onclick="setDept('kitab')">কিতাব বিভাগ</button>
+    <button type="button" class="sched-tab" id="stab-m" onclick="setDept('maktab')">মক্তব বিভাগ</button>
+  </div>
+  <div class="sched-class-select-wrap">
+    <label class="sched-class-select-label" for="sched-class-select">বর্ষ নির্বাচন করুন</label>
+    <select class="form-input form-select" id="sched-class-select" onchange="selectClass(this.value)" aria-label="বর্ষ নির্বাচন"></select>
+  </div>
+  <div id="sched-detail"></div>
+</div>
+
+<nav class="main-nav" role="navigation" aria-label="জিম্মাদার নেভিগেশন">
+  <a class="main-nav-btn is-active" href="/admin/madrasa.html" aria-label="মাদ্রাসা">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    <span class="main-nav-lbl">মাদ্রাসা</span>
+  </a>
+  <a class="main-nav-btn" href="/madrasa/admin/accounts.html" aria-label="হিসাব" data-admin-perm="daftar">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18v12H3z"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M7 10h.01M17 14h.01"/><circle stroke-width="1.75" cx="12" cy="12" r="2.5"/></svg>
+    <span class="main-nav-lbl">হিসাব</span>
+  </a>
+  <a class="main-nav-btn" href="/admin/khedmat.html" aria-label="খেদমত">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    <span class="main-nav-lbl">খেদমত</span>
+  </a>
+  <a class="main-nav-btn" href="../../chat.html" aria-label="বার্তা">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M22 6l-10 7L2 6"/></svg>
+    <span class="main-nav-lbl">বার্তা</span>
+  </a>
+  <a class="main-nav-btn" href="/admin/recent.html" aria-label="কার্যক্রম">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle stroke-width="1.75" cx="12" cy="12" r="9"/><path stroke-width="1.75" stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+    <span class="main-nav-lbl">কার্যক্রম</span>
+  </a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../supabase-config.js"></script>
+<script src="../../js/api/api-shared.js"></script>
+<script src="../../js/core/mm-session.js"></script>
+<script>
+  if (!MMSession.requireAdminPerm('dars', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
+
+  const toBn = n => String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const pad2 = n => String(n).padStart(2, '0');
+
+  let dept = 'all';
+  let classes = [];
+  let selectedClassCode = null;
+  let viewingRoutineId = null;
+  let routineData = null;
+
+  function adminActor() {
+    return {
+      id: MMSession.getStaffUserId && MMSession.getStaffUserId(),
+      pin: MMSession.getAdminPin && MMSession.getAdminPin(),
+    };
+  }
+
+  (function initDeptFromUrl() {
+    const allowed = MMSession.getAllowedMadrasaDepts();
+    try {
+      const d = new URLSearchParams(location.search).get('dept');
+      if (d === 'all' && allowed.length > 1) dept = 'all';
+      if ((d === 'kitab' || d === 'maktab') && MMSession.canUseMadrasaDept(d)) dept = d;
+    } catch (e) {}
+    if (dept !== 'all' && !MMSession.canUseMadrasaDept(dept)) dept = allowed[0] || 'kitab';
+    if (dept === 'all' && allowed.length <= 1) dept = allowed[0] || 'kitab';
+  })();
+
+  function deptLabel(d) { return d === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ'; }
+
+  function sortClasses(list) {
+    return [...list].sort((a, b) => {
+      const o = (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0);
+      if (o !== 0) return o;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'bn');
+    });
+  }
+
+  function getScopeDepts() {
+    const allowed = MMSession.getAllowedMadrasaDepts();
+    return dept === 'all' ? allowed : [dept];
+  }
+
+  function currentClasses() {
+    return sortClasses(classes.filter(c => getScopeDepts().includes(c.division_code)));
+  }
+
+  function formatTime(hour, minute, ampm) {
+    if (!hour) return '—';
+    return toBn(pad2(hour)) + ':' + toBn(pad2(minute || 0)) + ' ' + ampm;
+  }
+
+  function formatRange(slot) {
+    const start = formatTime(slot.start_hour, slot.start_minute, slot.start_ampm);
+    if (slot.end_hour) {
+      return start + ' – ' + formatTime(slot.end_hour, slot.end_minute, slot.end_ampm);
+    }
+    return start;
+  }
+
+  function timeKey(slot) {
+    const h = Number(slot.start_hour) || 0;
+    const m = Number(slot.start_minute) || 0;
+    const ap = String(slot.start_ampm || 'AM').toUpperCase();
+    if (ap === 'AM' && h === 12) return m;
+    if (ap === 'AM') return h * 60 + m;
+    if (h === 12) return 12 * 60 + m;
+    return (h + 12) * 60 + m;
+  }
+
+  function sortSlots(slots) {
+    return (slots || []).slice().sort((a, b) => {
+      const ak = timeKey(a);
+      const bk = timeKey(b);
+      if (ak !== bk) return ak - bk;
+      return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0);
+    });
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) {
+      return esc(iso);
+    }
+  }
+
+  function setDept(d) {
+    const allowed = MMSession.getAllowedMadrasaDepts();
+    if (d === 'all' && allowed.length <= 1) return;
+    if (d !== 'all' && !MMSession.canUseMadrasaDept(d)) return;
+    dept = d;
+    document.getElementById('stab-a').classList.toggle('active', d === 'all');
+    document.getElementById('stab-k').classList.toggle('active', d === 'kitab');
+    document.getElementById('stab-m').classList.toggle('active', d === 'maktab');
+    document.getElementById('stab-a').style.display = allowed.length > 1 ? '' : 'none';
+    document.getElementById('stab-k').style.display = MMSession.canUseMadrasaDept('kitab') ? '' : 'none';
+    document.getElementById('stab-m').style.display = MMSession.canUseMadrasaDept('maktab') ? '' : 'none';
+    const cl = currentClasses();
+    const still = cl.some(c => c.code === selectedClassCode);
+    if (!still) selectedClassCode = cl[0] ? cl[0].code : null;
+    viewingRoutineId = null;
+    renderClassSelect();
+    loadRoutine();
+  }
+
+  function renderClassSelect() {
+    const cl = currentClasses();
+    const sel = document.getElementById('sched-class-select');
+    if (!cl.length) {
+      selectedClassCode = null;
+      sel.innerHTML = '';
+      return;
+    }
+    if (!selectedClassCode || !cl.some(c => c.code === selectedClassCode)) {
+      selectedClassCode = cl[0].code;
+    }
+    sel.innerHTML = cl.map(c =>
+      `<option value="${esc(c.code)}">${dept === 'all' ? esc(deptLabel(c.division_code)) + ' — ' : ''}${esc(c.name)}</option>`
+    ).join('');
+    sel.value = selectedClassCode;
+  }
+
+  function selectClass(code) {
+    selectedClassCode = code;
+    viewingRoutineId = null;
+    loadRoutine();
+  }
+
+  function jsArg(v) {
+    return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
+  async function viewVersion(id) {
+    viewingRoutineId = id;
+    await loadRoutine();
+  }
+
+  function backToCurrent() {
+    viewingRoutineId = null;
+    loadRoutine();
+  }
+
+  function viewingRoutine() {
+    if (!routineData) return null;
+    if (viewingRoutineId) return routineData.viewing || null;
+    return routineData.current || null;
+  }
+
+  async function loadRoutine() {
+    const el = document.getElementById('sched-detail');
+    const cl = currentClasses();
+    if (!cl.length) {
+      el.innerHTML = '<div class="sched-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
+      return;
+    }
+    if (!selectedClassCode) {
+      el.innerHTML = '<div class="sched-empty">বর্ষ নির্বাচন করুন।</div>';
+      return;
+    }
+    el.innerHTML = '<div class="sched-empty">নিজাম লোড হচ্ছে…</div>';
+    const actor = adminActor();
+    try {
+      const res = await MMSharedAPI.classRoutineGet(
+        actor.id,
+        actor.pin,
+        selectedClassCode,
+        viewingRoutineId
+      );
+      if (!res || !res.ok) throw new Error((res && res.error) || 'load_failed');
+      routineData = res;
+      renderDetail();
+    } catch (e) {
+      console.warn('routine load failed', e);
+      el.innerHTML = '<div class="sched-empty">নিজাম লোড হয়নি।</div>';
+    }
+  }
+
+  function renderDetail() {
+    const el = document.getElementById('sched-detail');
+    const cls = currentClasses().find(c => c.code === selectedClassCode);
+    const routine = viewingRoutine();
+    const isOld = !!(routineData && routineData.current && viewingRoutineId && viewingRoutineId !== routineData.current.id);
+
+    if (!cls) {
+      el.innerHTML = '<div class="sched-empty">বর্ষ পাওয়া যায়নি।</div>';
+      return;
+    }
+
+    if (!routine) {
+      el.innerHTML = `<div class="sched-panel">
+        <div class="sched-class-h">${esc(cls.name)}<div class="sched-class-sub">${dept === 'all' ? deptLabel(cls.division_code) + ' · ' : ''}এখনো নিজাম তৈরি হয়নি</div></div>
+        <div class="sched-empty">শিক্ষক এখনো নিজাম সেট করেননি।</div>
+      </div>`;
+      return;
+    }
+
+    const slots = sortSlots(routine.slots || []).map(slot => {
+      return `<div class="sched-slot">
+        <div class="sched-slot-time">${esc(formatRange(slot))}</div>
+        <div class="sched-slot-label">${esc(slot.label)}</div>
+      </div>`;
+    }).join('');
+
+    const versions = (routineData.versions || []).map(v => {
+      const active = viewingRoutineId ? v.id === viewingRoutineId : !!v.is_current;
+      const badge = v.is_current ? '<span class="sched-badge">চলমান</span>' : '';
+      return `<button type="button" class="sched-version-btn${active ? ' is-active' : ''}" onclick="viewVersion('${jsArg(v.id)}')">
+        <span>ভার্সন ${toBn(v.version_no)}${badge}</span>
+        <span class="sched-version-meta">${fmtDateTime(v.created_at)}${v.slot_count ? ' · ' + toBn(v.slot_count) + ' স্লট' : ''}</span>
+      </button>`;
+    }).join('');
+
+    el.innerHTML = `<div class="sched-panel">
+      <div class="sched-class-h">${esc(cls.name)}
+        <div class="sched-class-sub">${dept === 'all' ? deptLabel(cls.division_code) + ' · ' : ''}ভার্সন ${toBn(routine.version_no)}${routine.is_current ? ' · চলমান' : ''}</div>
+      </div>
+      ${isOld ? '<div class="sched-readonly">পুরনো ভার্সন — শুধু দেখা</div>' : ''}
+      ${routine.change_note ? `<div class="sched-note">নোট: ${esc(routine.change_note)}</div>` : ''}
+      ${slots || '<div class="sched-empty">কোনো স্লট নেই।</div>'}
+      ${versions ? `<div class="sched-versions"><div class="sched-versions-hd">সব ভার্সন</div>${versions}</div>` : ''}
+    </div>`;
+  }
+
+  async function initSchedulePage() {
+    const el = document.getElementById('sched-detail');
+    if (el) el.innerHTML = '<div class="sched-empty">তালিকা লোড হচ্ছে…</div>';
+    const actor = adminActor();
+    try {
+      const res = await MMSharedAPI.adminRoutineBootstrap(actor.id, actor.pin);
+      if (!res || !res.ok) throw new Error((res && res.error) || 'bootstrap_failed');
+      classes = Array.isArray(res.classes) ? res.classes : [];
+    } catch (e) {
+      console.warn('routine bootstrap failed', e);
+      classes = [];
+    }
+    setDept(dept);
+  }
+
+  MMLoading.run(initSchedulePage);
+</script>
+</body>
+</html>

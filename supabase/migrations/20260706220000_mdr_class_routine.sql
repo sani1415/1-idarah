@@ -106,7 +106,7 @@ set search_path = public, private
 as $$
 declare
   v_teacher public.mdr_shared_users%rowtype;
-  v_admin public.shared_users%rowtype;
+  v_admin public.mdr_shared_users%rowtype;
   v_division_code text;
   v_depts text[];
   v_is_super boolean;
@@ -430,7 +430,7 @@ security definer
 set search_path = public, private
 as $$
 declare
-  v_actor public.shared_users%rowtype;
+  v_actor public.mdr_shared_users%rowtype;
   v_depts text[];
   v_is_super boolean;
 begin

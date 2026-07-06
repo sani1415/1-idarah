@@ -910,6 +910,43 @@ const MMSharedAPI = (() => {
         p_notes: notes || null,
       });
     },
+    classRoutineGet(actorId, pin, classCode, routineId) {
+      return rpc('mdr_rel_class_routine_get', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_class_code: classCode || null,
+        p_routine_id: routineId || null,
+      });
+    },
+    classRoutineSave(actorId, pin, slots, changeNote) {
+      return rpc('mdr_rel_class_routine_save', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_slots: slots || [],
+        p_change_note: changeNote || '',
+      });
+    },
+    classRoutineUpdate(actorId, pin, slots, changeNote) {
+      return rpc('mdr_rel_class_routine_update', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_slots: slots || [],
+        p_change_note: changeNote || null,
+      });
+    },
+    classRoutineDelete(actorId, pin, routineId) {
+      return rpc('mdr_rel_class_routine_delete', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_routine_id: routineId,
+      });
+    },
+    adminRoutineBootstrap(actorId, pin) {
+      return rpc('mdr_rel_admin_routine_bootstrap', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+      });
+    },
   };
 })();
 
