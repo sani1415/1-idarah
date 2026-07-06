@@ -31,6 +31,11 @@
   .sbadge{font-size:10px;padding:2px 6px;border-radius:10px;font-weight:600;}
   .sbadge-active{background:var(--green-light);color:var(--green);}
   .sbadge-other{background:var(--cream2);color:var(--ink3);}
+  .member-add-box{background:var(--cream);border:1px solid var(--cream3);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
+  .member-add-title{font-family:'Tiro Bangla',serif;font-size:13px;font-weight:700;color:var(--ink2);margin-bottom:8px;}
+  .member-add-row{display:flex;gap:8px;align-items:center;}
+  .member-add-row select{flex:1;min-width:0;border:1px solid var(--cream3);border-radius:10px;background:#fff;padding:10px;font-family:'Tiro Bangla',serif;font-size:12px;color:var(--ink);}
+  .member-add-row button{border:0;border-radius:10px;background:var(--ink);color:var(--gold2);padding:10px 12px;font-family:'Tiro Bangla',serif;font-size:12px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -121,7 +126,7 @@
 <script>
 if (!MMSession.requireAdminPerm('hifz','../main-admin-madrasa.html')) { throw new Error('admin permission denied'); }
 
-let hifzData = {groups:[],members:[],progress:[],activity:[]};
+let hifzData = {groups:[],students:[],members:[],progress:[],activity:[]};
 let currentGroupId = null;
 
 function toBn(n) { return String(n).replace(/[0-9]/g,d=>'০১২৩৪৫৬৭৮৯'[d]); }
@@ -135,7 +140,13 @@ async function loadHifzData() {
   try {
     const res = await MMSharedAPI.hifzBootstrap(MMSession.getId(), MMSession.getPin());
     if (res && res.ok) {
-      hifzData = {groups:res.groups||[],members:res.members||[],progress:res.progress||[],activity:res.activity||[]};
+      hifzData = {
+        groups: res.groups || [],
+        students: res.students || [],
+        members: res.members || [],
+        progress: res.progress || [],
+        activity: res.activity || []
+      };
     } else {
       showToast('ডেটা লোড ব্যর্থ');
     }
@@ -219,6 +230,35 @@ function renderGroupProgress() {
   }).join('');
 }
 
+function studentLabel(s) {
+  const parts = [];
+  if (s.roll) parts.push('রোল '+toBn(s.roll));
+  if (s.student_id) parts.push('আইডি '+toBn(s.student_id));
+  if (s.class_name) parts.push(s.class_name);
+  return `${s.name || 'নাম নেই'}${parts.length ? ' — ' + parts.join(' · ') : ''}`;
+}
+
+function getAvailableStudents() {
+  const activeStudentIds = new Set(hifzData.members.filter(m=>m.status==='active').map(m=>String(m.student_id||'')));
+  return (hifzData.students || [])
+    .filter(s=>s && s.id && !activeStudentIds.has(String(s.id)))
+    .sort((a,b)=>String(a.roll||'').localeCompare(String(b.roll||''), 'bn', {numeric:true}) || String(a.name||'').localeCompare(String(b.name||''), 'bn'));
+}
+
+function renderAddMemberBox() {
+  const students = getAvailableStudents();
+  const opts = students.map(s=>`<option value="${esc(s.id)}">${esc(studentLabel(s))}</option>`).join('');
+  return `<div class="member-add-box">
+    <div class="member-add-title">সদস্য যোগ করুন</div>
+    <div class="member-add-row">
+      <select id="hifz-add-student" ${students.length?'':'disabled'}>
+        ${students.length?'<option value="">ছাত্র নির্বাচন করুন</option>'+opts:'<option value="">যোগ করার মতো ছাত্র পাওয়া যায়নি</option>'}
+      </select>
+      <button type="button" onclick="addSelectedMember()" ${students.length?'':'disabled'}>যোগ</button>
+    </div>
+  </div>`;
+}
+
 function renderGroupMembers() {
   const STATUS_LBL = {active:'সক্রিয়',completed:'সম্পন্ন',transferred:'স্থানান্তরিত',dropped:'বিদায়'};
   const members = hifzData.members.filter(m=>m.group_id===currentGroupId)
@@ -227,7 +267,7 @@ function renderGroupMembers() {
       if(a.status!=='active'&&b.status==='active') return 1;
       return (a.student_name||'').localeCompare(b.student_name||'','bn');
     });
-  document.getElementById('member-list').innerHTML = members.map(m=>{
+  const listHtml = members.map(m=>{
     const lbl = STATUS_LBL[m.status]||m.status;
     const bc = m.status==='active'?'sbadge-active':'sbadge-other';
     return `<div class="member-row">
@@ -242,6 +282,20 @@ function renderGroupMembers() {
       </div>
     </div>`;
   }).join('')||'<div class="empty-state"><span class="empty-icon">👥</span><div class="empty-text">কোনো সদস্য নেই</div></div>';
+  document.getElementById('member-list').innerHTML = renderAddMemberBox() + listHtml;
+}
+
+async function addSelectedMember() {
+  const sel = document.getElementById('hifz-add-student');
+  const studentId = sel ? sel.value : '';
+  if (!studentId) { showToast('প্রথমে ছাত্র নির্বাচন করুন'); return; }
+  try {
+    await MMSharedAPI.hifzAddMember(MMSession.getId(), MMSession.getPin(), currentGroupId, studentId, new Date().toISOString().slice(0,10));
+    showToast('সদস্য যোগ হয়েছে');
+    await loadHifzData();
+    renderGroupMembers();
+    renderHome();
+  } catch(e) { showToast('সদস্য যোগ ব্যর্থ'); }
 }
 
 function renderGroupActivity() {
