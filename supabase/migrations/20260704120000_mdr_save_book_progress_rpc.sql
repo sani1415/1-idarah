@@ -13,11 +13,11 @@ security definer
 set search_path = public, private
 as $$
 declare
-  v_actor public.shared_users%rowtype;
+  v_actor public.mdr_shared_users%rowtype;
   v_book public.mdr_books%rowtype;
   v_event_id uuid;
 begin
-  select * into v_actor from public.shared_users
+  select * into v_actor from public.mdr_shared_users
   where id = p_actor_id and is_active = true and pin = p_pin and role = 'madrasa_teacher' and class_id is not null;
   if v_actor.id is null then return jsonb_build_object('ok', false, 'error', 'invalid_teacher'); end if;
   if p_pages_done is null or p_pages_done < 0 then return jsonb_build_object('ok', false, 'error', 'invalid_pages'); end if;
@@ -38,7 +38,7 @@ begin
       updated_by = excluded.updated_by,
       updated_at = now();
 
-  insert into public.shared_notifications (target, title, body, source_type, source_id)
+  insert into public.mdr_shared_notifications (target, title, body, source_type, source_id)
   values ('admin', 'কিতাব অগ্রগতি আপডেট', v_book.name || ' — ' || p_pages_done::text || ' পৃষ্ঠা', 'book_progress', v_event_id);
 
   return jsonb_build_object('ok', true, 'id', v_event_id);

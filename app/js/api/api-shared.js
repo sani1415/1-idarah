@@ -314,6 +314,14 @@ const MMSharedAPI = (() => {
         p_note: note || null,
       });
     },
+    setBookActive(actorId, pin, bookId, isActive) {
+      return rpc('mdr_rel_set_book_active', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_book_id: bookId,
+        p_is_active: !!isActive,
+      });
+    },
     chatBootstrap(actorId, pin, isAdmin) {
       return rpc('mdr_rel_chat_bootstrap', {
         p_actor_id: actorId || null,

@@ -51,7 +51,9 @@
   }
 
   function getClassKitabBooks(classId) {
-    return global.API.KitabProgress.getByClass(classId);
+    // নিষ্ক্রিয় (এখনো শুরু হয়নি এমন) বই ডিউটি-চেক থেকে বাদ — শুধু সক্রিয় বইয়ের
+    // আপডেট থাকলেই কিতাব-ডিউটি সন্তুষ্ট ধরা হবে।
+    return global.API.KitabProgress.getByClass(classId).filter(function (b) { return b.is_active !== false; });
   }
 
   function getClassKitabLastUpdate(classId) {

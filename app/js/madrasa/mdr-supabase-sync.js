@@ -48,8 +48,11 @@
       status: row.status || 'active',
       active: row.status !== 'dropped' && row.status !== 'alumni',
       hifz: !!row.is_hifz || row.class_code === 'kitab_hifz',
-      special_watch: !!row.special_watch,
-      alhamdulillah: !!row.alhamdulillah,
+      // row-এ কী নেই (কোনো bootstrap ভবিষ্যতে এই ফিল্ড বাদ দিলে) তা undefined-ই থাকুক,
+      // false-এ coerce না করে — যাতে api.js-এর merge guard (prev true, নতুন null/undefined
+      // হলে পুরনো true রক্ষা করা) আসলে কাজ করে; সরাসরি false বসালে সেই guard কখনো ধরতে পারে না।
+      special_watch: row.special_watch == null ? undefined : !!row.special_watch,
+      alhamdulillah: row.alhamdulillah == null ? undefined : !!row.alhamdulillah,
       left_date: row.left_date || '',
       left_reason: row.left_reason || '',
       supabase_id: row.id || '',
@@ -131,6 +134,7 @@
         class_id: CLASS_CODE_TO_LOCAL_ID[b.class_code] || b.class_code || classId,
         total_pages: b.total_pages,
         sort_order: b.sort_order || 0,
+        is_active: b.is_active !== false,
       };
     });
     mergeScopedArray('mm_kitabs', function (b) { return b.class_id === classId; }, books);
@@ -237,6 +241,7 @@
         class_id: CLASS_CODE_TO_LOCAL_ID[b.class_code] || b.class_code || '',
         total_pages: b.total_pages,
         sort_order: b.sort_order || 0,
+        is_active: b.is_active !== false,
       };
     }).filter(function (b) { return b.id && b.class_id; });
     mergeScopedArray('mm_kitabs', function (b) { return !!classIds[String(b.class_id || '')]; }, books);

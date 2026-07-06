@@ -174,6 +174,15 @@
   .prog-track { flex:1; height:7px; background:var(--cream2); border-radius:99px; overflow:hidden; }
   .prog-fill { height:100%; background:var(--gold); border-radius:99px; transition:width .3s; }
   .prog-pct { font-size:11px; font-weight:700; color:var(--ink3); width:36px; text-align:right; flex-shrink:0; }
+  .book-row-wrap { margin-bottom:10px; }
+  .book-row-wrap .book-row { margin-bottom:6px; }
+  .book-row--inactive { opacity:0.55; }
+  .book-inactive-badge { font-size:10px; font-weight:700; color:var(--ink3); background:var(--cream2); padding:2px 7px; border-radius:99px; margin-left:6px; }
+  .book-active-toggle {
+    width:100%; box-sizing:border-box; background:#fff; border:1px solid rgba(26,18,8,.1); border-radius:8px;
+    padding:6px 10px; font-size:11px; font-family:'Tiro Bangla',serif; color:var(--ink3); cursor:pointer; text-align:center;
+  }
+  .book-active-toggle.is-active { color:var(--green); border-color:rgba(0,150,80,.28); }
   .prog-pages { font-size:10px; color:var(--ink3); margin-top:4px; }
   .log-item { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; box-shadow:var(--shadow); margin-bottom:7px; border-left:3px solid var(--gold); }
   .log-item--student { border-left-color:#0ea5e9; }
@@ -1207,20 +1216,44 @@
     document.getElementById('kitab-list').innerHTML = books.length
       ? books.map(b => {
           const meta = bookProgressMeta(b);
+          const isActive = b.is_active !== false;
           const metaLine = meta.total > 0
             ? 'মোট ' + toBn(meta.total) + ' · পড়া ' + toBn(meta.done) + ' · ' + toBn(meta.pct) + '%'
             : 'পড়া ' + toBn(meta.done) + ' পৃষ্ঠা';
           const dateBit = b.last_updated ? ' · ' + b.last_updated : '';
-          return `<button type="button" class="book-row book-row--clickable" data-book-id="${_attrId(b.id)}" onclick="openBookProgModal('${_jsQuote(b.id)}')" aria-label="কিতাব অগ্রগতি: ${API.esc(b.name)}">
-            <div class="book-name">${API.esc(b.name)}</div>
-            <div class="book-meta">${metaLine}${dateBit}</div>
-            <div class="prog-wrap">
-              <div class="prog-track"><div class="prog-fill" style="width:${meta.pct != null ? meta.pct : 0}%"></div></div>
-              <span class="prog-pct">${meta.pct != null ? toBn(meta.pct) + '%' : '—'}</span>
-            </div>
-          </button>`;
+          return `<div class="book-row-wrap">
+            <button type="button" class="book-row book-row--clickable${isActive ? '' : ' book-row--inactive'}" data-book-id="${_attrId(b.id)}" onclick="openBookProgModal('${_jsQuote(b.id)}')" aria-label="কিতাব অগ্রগতি: ${API.esc(b.name)}">
+              <div class="book-name">${API.esc(b.name)}${isActive ? '' : '<span class="book-inactive-badge">নিষ্ক্রিয়</span>'}</div>
+              <div class="book-meta">${metaLine}${dateBit}</div>
+              <div class="prog-wrap">
+                <div class="prog-track"><div class="prog-fill" style="width:${meta.pct != null ? meta.pct : 0}%"></div></div>
+                <span class="prog-pct">${meta.pct != null ? toBn(meta.pct) + '%' : '—'}</span>
+              </div>
+            </button>
+            <button type="button" class="book-active-toggle${isActive ? ' is-active' : ''}" onclick="toggleBookActive('${_jsQuote(b.id)}', ${isActive ? 'false' : 'true'})">
+              ${isActive ? '✓ সক্রিয় — এখন পড়ানো হচ্ছে (নিষ্ক্রিয় করতে চাপুন)' : '○ নিষ্ক্রিয় — এখন পড়ানো হচ্ছে না (সক্রিয় করতে চাপুন)'}
+            </button>
+          </div>`;
         }).join('')
       : '<div style="text-align:center;padding:36px;color:var(--ink3);font-size:13px;">কোনো কিতাব নেই<br>সেটিংস থেকে কিতাব যোগ করুন</div>';
+  }
+  async function toggleBookActive(bookId, makeActive) {
+    if (API.KitabProgress.updateKitab) API.KitabProgress.updateKitab(bookId, { is_active: makeActive });
+    renderKitab();
+    if (typeof renderDutyAlerts === 'function') renderDutyAlerts();
+    if (window.MMSharedAPI && UUID_RE.test(bookId)) {
+      try {
+        const actor = teacherActor();
+        const res = await MMSharedAPI.setBookActive(actor.id, actor.pin, bookId, makeActive);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'set_book_active_failed');
+        await refreshTeacherData();
+        renderKitab();
+        if (typeof renderDutyAlerts === 'function') renderDutyAlerts();
+      } catch (e) {
+        console.warn('Set book active failed', e);
+        showToast('সার্ভারে সংরক্ষণ হয়নি, আবার চেষ্টা করুন');
+      }
+    }
   }
   async function saveBookProg() {
     const book_id = document.getElementById('bp-book-id').value;
