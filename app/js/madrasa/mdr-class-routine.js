@@ -52,6 +52,76 @@
     return { hour: h, minute: min };
   }
 
+  function extractClockDigits(raw) {
+    return toLatinDigits(String(raw || '')).replace(/\D/g, '').slice(0, 4);
+  }
+
+  function splitClockDigits(digits) {
+    if (!digits) return { hour: '', minute: '' };
+    if (digits.length === 1) return { hour: digits, minute: '' };
+    if (digits.length === 2) {
+      var h2 = parseInt(digits, 10);
+      if (h2 >= 10 && h2 <= 12) return { hour: digits, minute: '' };
+      return { hour: digits[0], minute: digits[1] };
+    }
+    if (digits.length === 3) {
+      return { hour: digits[0], minute: digits.slice(1) };
+    }
+    var h2four = parseInt(digits.slice(0, 2), 10);
+    if (h2four >= 10 && h2four <= 12) {
+      return { hour: digits.slice(0, 2), minute: digits.slice(2) };
+    }
+    return { hour: digits.slice(0, 2), minute: digits.slice(2) };
+  }
+
+  function clockDigitsValid(parts) {
+    if (parts.hour) {
+      var h = parseInt(parts.hour, 10);
+      if (parts.hour.length === 2 && (h < 1 || h > 12)) return false;
+    }
+    if (parts.minute.length >= 1) {
+      if (parseInt(parts.minute[0], 10) > 5) return false;
+    }
+    if (parts.minute.length === 2) {
+      if (parseInt(parts.minute, 10) > 59) return false;
+    }
+    return true;
+  }
+
+  function sanitizeClockDigits(digits) {
+    while (digits.length > 0) {
+      if (clockDigitsValid(splitClockDigits(digits))) return digits;
+      digits = digits.slice(0, -1);
+    }
+    return '';
+  }
+
+  function formatClockInput(raw) {
+    var digits = sanitizeClockDigits(extractClockDigits(raw));
+    if (!digits) return '';
+    var parts = splitClockDigits(digits);
+    var hourBn = toBn(parts.hour);
+    if (!parts.minute) return hourBn;
+    if (parts.minute.length === 1) return hourBn + ':' + toBn(parts.minute);
+    return hourBn + ':' + toBn(pad2(parseInt(parts.minute, 10)));
+  }
+
+  function normalizeClockBlur(raw) {
+    var trimmed = String(raw || '').trim();
+    if (!trimmed) return '';
+    var parsed = parseClockText(trimmed);
+    if (parsed) return formatClockText(parsed.hour, parsed.minute);
+    var parts = splitClockDigits(extractClockDigits(raw));
+    if (parts.hour && parts.minute.length === 2) {
+      var h = parseInt(parts.hour, 10);
+      var m = parseInt(parts.minute, 10);
+      if (h >= 1 && h <= 12 && m >= 0 && m <= 59) {
+        return formatClockText(h, m);
+      }
+    }
+    return trimmed;
+  }
+
   function parseDraftTime(clock, ampm) {
     if (!String(clock || '').trim()) return null;
     var c = parseClockText(clock);
@@ -341,14 +411,14 @@
         '</div>' +
         '<div class="awqat-time-inline">' +
           '<div class="awqat-time-group">' +
-            '<input class="form-input awqat-time-input" type="text" inputmode="decimal" autocomplete="off" ' +
+            '<input class="form-input awqat-time-input" type="text" inputmode="numeric" autocomplete="off" ' +
               'placeholder="' + TIME_PLACEHOLDER + '" maxlength="8" value="' + esc(slot.start_clock) + '" ' +
               'data-field="start_clock" data-idx="' + idx + '" aria-label="শুরুর সময়">' +
             ampmSelect('start_ampm', idx, slot.start_ampm) +
           '</div>' +
           '<span class="awqat-time-sep">–</span>' +
           '<div class="awqat-time-group">' +
-            '<input class="form-input awqat-time-input" type="text" inputmode="decimal" autocomplete="off" ' +
+            '<input class="form-input awqat-time-input" type="text" inputmode="numeric" autocomplete="off" ' +
               'placeholder="' + TIME_PLACEHOLDER + '" maxlength="8" value="' + esc(slot.end_clock) + '" ' +
               'data-field="end_clock" data-idx="' + idx + '" aria-label="শেষের সময় (ঐচ্ছিক)">' +
             ampmSelect('end_ampm', idx, slot.end_ampm) +
@@ -484,7 +554,7 @@
       });
     });
 
-    root.querySelectorAll('[data-field]').forEach(function (el) {
+    root.querySelectorAll('[data-field]:not(.awqat-time-input)').forEach(function (el) {
       function sync() {
         var idx = Number(el.getAttribute('data-idx'));
         var field = el.getAttribute('data-field');
@@ -492,6 +562,23 @@
       }
       el.addEventListener('change', sync);
       el.addEventListener('input', sync);
+    });
+
+    root.querySelectorAll('.awqat-time-input[data-field]').forEach(function (el) {
+      function sync() {
+        var idx = Number(el.getAttribute('data-idx'));
+        var field = el.getAttribute('data-field');
+        updateSlot(idx, field, el.value);
+      }
+      el.addEventListener('input', function () {
+        el.value = formatClockInput(el.value);
+        sync();
+      });
+      el.addEventListener('blur', function () {
+        el.value = normalizeClockBlur(el.value);
+        sync();
+      });
+      el.addEventListener('change', sync);
     });
   }
 
