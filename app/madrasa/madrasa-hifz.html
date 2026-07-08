@@ -239,13 +239,23 @@
     document.getElementById('upd-note').value=latest?latest.note||'':'';
     openModal('update-progress');
   }
-  function openAddMemberModal(gid) {
+  async function openAddMemberModal(gid) {
     currentGroupId=gid;
-    const existing=new Set(hifzData.members.filter(m=>m.group_id===gid&&(!m.status||m.status==='active')).map(m=>String(m.student_id)));
-    _availableStudents=API.Students.getAll().filter(s=>s.active!==false&&!existing.has(String(s.id)));
     document.getElementById('member-search').value=''; document.getElementById('member-student-id').value='';
     document.getElementById('member-selected').textContent=''; document.getElementById('member-date').value='';
-    filterMemberSearch(); openModal('add-member');
+    _availableStudents=[];
+    document.getElementById('member-search-list').innerHTML='<div style="padding:10px;color:var(--ink3);font-size:12px;">ছাত্র তালিকা লোড হচ্ছে…</div>';
+    openModal('add-member');
+    const existing=new Set(hifzData.members.filter(m=>m.group_id===gid&&(!m.status||m.status==='active')).map(m=>String(m.student_id)));
+    try {
+      const res=await MMSharedAPI.hifzEligibleStudents(MMSession.getId(),MMSession.getPin());
+      if (!res||!res.ok) throw new Error((res&&res.error)||'load_failed');
+      _availableStudents=(res.students||[]).filter(s=>!existing.has(String(s.id)));
+    } catch(e) {
+      console.warn('hifz eligible students load failed', e);
+      showToast('ছাত্র তালিকা লোড করা যায়নি');
+    }
+    filterMemberSearch();
   }
   function openActivityModal(gid) { currentGroupId=gid; document.getElementById('act-text').value=''; openModal('add-activity'); }
 

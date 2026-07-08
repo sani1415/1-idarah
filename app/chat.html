@@ -355,8 +355,10 @@
       if (myRole === 'teacher') {
         const tagBar = document.getElementById('chat-tag-bar');
         if (tagBar) tagBar.style.display = '';
+        // চ্যাট খোলা আটকে না রেখে ছাত্র-তালিকা ব্যাকগ্রাউন্ডে সিঙ্ক করি — ভারী class-bootstrap
+        // কল শুধু ছাত্র-ট্যাগ পিকারের জন্য দরকার, বার্তা দেখা/পাঠানোর জন্য না।
         if (window.MDRSupabaseSync && MDRSupabaseSync.syncTeacherClass) {
-          try { await MDRSupabaseSync.syncTeacherClass(); } catch (e) {}
+          MDRSupabaseSync.syncTeacherClass().then(populateChatTagStudentList).catch(function () {});
         }
         populateChatTagStudentList();
       }

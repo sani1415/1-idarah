@@ -842,6 +842,9 @@ const MMSharedAPI = (() => {
     hifzBootstrap(actorId, pin) {
       return rpc('mdr_rel_hifz_bootstrap', { p_actor_id: actorId || null, p_pin: pin });
     },
+    hifzEligibleStudents(actorId, pin) {
+      return rpc('mdr_rel_hifz_eligible_students', { p_actor_id: actorId || null, p_pin: pin });
+    },
     hifzSaveGroup(actorId, pin, group) {
       return rpc('mdr_rel_hifz_save_group', {
         p_actor_id: actorId || null, p_pin: pin,
