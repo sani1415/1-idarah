@@ -72,9 +72,15 @@
   .li-amt { font-family:'Tiro Bangla',serif; font-size:13px; font-weight:600; color:var(--ink2); }
   .li-del { background:none; border:none; color:var(--red); font-size:16px; cursor:pointer; padding:2px 4px; }
   .items-total-bar { display:flex; justify-content:space-between; align-items:center; padding:10px 0 6px; border-top:2px solid var(--cream2); margin-top:4px; }
-  #modal-txn .modal { max-width:min(760px, calc(100vw - 24px)); overflow-y:auto; }
-  .txn-top-grid { display:grid; grid-template-columns:minmax(116px,.8fr) minmax(132px,1fr); gap:8px; align-items:end; margin-bottom:10px; }
-  .txn-form-grid { display:grid; grid-template-columns:minmax(116px,.8fr) minmax(116px,.8fr); gap:8px; align-items:end; }
+  #modal-txn.modal-bg.modal-float .modal {
+    width: min(980px, calc(100vw - 24px));
+    max-width: min(980px, calc(100vw - 24px));
+    overflow-y: auto;
+  }
+  .txn-top-grid { display:grid; grid-template-columns:1fr; gap:8px; align-items:end; margin-bottom:10px; }
+  .txn-top-grid > .form-group,
+  .txn-form-grid > .form-group { margin-bottom:0; }
+  .txn-form-grid { display:grid; grid-template-columns:1fr; gap:8px; align-items:end; }
   .txn-form-wide { grid-column:1 / -1; }
   .sale-lines { display:grid; gap:8px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px; }
   .sale-row { display:grid; grid-template-columns:minmax(190px,2fr) 86px 112px 104px 100px 42px; gap:8px; align-items:end; min-width:650px; }
@@ -144,6 +150,13 @@
     .expense-row { grid-template-columns:180px 82px 104px 96px 92px 94px 42px; min-width:760px; }
   }
 
+  /* Tablet+: top fields & amount/desc side-by-side */
+  @media (min-width: 700px) {
+    .txn-top-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .txn-form-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .txn-form-wide { grid-column: auto; }
+  }
+
   /* ══ Desktop (≥ 960px) ══ */
   @media (min-width: 960px) {
     .txn-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -152,6 +165,18 @@
     .inv-grid .inv-item { margin-bottom: 0; }
     .report-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .month-chart { min-width: 0; grid-template-columns: repeat(12, 1fr); }
+    .txn-top-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .txn-form-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .expense-lines { overflow-x: visible; }
+    .expense-row {
+      min-width: 0;
+      grid-template-columns: minmax(160px, 2fr) 90px 110px 100px 100px 110px 42px;
+    }
+    .sale-lines { overflow-x: visible; }
+    .sale-row {
+      min-width: 0;
+      grid-template-columns: minmax(180px, 2fr) 90px 112px 110px 110px 42px;
+    }
   }
 </style>
 </head>
@@ -270,6 +295,14 @@
         <label class="form-label">বিক্রেতার নাম <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label>
         <input class="form-input" id="txn-seller-name" placeholder="বিক্রেতার নাম">
       </div>
+      <div class="form-group" id="category-wrap" style="display:none">
+        <label class="form-label">ক্যাটাগরি</label>
+        <select class="form-input" id="txn-category">
+          <option value="production">উৎপাদন উপকরণ (কাঁচামাল)</option>
+          <option value="operational">পরিচালন খরচ</option>
+          <option value="other">অন্যান্য</option>
+        </select>
+      </div>
     </div>
 
     <!-- আয়: পণ্য dropdown -->
@@ -280,14 +313,6 @@
 
     <!-- ব্যয় -->
     <div id="area-expense" style="display:none">
-      <div class="form-group">
-        <label class="form-label">ক্যাটাগরি</label>
-        <select class="form-input" id="txn-category">
-          <option value="production">উৎপাদন উপকরণ (কাঁচামাল)</option>
-          <option value="operational">পরিচালন খরচ</option>
-          <option value="other">অন্যান্য</option>
-        </select>
-      </div>
       <div class="expense-lines" id="expense-line-list"></div>
       <div class="sale-hint">প্রতি লাইনে আইটেম, পরিমাণ, একক, একক মূল্য ও রশিদ দিন। লাইন দিলে মোট টাকা নিজে বসে যাবে; সাধারণ একক ব্যয় হলে শুধু নিচের পরিমাণ ও বিবরণ দিলেও হবে।</div>
     </div>
@@ -838,6 +863,8 @@
     document.getElementById('honor-wrap').style.display = t==='income' && settings.accounting.show_honor !== false ? '' : 'none';
     document.getElementById('buyer-name-wrap').style.display = t==='income' ? '' : 'none';
     document.getElementById('seller-name-wrap').style.display = t==='expense' ? '' : 'none';
+    const categoryWrap = document.getElementById('category-wrap');
+    if (categoryWrap) categoryWrap.style.display = t==='expense' ? '' : 'none';
     if (t==='income') populateProductDropdown();
     if (t==='expense') renderExpenseItems();
     updateTxnAmount();

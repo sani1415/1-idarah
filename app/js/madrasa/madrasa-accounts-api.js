@@ -315,6 +315,36 @@ const MdrAccAPI = (() => {
     return remoteRefreshAfter(await fn(remoteActor()));
   }
 
+  /** ধারাবাহিক বাল্ক-যোগ (Excel import): প্রতি সারিতে আলাদা bootstrap-refresh না করে সব
+      আপলোডের শেষে একবার refresh হয়। মাঝপথে ব্যর্থ হলে err.uploadedCount-এ কতটি সারি
+      সার্ভারে পৌঁছেছে তা থাকে, আর finally-র bootstrap লোকাল ক্যাশ সার্ভারের সাথে মিলিয়ে
+      দেয় — ফলে ব্যর্থ সারিগুলো লোকাল ক্যাশেও থেকে যায় না। */
+  async function bulkAddRows(storeKey, prefix, upsert, list, onProgress) {
+    const entries = (list || []).map((d, i) => norm({ id: uid(prefix) + i.toString(36), ...d, _at: Date.now() }));
+    if (!entries.length) return entries;
+    const a = load(storeKey);
+    entries.forEach((e) => a.push(e));
+    store(storeKey, a);
+    if (!remoteReady()) return entries;
+    const ra = remoteActor();
+    let done = 0;
+    try {
+      for (const e of entries) {
+        const res = await upsert(ra, e);
+        if (!res || !res.ok) {
+          const err = new Error((res && res.error) || 'accounts_save_failed');
+          err.uploadedCount = done;
+          throw err;
+        }
+        done++;
+        if (onProgress) { try { onProgress(done, entries.length); } catch (e2) {} }
+      }
+    } finally {
+      try { await bootstrapRemote({ force: true }); } catch (e3) {}
+    }
+    return entries;
+  }
+
   /* Database is the source of truth; this no-op keeps older render calls compatible. */
   function ensureSeed() {
     return false;
@@ -348,6 +378,9 @@ const MdrAccAPI = (() => {
       await remoteCall((ra) => MMSharedAPI.upsertAccountIncome(ra.id, ra.pin, e));
       return e;
     },
+    bulkAdd(list, onProgress) {
+      return bulkAddRows(INC_KEY, 'inc-', (ra, e) => MMSharedAPI.upsertAccountIncome(ra.id, ra.pin, e), list, onProgress);
+    },
     async update(id, patch) {
       const a = load(INC_KEY);
       const idx = a.findIndex(x => x.id === id);
@@ -376,6 +409,9 @@ const MdrAccAPI = (() => {
       a.push(e); store(EXP_KEY, a);
       await remoteCall((ra) => MMSharedAPI.upsertAccountExpense(ra.id, ra.pin, e));
       return e;
+    },
+    bulkAdd(list, onProgress) {
+      return bulkAddRows(EXP_KEY, 'exp-', (ra, e) => MMSharedAPI.upsertAccountExpense(ra.id, ra.pin, e), list, onProgress);
     },
     async update(id, patch) {
       const a = load(EXP_KEY);
@@ -524,7 +560,7 @@ const MdrAccAPI = (() => {
     }
   }
 
-  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri };
+  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
 })();
 
 if (typeof window !== 'undefined') {

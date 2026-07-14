@@ -578,7 +578,8 @@ body.page-daftar .modal.modal-wide {
   width: min(760px, calc(100vw - 32px));
 }
 body.page-daftar #modal-account-entry .modal {
-  height: min(720px, calc(100vh - 32px));
+  width: min(1100px, calc(100vw - 32px));
+  height: min(820px, calc(100vh - 32px));
 }
 @media (min-width: 700px) {
   body.page-daftar .content { max-width: 760px; }
@@ -904,22 +905,33 @@ body.page-daftar #modal-account-entry .modal {
       <button class="modal-close" onclick="closeModal('account-entry')">✕</button>
     </div>
     <input type="hidden" id="account-entry-type">
-    <div class="form-row">
-      <div class="form-group" style="flex:1">
+    <div class="form-row acc-entry-top-row">
+      <div class="form-group">
         <label class="form-label">হিজরী তারিখ</label>
         <input class="form-input" id="acc-date" inputmode="numeric" placeholder="১৪৪৭-১০-০৯">
+      </div>
+      <div id="acc-expense-top-fields" class="acc-expense-top-fields">
+        <div class="form-group" id="acc-exp-account-row">
+          <label class="form-label">হিসাব বই</label>
+          <select class="form-input form-select" id="acc-exp-account" onchange="onAccExpAccountChange(this.value)"><option value="matbakh">মাতবাখ</option><option value="madrasa">মাদরাসা</option><option value="tamirat">তামিরাত</option><option value="general">সাধারণ</option></select>
+        </div>
+        <div class="form-group" id="acc-exp-supplier-row">
+          <label class="form-label" id="acc-exp-supplier-label">সরবরাহকারী</label>
+          <input class="form-input" id="acc-exp-supplier" placeholder="নাম / দোকান" autocomplete="off">
+        </div>
+        <div class="form-group" id="acc-exp-receipt-row">
+          <label class="form-label">রশিদ নং <span style="font-size:10px;color:var(--ink3);font-weight:400">(ঐচ্ছিক)</span></label>
+          <input class="form-input" id="acc-exp-receipt" placeholder="যেমন: ১২৩">
+        </div>
       </div>
     </div>
     <div id="acc-income-fields">
       <div class="form-row">
         <div class="form-group"><label class="form-label">মোট টাকা</label><input class="form-input" id="acc-inc-amount" type="number" placeholder="০" min="0"></div>
-        <div class="form-group"><label class="form-label">উৎস / বিবরণ</label><input class="form-input" id="acc-inc-note" placeholder="যেমন: বিকাশ অনুদান"></div>
+        <div class="form-group"><label class="form-label">উৎস / বিবরণ</label><input class="form-input" id="acc-inc-note" list="acc-inc-src-dl" placeholder="যেমন: বিকাশ অনুদান"></div>
       </div>
     </div>
     <div id="acc-expense-fields" style="display:none">
-      <div class="form-row" id="acc-exp-account-row">
-        <div class="form-group" style="flex:1"><label class="form-label">হিসাব বই</label><select class="form-input form-select" id="acc-exp-account" onchange="onAccExpAccountChange(this.value)"><option value="matbakh">মাতবাখ</option><option value="madrasa">মাদরাসা</option><option value="tamirat">তামিরাত</option><option value="general">সাধারণ</option></select></div>
-      </div>
       <div class="form-row" id="acc-qard-cat-pick-row" style="display:none">
         <div class="form-group" style="flex:1">
           <label class="form-label" for="acc-qard-cat-pick">আগের করজ খাত</label>
@@ -927,16 +939,9 @@ body.page-daftar #modal-account-entry .modal {
           <p style="font-size:10px;color:var(--ink3);margin:5px 0 0;font-weight:600;line-height:1.35">শুধু আগে করজে হিসেবে লেখা খাতগুলো। তালিকায় না থাকলে নিচের ঘরে নতুন নাম লিখুন।</p>
         </div>
       </div>
-      <div class="form-row" id="acc-exp-supplier-row">
-        <div class="form-group" style="flex:1"><label class="form-label" id="acc-exp-supplier-label">সরবরাহকারী</label><input class="form-input" id="acc-exp-supplier" placeholder="নাম / দোকান" autocomplete="off"></div>
-      </div>
       <!-- করজে হাসানা: শুধু পরিমাণ -->
       <div class="form-row" id="acc-qard-amt-row" style="display:none">
         <div class="form-group"><label class="form-label">পরিমাণ (টাকা)</label><input class="form-input" type="text" inputmode="decimal" id="acc-qard-amt" placeholder="০"></div>
-      </div>
-      <!-- রশিদ নং (qard-এ লুকানো) -->
-      <div class="form-row" id="acc-exp-receipt-row">
-        <div class="form-group"><label class="form-label">রশিদ নং <span style="font-size:10px;color:var(--ink3);font-weight:400">(ঐচ্ছিক)</span></label><input class="form-input" id="acc-exp-receipt" placeholder="যেমন: ১২৩"></div>
       </div>
       <!-- পরিশোধ পদ্ধতি (qard-এ লুকানো) -->
       <div class="form-group" id="acc-exp-pay-row" style="margin-bottom:10px">
@@ -954,6 +959,14 @@ body.page-daftar #modal-account-entry .modal {
       </div>
     </div>
     <button class="submit-btn gold" onclick="saveAccountEntry()">সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- EXCEL IMPORT MODAL -->
+<div class="modal-bg" id="modal-account-import">
+  <div class="modal">
+    <div class="modal-title">Excel থেকে হিসাব আনুন <button type="button" class="modal-close" onclick="closeModal('account-import')">✕</button></div>
+    <div id="acc-import-root"></div>
   </div>
 </div>
 
@@ -976,9 +989,9 @@ body.page-daftar #modal-account-entry .modal {
 <script src="../js/api/api.js?v=20260517-attendance-consistency"></script>
 <script src="../js/madrasa/mdr-daftar-supabase.js?v=20260624-save-perf"></script>
 <script src="../js/core/mm-hijri.js"></script>
-<script src="../js/madrasa/madrasa-accounts-api.js?v=20260614-live-import-refresh"></script>
+<script src="../js/madrasa/madrasa-accounts-api.js?v=20260714-excel-import"></script>
 <script src="../js/shared/chat-api.js"></script>
-<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260622-detail-modal-modern-v2"></script>
+<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-excel-import"></script>
 <script src="../js/madrasa/madrasa-accounts-reports.js?v=20260614-live-import-refresh"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260517-attendance-consistency"></script>
 <script src="../js/core/mm-session.js?v=20260516-attendance-persist"></script>
