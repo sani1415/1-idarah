@@ -101,9 +101,27 @@
     });
   }
 
+  /* সার্ভার থেকে আনা এক ছাত্রের পূর্ণ হাজিরা ইতিহাস — লোকাল ক্যাশ (~৩০ দিন) এর বদলে */
+  var _attHist = null; /* { sid, rows, classDates } */
+
+  function attTimelineFor(API, sid) {
+    if (_attHist && _attHist.sid === String(sid)) {
+      var rowByDate = latestRowsByDate(_attHist.rows);
+      var dates = {};
+      Object.keys(rowByDate).forEach(function (d) { dates[d] = true; });
+      (_attHist.classDates || []).forEach(function (d) {
+        var key = String(d || '').slice(0, 10);
+        if (key) dates[key] = true;
+      });
+      return Object.keys(dates).sort().reverse().map(function (date) {
+        return rowByDate[date] || { date: date, student_id: sid, _missingAttendance: true };
+      });
+    }
+    return buildAttendanceTimeline(API, sid, API.Attendance.getByStudent(sid));
+  }
+
   function buildAttendancePanel(API, sid) {
-    var studentRows = API.Attendance.getByStudent(sid);
-    var allRows = buildAttendanceTimeline(API, sid, studentRows);
+    var allRows = attTimelineFor(API, sid);
     if (!allRows.length) {
       return '<div class="st-empty">কোনো হাজিরা রেকর্ড পাওয়া যায়নি।</div>';
     }
@@ -115,16 +133,21 @@
     var counted = counts.p + counts.a + counts.m;
     var pct = counted ? Math.round((counts.p / counted) * 100) : 0;
 
-    var recentMonth = String(allRows[0].date || '').slice(0, 7);
-    var monthRows = allRows.filter(function (r) { return String(r.date || '').slice(0, 7) === recentMonth; });
+    var latestMonth = String(allRows[0].date || '').slice(0, 7);
+    var monthsAvail = {};
+    allRows.forEach(function (r) { var ym0 = String(r.date || '').slice(0, 7); if (ym0) monthsAvail[ym0] = 1; });
+    monthsAvail = Object.keys(monthsAvail).sort();
+    var calYm = (_attCalYm && monthsAvail.indexOf(_attCalYm) >= 0) ? _attCalYm : latestMonth;
+    var calIdx = monthsAvail.indexOf(calYm);
+    var monthRows = allRows.filter(function (r) { return String(r.date || '').slice(0, 7) === calYm; });
     var byDate = {};
     monthRows.forEach(function (r) { byDate[String(r.date || '').slice(0, 10)] = r; });
-    var y = Number(recentMonth.slice(0, 4));
-    var m = Number(recentMonth.slice(5, 7));
+    var y = Number(calYm.slice(0, 4));
+    var m = Number(calYm.slice(5, 7));
     var daysInMonth = new Date(y, m, 0).getDate();
     var monthCells = '';
     for (var d = 1; d <= daysInMonth; d++) {
-      var iso = recentMonth + '-' + String(d).padStart(2, '0');
+      var iso = calYm + '-' + String(d).padStart(2, '0');
       var row = byDate[iso];
       var meta = row ? attStatusMeta(API, row) : { key: 'x', label: '' };
       monthCells += '<span class="st-att-day st-att-day--' + meta.key + '" title="' + API.esc(iso + (meta.label ? ' · ' + meta.label : '')) + '">' + toBn(d) + '</span>';
@@ -174,7 +197,7 @@
     return (
       '<div class="st-att-overview">' +
       '<div class="st-att-cards">' +
-      '<div class="st-att-card"><span>হাজিরা নেওয়া দিন</span><strong>' + toBn(allRows.length) + '</strong></div>' +
+      '<div class="st-att-card"><span>হাজিরা</span><strong>' + toBn(allRows.length) + '</strong></div>' +
       '<div class="st-att-card st-att-card--p"><span>উপস্থিত</span><strong>' + toBn(counts.p) + '</strong></div>' +
       '<div class="st-att-card st-att-card--a"><span>অনুপস্থিত</span><strong>' + toBn(counts.a) + '</strong></div>' +
       (counts.h ? '<div class="st-att-card st-att-card--h"><span>ছুটি</span><strong>' + toBn(counts.h) + '</strong></div>' : '') +
@@ -182,7 +205,11 @@
       '<div class="st-att-card"><span>হার</span><strong>' + toBn(pct) + '%</strong></div>' +
       '</div>' +
       coverageNote +
-      '<div class="st-att-month"><div class="st-att-section-hd"><strong>' + API.esc(monthLabel(recentMonth)) + '</strong><span>সাম্প্রতিক মাস</span></div><div class="st-att-grid">' + monthCells + '</div></div>' +
+      '<div class="st-att-month"><div class="st-att-section-hd st-att-cal-hd">' +
+      '<button type="button" class="st-att-cal-nav" onclick="MMStudentModal.attCalShift(-1)"' + (calIdx <= 0 ? ' disabled' : '') + ' aria-label="আগের মাস">‹</button>' +
+      '<strong>' + API.esc(monthLabel(calYm)) + '</strong>' +
+      '<button type="button" class="st-att-cal-nav" onclick="MMStudentModal.attCalShift(1)"' + (calIdx >= monthsAvail.length - 1 ? ' disabled' : '') + ' aria-label="পরের মাস">›</button>' +
+      '</div><div class="st-att-grid">' + monthCells + '</div></div>' +
       '<div class="st-att-section"><div class="st-att-section-hd"><strong>মাসভিত্তিক সারাংশ</strong></div>' + monthSummary + '</div>' +
       '<div class="st-att-section"><div class="st-att-section-hd"><strong>অনুপস্থিতির কারণ</strong></div>' + absentHtml + '</div>' +
       '<div class="st-att-section"><div class="st-att-section-hd"><strong>শেষ ১০ দিন</strong></div>' + recentHtml + '</div>' +
@@ -344,7 +371,24 @@
   }
 
   var _openSid = null;
+  var _attCalYm = null; /* হাজিরা ক্যালেন্ডারে দেখানো মাস (YYYY-MM); null = সর্বশেষ */
   var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  /** হাজিরা ক্যালেন্ডার: আগের/পরের মাসে যাওয়া — ডেটা থাকা মাসগুলোর মধ্যে */
+  function attCalShift(delta) {
+    var API = getApi();
+    if (!API || !_openSid || !API.Attendance) return;
+    var allRows = attTimelineFor(API, _openSid);
+    var months = {};
+    allRows.forEach(function (r) { var ym = String(r.date || '').slice(0, 7); if (ym) months[ym] = 1; });
+    var list = Object.keys(months).sort();
+    if (!list.length) return;
+    var cur = (_attCalYm && list.indexOf(_attCalYm) >= 0) ? _attCalYm : list[list.length - 1];
+    var idx = Math.max(0, Math.min(list.length - 1, list.indexOf(cur) + delta));
+    _attCalYm = list[idx];
+    var panel = document.getElementById('st-panel-att');
+    if (panel) panel.innerHTML = buildAttendancePanel(API, _openSid);
+  }
 
   function logAuthorName() {
     if (typeof global.MMSession === 'undefined' || !global.MMSession) return '—';
@@ -543,6 +587,8 @@
       return;
     }
     _openSid = sid;
+    _attCalYm = null;
+    if (!(_attHist && _attHist.sid === String(sid))) _attHist = null;
 
     ensureModal();
     ensureDocumentsModule();
@@ -869,16 +915,36 @@
     var modal = document.getElementById(MODAL_ID);
     if (modal) modal.classList.add('open');
 
+    /* পূর্ণ হাজিরা ইতিহাস ব্যাকগ্রাউন্ডে আনা: প্যানেল আগে লোকাল ক্যাশ (~৩০ দিন) দিয়ে
+       সাথে সাথে আঁকা হয়, ইতিহাস এলে নীরবে পুরো বর্ষে বিস্তৃত হয় — গতি কমে না। */
+    if (!_attHist && UUID_RE.test(sid) && global.MMSharedAPI && global.MMSharedAPI.studentAttendanceHistory &&
+        global.MMSession && global.MMSession.getId && global.MMSession.getPin) {
+      var _histActorId = global.MMSession.getId();
+      var _histPin = global.MMSession.getPin();
+      if (_histActorId && _histPin) {
+        global.MMSharedAPI.studentAttendanceHistory(_histActorId, _histPin, sid).then(function (res) {
+          if (!res || !res.ok || _openSid !== sid) return;
+          _attHist = { sid: String(sid), rows: res.attendance || [], classDates: res.class_dates || [] };
+          var panel = document.getElementById('st-panel-att');
+          if (panel) panel.innerHTML = buildAttendancePanel(API, sid);
+        }).catch(function () { /* ব্যর্থ হলে লোকাল ক্যাশের সাম্প্রতিক ডেটাই থাকবে */ });
+      }
+    }
+
     // Fetch fresh akhlaq from DB and update the section — bypasses localStorage cache.
     if (fetchingFreshAkhlaq) {
       var _freshActorId = global.MMSession.getId();
       var _freshPin = global.MMSession.getPin();
       global.MMSharedAPI.getStudentAkhlaq(_freshActorId, _freshPin, sid).then(function (res) {
-        if (!res || !res.ok) return;
         var section = document.getElementById('st-khuluk-section');
         if (!section) return;
+        if (!res || !res.ok) {
+          /* "লোড হচ্ছে…" আটকে না থেকে ব্যর্থতার কারণ দেখাও */
+          section.innerHTML = '<div class="st-note" style="color:var(--ink3);font-size:12px;padding:4px 0;">হুসনুল খুলুক আনা যায়নি' + (res && res.error ? ' (' + API.esc(res.error) + ')' : '') + '।</div>';
+          return;
+        }
         var list = res.akhlaq || [];
-        if (!list.length) { section.innerHTML = ''; return; }
+        if (!list.length) { section.innerHTML = '<div class="st-note" style="color:var(--ink3);font-size:12px;padding:4px 0;">কোনো হুসনুল খুলুক রেকর্ড নেই।</div>'; return; }
         section.innerHTML =
           '<h4>হুসনুল খুলুক</h4>' +
           list.map(function (k) {
@@ -914,11 +980,14 @@
             API.persistSaveArr('mm_khuluk', cached.concat(fresh));
           }
         } catch (e2) { /* ignore cache update failures */ }
-      }).catch(function () {});
+      }).catch(function () {
+        var section = document.getElementById('st-khuluk-section');
+        if (section) section.innerHTML = '<div class="st-note" style="color:var(--ink3);font-size:12px;padding:4px 0;">হুসনুল খুলুক আনা যায়নি — নেট সংযোগ দেখে আবার খুলুন।</div>';
+      });
     }
   }
 
-  global.MMStudentModal = { open: open, close: close, switchTab: switchTab, submitStudentLog: submitStudentLog, submitStatusChange: submitStatusChange, openPhotoPreview: openPhotoPreview };
+  global.MMStudentModal = { open: open, close: close, switchTab: switchTab, submitStudentLog: submitStudentLog, submitStatusChange: submitStatusChange, openPhotoPreview: openPhotoPreview, attCalShift: attCalShift };
   global.switchStudentTab = switchTab;
   global.openStudentDetail = function (sid) {
     return open(sid);

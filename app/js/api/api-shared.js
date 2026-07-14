@@ -267,6 +267,14 @@ const MMSharedAPI = (() => {
         p_student_id: studentId,
       });
     },
+    /** এক ছাত্রের পূর্ণ হাজিরা ইতিহাস (বর্ষের শুরু থেকে) — bootstrap-এর ৩০ দিনের ক্যাশের বাইরে */
+    studentAttendanceHistory(actorId, pin, studentId) {
+      return rpc('mdr_rel_student_attendance_history', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_student_id: studentId,
+      });
+    },
     saveTeacherLog(actorId, pin, type, studentId, content, reviewRequested) {
       return rpc('mdr_rel_save_teacher_log', {
         p_actor_id: actorId,

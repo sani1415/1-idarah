@@ -915,6 +915,8 @@ body {
   color: var(--ink3);
   line-height: 1.2;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .st-att-card strong {
   display: block;
@@ -946,6 +948,21 @@ body {
   font-size: 12px;
 }
 .st-att-section-hd span { font-size: 10px; color: var(--ink3); }
+.st-att-cal-hd { align-items: center; }
+.st-att-cal-nav {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--cream2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink2);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.st-att-cal-nav:disabled { opacity: 0.3; cursor: default; }
 .st-att-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
