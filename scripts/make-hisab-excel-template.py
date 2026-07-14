@@ -4,6 +4,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.workbook.defined_name import DefinedName
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,16 +81,15 @@ def main():
     ws["A1"].font = title_font
     ws.merge_cells("A1:B1")
     lines = [
-        ("এই ফাইল কী", "একটি .xlsx ফাইলে সব হিসাব রাখুন। অ্যাপে «এক্সেল ↧» → ফাইল আপলোড করলে ব্যয়/আয়/করজ শীট থেকে ডেটা নেবে।"),
-        ("শীট", "ব্যয় · আয় · করজ · ড্যাশবোর্ড (ড্যাশবোর্ড শুধু দেখার জন্য — অ্যাপ আপলোড করে না)।"),
-        ("ব্যয়", "মাতবাখ/মাদরাসা/তামিরাত/সাধারণ — «হিসাব বই» কলামে লিখুন। করজ এখানে নয়।"),
-        ("মোট টাকা", "অ্যাপের মতো অটো: পরিমাণ × একক মূল্য দিলে মোট নিজে হিসাব হয় (সবুজ ঘর)। বিল টাইপ হলে পরিমাণ/দর খালি রেখে শুধু মোট লিখুন।"),
-        ("আয়", "নিয়মিত আয় (অনুদান, ওয়াযিফা ইত্যাদি)। করজ আদায় «করজ» শীটে।"),
-        ("করজ", "ধরন = দেওয়া বা আদায়। খাত নাম দেওয়া ও আদায়ে একই রাখুন।"),
-        ("তারিখ", "হিজরী: ১৪৪৭-১০-০৯ · ইংরেজি: ২০২৬-০৭-১৪ বা ১৪-০৭-২০২৬ · Excel তারিখ ঘরও চলবে।"),
-        ("পরিশোধ", "নগদ বা বাকি। বাকি হলে সরবরাহকারী আবশ্যক।"),
-        ("নিয়ম", "কলামের শিরোনাম মুছবেন/সরাবেন না। নমুনা সারি মুছে আসল ডেটা বসান। শুধু সংখ্যা লিখুন (৳/কমা ছাড়া)।"),
-        ("অ্যাপে", "হিসাব → এক্সেল ↧ → টেমপ্লেট ডাউনলোড (প্রয়োজনে) → ভরা ফাইল বেছে নিন → প্রিভিউ → সংরক্ষণ।"),
+        ("এই ফাইল কী", "দৈনন্দিন সব লেনদেন এখানে রাখুন। দিনশেষে অ্যাপে আপলোড করলে অ্যাপ লেটেস্ট দেখাবে।"),
+        ("শীট", "ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড। বকেয়া/ড্যাশবোর্ড শুধু লাইভ দেখা — অ্যাপ সেগুলো পড়ে না।"),
+        ("ব্যয়", "মাতবাখ/মাদরাসা/তামিরাত/সাধারণ। বাকি কেনাকাটায় পরিশোধ=বাকি + সরবরাহকারী নাম।"),
+        ("মোট টাকা", "পরিমাণ × একক মূল্য হলে মোট অটো। বিল হলে শুধু মোট লিখুন।"),
+        ("বকেয়া", "এই শীটের «সরবরাহকারী» কলামে নাম লিখুন — ব্যয় ও পরিশোধ শীটের ড্রপডাউনে অটো আসবে। অবশিষ্ট = বাকি কেনা − পরিশোধ।"),
+        ("পরিশোধ", "বকেয়া মেটানোর এন্ট্রি; সরবরাহকারী ড্রপডাউন থেকে বেছে নিন।"),
+        ("আয় / করজ", "নিয়মিত আয় আলাদা; করজে দেওয়া/আদায় করজ শীটে।"),
+        ("তারিখ", "হিজরী বা ইংরেজি — দুইভাবেই চলবে।"),
+        ("অ্যাপে", "হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। একই সারি বারবার আপলোড করবেন না।"),
     ]
     r = 3
     for a, b in lines:
@@ -192,9 +192,115 @@ def main():
     ws.add_data_validation(dv_kind)
     dv_kind.add("A2:A5000")
 
+    # ── পরিশোধ (বকেয়া মেটানোর এন্ট্রি) ──
+    ws = wb.create_sheet("পরিশোধ")
+    style_header(ws, ["তারিখ *", "সরবরাহকারী *", "টাকা *", "মন্তব্য"], [16, 24, 14, 36])
+    for i, row in enumerate([
+        ["1447-10-15", "রাজমিস্ত্রি করিম", 5000, "আংশিক পরিশোধ"],
+    ], start=2):
+        for c, val in enumerate(row, 1):
+            cell = ws.cell(i, c, val)
+            cell.border = thin
+            cell.fill = sample_fill
+    ws["F1"] = "সরবরাহকারী ড্রপডাউন = বকেয়া শীটের নাম তালিকা।"
+    ws["F1"].font = note_font
+    ws.column_dimensions["F"].width = 48
+
+    # ── বকেয়া (লাইভ তালিকা — সহজ ফর্মুলা, UNIQUE/FILTER নেই) ──
+    ws = wb.create_sheet("বকেয়া")
+    ws["A1"] = "সরবরাহকারী বকেয়া (লাইভ)"
+    ws["A1"].font = title_font
+    ws.merge_cells("A1:E1")
+    ws["A2"] = (
+        "এই টেবিলের «সরবরাহকারী» কলাম = মাস্টার তালিকা। "
+        "এখানে নাম লিখলে ব্যয় ও পরিশোধ শীটের ড্রপডাউনে চলে আসবে। "
+        "অবশিষ্ট = বাকি কেনা − পরিশোধ।"
+    )
+    ws["A2"].font = note_font
+    ws["A2"].alignment = wrap
+    ws.merge_cells("A2:E3")
+    ws.row_dimensions[2].height = 44
+
+    summary = [
+        (5, "মোট বাকি কেনা", '=SUMIF(ব্যয়!K:K,"বাকি",ব্যয়!H:H)'),
+        (6, "মোট পরিশোধ", "=SUM(পরিশোধ!C:C)"),
+        (7, "এখন মোট বাকি", "=B5-B6"),
+    ]
+    for row, label, formula in summary:
+        a = ws.cell(row, 1, label)
+        b = ws.cell(row, 2, formula)
+        a.font = Font(bold=True, size=11)
+        a.fill = dash_fill
+        a.border = thin
+        b.number_format = '#,##0'
+        b.border = thin
+        b.fill = auto_fill
+        if row == 7:
+            b.font = Font(bold=True, size=14, color="C1440E")
+
+    headers = ["সরবরাহকারী", "বাকি কেনা", "পরিশোধ", "অবশিষ্ট বাকি", "বার"]
+    for col, title in enumerate(headers, 1):
+        cell = ws.cell(9, col, title)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = thin
+
+    # মাস্টার তালিকা (ড্রপডাউনের সোর্স) + লাইভ হিসাব
+    supplier_seed = ["রাজমিস্ত্রি করিম", "রহিম স্টোর", "বইঘর", "পল্লী বিদ্যুৎ"]
+    suppliers = supplier_seed + [""] * (100 - len(supplier_seed))
+    for i, name in enumerate(suppliers):
+        r = 10 + i
+        ws.cell(r, 1, name).border = thin
+        ws.cell(r, 1).fill = sample_fill
+        ws.cell(r, 2).value = (
+            f'=IF(A{r}="","",SUMIFS(ব্যয়!$H$2:$H$500,ব্যয়!$I$2:$I$500,A{r},ব্যয়!$K$2:$K$500,"বাকি"))'
+        )
+        ws.cell(r, 3).value = (
+            f'=IF(A{r}="","",SUMIF(পরিশোধ!$B$2:$B$500,A{r},পরিশোধ!$C$2:$C$500))'
+        )
+        ws.cell(r, 4).value = f'=IF(A{r}="","",B{r}-C{r})'
+        ws.cell(r, 5).value = (
+            f'=IF(A{r}="","",COUNTIFS(ব্যয়!$I$2:$I$500,A{r},ব্যয়!$K$2:$K$500,"বাকি"))'
+        )
+        for c in range(2, 6):
+            ws.cell(r, c).border = thin
+            ws.cell(r, c).fill = auto_fill
+            if c < 5:
+                ws.cell(r, c).number_format = '#,##0'
+
+    ws["A111"] = (
+        "টিপ: নতুন সরবরাহকারী → এখানে নাম লিখুন → ব্যয়/পরিশোধে ড্রপডাউন থেকে বেছে নিন।"
+    )
+    ws["A111"].font = note_font
+    ws.merge_cells("A111:E111")
+    ws.column_dimensions["A"].width = 26
+    ws.column_dimensions["B"].width = 14
+    ws.column_dimensions["C"].width = 12
+    ws.column_dimensions["D"].width = 14
+    ws.column_dimensions["E"].width = 8
+
+    # ড্রপডাউন: বকেয়া!A10:A109 → ব্যয় (সরবরাহকারী) ও পরিশোধ
+    try:
+        wb.defined_names.delete("SupplierList")
+    except (KeyError, AttributeError, TypeError):
+        pass
+    wb.defined_names.add(DefinedName(name="SupplierList", attr_text="'বকেয়া'!$A$10:$A$109"))
+
+    dv_sup_exp = DataValidation(type="list", formula1="=SupplierList", allow_blank=True)
+    dv_sup_exp.error = "বকেয়া শীটের তালিকা থেকে বেছে নিন, বা আগে সেখানে নাম যোগ করুন"
+    dv_sup_exp.errorTitle = "সরবরাহকারী"
+    dv_sup_exp.prompt = "বকেয়া শীটের তালিকা"
+    dv_sup_exp.promptTitle = "সরবরাহকারী"
+    wb["ব্যয়"].add_data_validation(dv_sup_exp)
+    dv_sup_exp.add("I2:I5000")
+
+    dv_sup_pay = DataValidation(type="list", formula1="=SupplierList", allow_blank=True)
+    wb["পরিশোধ"].add_data_validation(dv_sup_pay)
+    dv_sup_pay.add("B2:B5000")
+
     # ── ড্যাশবোর্ড ──
     ws = wb.create_sheet("ড্যাশবোর্ড")
-    ws["A1"] = "সামারি (অটো — অ্যাপে আপলোড হয় না)"
+    ws["A1"] = "সামারি (লাইভ)"
     ws["A1"].font = title_font
     ws.merge_cells("A1:C1")
 
@@ -204,7 +310,8 @@ def main():
         (5, "করজ দেওয়া", '=SUMIF(করজ!A:A,"দেওয়া",করজ!C:C)'),
         (6, "করজ আদায়", '=SUMIF(করজ!A:A,"আদায়",করজ!C:C)'),
         (7, "করজ বাকি", "=B5-B6"),
-        (8, "নগদ (আনুমানিক)", "=B4-B3-B5+B6"),
+        (8, "সরবরাহকারী বাকি", "=বকেয়া!B7"),
+        (9, "নগদ (আনুমানিক)", "=B4-B3-B5+B6"),
     ]
     ws["A2"] = "বিবরণ"
     ws["B2"] = "টাকা"
@@ -219,27 +326,27 @@ def main():
         b.border = thin
         a.fill = dash_fill
         b.number_format = '#,##0'
-    ws["A10"] = "বই অনুযায়ী ব্যয়"
-    ws["A10"].font = Font(bold=True, size=12)
+    ws["A11"] = "বই অনুযায়ী ব্যয়"
+    ws["A11"].font = Font(bold=True, size=12)
     books = ["মাতবাখ", "মাদরাসা", "তামিরাত", "সাধারণ"]
-    ws["A11"] = "হিসাব বই"
-    ws["B11"] = "মোট"
-    for c in (ws["A11"], ws["B11"]):
+    ws["A12"] = "হিসাব বই"
+    ws["B12"] = "মোট"
+    for c in (ws["A12"], ws["B12"]):
         c.fill = header_fill
         c.font = header_font
         c.border = thin
     for i, book in enumerate(books):
-        rr = 12 + i
+        rr = 13 + i
         ws.cell(rr, 1, book).border = thin
         cell = ws.cell(rr, 2, f"=SUMIF(ব্যয়!A:A,A{rr},ব্যয়!H:H)")
         cell.border = thin
         cell.number_format = "#,##0"
-    ws["A17"] = (
-        "নোট: ব্যয়ের মোট কলাম পরিমাণ×একক মূল্যে অটো। "
-        "নমুনা মুছে আসল ডেটা বসালে ড্যাশবোর্ড আপডেট হবে।"
+    ws["A18"] = (
+        "বকেয়া তালিকায় নাম লিখুন → ব্যয়/পরিশোধে ড্রপডাউন। "
+        "পরিশোধ «পরিশোধ» শীটে।"
     )
-    ws["A17"].font = note_font
-    ws.merge_cells("A17:C18")
+    ws["A18"].font = note_font
+    ws.merge_cells("A18:C19")
     ws.column_dimensions["A"].width = 28
     ws.column_dimensions["B"].width = 16
     ws.column_dimensions["C"].width = 40

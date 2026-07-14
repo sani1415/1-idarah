@@ -2877,7 +2877,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   function impSheetKind(name) {
     var n = impNormHeader(name).replace(/\s+/g, '');
-    if (/নির্দেশ|dashboard|ড্যাশবোর্ড|dash/.test(n)) return 'skip';
+    if (/নির্দেশ|dashboard|ড্যাশবোর্ড|dash|বকেয়া|^পরিশোধ$|পরিশোধ/.test(n)) return 'skip';
     if (/^করজ|qard|loan/.test(n)) return 'qard';
     if (/^আয়|^আয়|^income|^inc/.test(n)) return 'income';
     if (/^ব্যয়|^ব্যয়|^expense|^exp|মাস্টার/.test(n)) return 'expense';
@@ -2898,12 +2898,13 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var guide = [
         ['দপ্তর হিসাব — স্ট্যান্ডার্ড Excel টেমপ্লেট'],
         [],
-        ['শীট', 'ব্যয় · আয় · করজ · ড্যাশবোর্ড (ড্যাশবোর্ড অ্যাপ পড়ে না)'],
-        ['ব্যয়', 'হিসাব বই কলামে মাতবাখ/মাদরাসা/তামিরাত/সাধারণ'],
-        ['মোট টাকা', 'পরিমাণ × একক মূল্য দিলে মোট অটো (অ্যাপের মতো)। বিল হলে শুধু মোট লিখুন।'],
-        ['আয়', 'নিয়মিত আয় — করজ আদায় করজ শীটে'],
-        ['করজ', 'ধরন = দেওয়া বা আদায়; খাত নাম মিল রাখুন'],
-        ['অ্যাপে', 'হিসাব → এক্সেল ↧ → এই ফাইল ভরে আপলোড'],
+        ['শীট', 'ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড'],
+        ['ব্যয়', 'হিসাব বই + বাকি হলে পরিশোধ=বাকি ও সরবরাহকারী'],
+        ['মোট টাকা', 'পরিমাণ × একক মূল্য হলে অটো; বিল হলে শুধু মোট'],
+        ['বকেয়া', 'নাম তালিকা এখানে → ব্যয়/পরিশোধ ড্রপডাউন; অবশিষ্ট = বাকি − পরিশোধ'],
+        ['পরিশোধ', 'বকেয়া মেটানো; সরবরাহকারী ড্রপডাউন থেকে'],
+        ['আয় / করজ', 'নিয়মিত আয়; করজ দেওয়া/আদায়'],
+        ['অ্যাপে', 'দিনশেষে এক্সেল ↧ দিয়ে আপলোড — একই সারি দুবার নয়'],
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(guide), 'নির্দেশনা');
 
@@ -2924,7 +2925,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
           expWs['H' + r] = { t: 'n', f: 'IF(AND(E' + r + '<>"",G' + r + '<>""),E' + r + '*G' + r + ',"")' };
         }
       }
-      /* বিল নমুনা: ম্যানুয়াল মোট */
       expWs.H6 = { t: 'n', v: 500 };
       expWs.H7 = { t: 'n', v: 4500 };
       if (!expWs['!ref']) expWs['!ref'] = 'A1:K' + maxR;
@@ -2951,14 +2951,43 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         ['আদায়', '1447-10-11', 2000, 'মাদরাসা ফান্ড', ''],
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(qard), 'করজ');
+
+      var pay = [
+        ['তারিখ *', 'সরবরাহকারী *', 'টাকা *', 'মন্তব্য'],
+        ['1447-10-15', 'রাজমিস্ত্রি করিম', 5000, 'আংশিক পরিশোধ'],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pay), 'পরিশোধ');
+
+      var dueWs = XLSX.utils.aoa_to_sheet([
+        ['সরবরাহকারী বকেয়া (লাইভ)'],
+        ['বাকি কেনা − পরিশোধ = অবশিষ্ট। নতুন নাম এখানে লিখুন → ব্যয়/পরিশোধ ড্রপডাউনে আসবে।'],
+        [],
+        ['মোট বাকি কেনা', { f: 'SUMIF(ব্যয়!K:K,"বাকি",ব্যয়!H:H)' }],
+        ['মোট পরিশোধ', { f: 'SUM(পরিশোধ!C:C)' }],
+        ['এখন মোট বাকি', { f: 'B4-B5' }],
+        [],
+        ['সরবরাহকারী', 'বাকি কেনা', 'পরিশোধ', 'অবশিষ্ট বাকি', 'বার'],
+        ['রাজমিস্ত্রি করিম', null, null, null, null],
+      ]);
+      for (var dr = 9; dr <= 58; dr++) {
+        if (dr > 9) dueWs['A' + dr] = { t: 's', v: '' };
+        dueWs['B' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",SUMIFS(ব্যয়!$H$2:$H$500,ব্যয়!$I$2:$I$500,A' + dr + ',ব্যয়!$K$2:$K$500,"বাকি"))' };
+        dueWs['C' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",SUMIF(পরিশোধ!$B$2:$B$500,A' + dr + ',পরিশোধ!$C$2:$C$500))' };
+        dueWs['D' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",B' + dr + '-C' + dr + ')' };
+        dueWs['E' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",COUNTIFS(ব্যয়!$I$2:$I$500,A' + dr + ',ব্যয়!$K$2:$K$500,"বাকি"))' };
+      }
+      dueWs['!ref'] = 'A1:E58';
+      XLSX.utils.book_append_sheet(wb, dueWs, 'বকেয়া');
+
       var dash = [
-        ['সামারি (অটো — অ্যাপে আপলোড হয় না)'],
+        ['সামারি (লাইভ)'],
         ['বিবরণ', 'টাকা'],
         ['মোট ব্যয়', { f: 'SUM(ব্যয়!H:H)' }],
         ['মোট আয়', { f: 'SUM(আয়!B:B)' }],
         ['করজ দেওয়া', { f: 'SUMIF(করজ!A:A,"দেওয়া",করজ!C:C)' }],
         ['করজ আদায়', { f: 'SUMIF(করজ!A:A,"আদায়",করজ!C:C)' }],
         ['করজ বাকি', { f: 'B5-B6' }],
+        ['সরবরাহকারী বাকি', { f: 'বকেয়া!B6' }],
         ['নগদ (আনুমানিক)', { f: 'B4-B3-B5+B6' }],
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dash), 'ড্যাশবোর্ড');
@@ -3189,7 +3218,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var help =
       '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>। ' +
       'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বই</b> কলাম থেকে বই অটো-সাজানো হয়। ' +
-      'মোট টাকা = পরিমাণ × একক মূল্য (অটো); বিল হলে শুধু মোট দিলেই চলবে।' +
+      'মোট টাকা = পরিমাণ × একক মূল্য (অটো)। বকেয়া/পরিশোধ শীট Excel-এ লাইভ দেখার জন্য।' +
       '<br><button type="button" class="acc-imp-tpl" onclick="downloadAccHisabTemplate()">⬇ খালি টেমপ্লেট ডাউনলোড</button></div>';
     var drop =
       '<div class="acc-imp-drop" id="acc-imp-drop" role="button" tabindex="0">' +
