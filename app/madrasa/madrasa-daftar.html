@@ -965,7 +965,7 @@ body.page-daftar #modal-account-entry .modal {
 <!-- EXCEL IMPORT MODAL -->
 <div class="modal-bg" id="modal-account-import">
   <div class="modal">
-    <div class="modal-title">Excel থেকে হিসাব আনুন <button type="button" class="modal-close" onclick="closeModal('account-import')">✕</button></div>
+    <div class="modal-title">Excel ফাইল থেকে হিসাব আনুন <button type="button" class="modal-close" onclick="closeModal('account-import')">✕</button></div>
     <div id="acc-import-root"></div>
   </div>
 </div>
@@ -989,9 +989,10 @@ body.page-daftar #modal-account-entry .modal {
 <script src="../js/api/api.js?v=20260517-attendance-consistency"></script>
 <script src="../js/madrasa/mdr-daftar-supabase.js?v=20260624-save-perf"></script>
 <script src="../js/core/mm-hijri.js"></script>
-<script src="../js/madrasa/madrasa-accounts-api.js?v=20260714-excel-import"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="../js/madrasa/madrasa-accounts-api.js?v=20260714-xlsx-auto-total"></script>
 <script src="../js/shared/chat-api.js"></script>
-<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-main-qard-cash"></script>
+<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-xlsx-auto-total"></script>
 <script src="../js/madrasa/madrasa-accounts-reports.js?v=20260714-rpt-qard-supplier"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260517-attendance-consistency"></script>
 <script src="../js/core/mm-session.js?v=20260516-attendance-persist"></script>

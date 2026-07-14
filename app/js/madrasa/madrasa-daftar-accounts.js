@@ -125,7 +125,7 @@ var _qardGiveInlineOpen = false; /* করজ বিস্তারিত মড
 body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-shell{padding-top:2px}
 .acc-add-btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:2px 4px 8px}
-.acc-add-btns.has-month{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-bottom:6px}
+.acc-add-btns.has-month{gap:6px;padding-bottom:6px}
 .acc-add-btns.acc-readonly{grid-template-columns:1fr;align-items:stretch}
 .acc-btn{position:relative;overflow:hidden;height:38px;padding:0 4px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 18px rgba(26,18,8,.08);white-space:nowrap}
 .acc-add-btns.has-month .acc-btn{height:38px;padding:0 4px;font-size:12px;border-radius:12px}
@@ -561,25 +561,24 @@ body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-deta
 body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(7),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(7){width:10%}
 body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:normal;overflow-wrap:anywhere}
 @media (max-width:700px){body #modal-account-details.acc-qard-detail-open{padding:12px 0 0;align-items:flex-end}body #modal-account-details.acc-qard-detail-open .modal{width:100vw;height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);border-radius:24px 24px 0 0;border-bottom:0;padding:16px 14px}body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table{min-width:640px;table-layout:auto}}
-/* ── Excel import ── */
-.acc-imp-open{display:none}
-@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(4,minmax(0,1fr))}.acc-imp-open{display:block}}
+/* ── Excel import (.xlsx upload) ── */
+.acc-add-btns.has-month{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(4,minmax(0,1fr))}}
 #modal-account-import .modal{width:min(980px,calc(100vw - 24px));max-width:980px;max-height:calc(100vh - 24px);overflow:auto;padding:22px 20px 26px;box-sizing:border-box}
-.acc-imp-typerow{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.acc-imp-type-btn{flex:0 0 auto;padding:9px 22px;border-radius:9px;border:1.5px solid var(--cream3);background:#fff;color:var(--ink3);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.acc-imp-type-btn.is-on.is-exp{border-color:var(--red);background:var(--red-light);color:var(--red);font-weight:800}
-.acc-imp-type-btn.is-on.is-inc{border-color:var(--green2);background:var(--green-light);color:var(--green);font-weight:800}
-.acc-imp-acc{flex:0 1 220px;min-width:150px}
-.acc-imp-help{background:rgba(154,106,33,.07);border:1px solid rgba(154,106,33,.14);border-radius:12px;padding:10px 12px;font-size:11px;color:var(--ink3);line-height:1.7;margin-bottom:10px}
+.acc-imp-help{background:rgba(154,106,33,.07);border:1px solid rgba(154,106,33,.14);border-radius:12px;padding:10px 12px;font-size:11px;color:var(--ink3);line-height:1.7;margin-bottom:12px}
 .acc-imp-help b{color:var(--ink2)}
-.acc-imp-cols{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 3px}
-.acc-imp-col{background:#fff;border:1px solid rgba(26,18,8,.1);border-radius:7px;padding:2px 8px;font-size:10px;font-weight:800;color:var(--ink2);white-space:nowrap}
-.acc-imp-col.req{border-color:rgba(193,68,14,.35);color:var(--red)}
-.acc-imp-textarea{width:100%;min-height:150px;box-sizing:border-box;border:1.5px dashed rgba(154,106,33,.35);border-radius:12px;background:#fffdf8;padding:10px 12px;font-family:inherit;font-size:12px;color:var(--ink1);resize:vertical;white-space:pre;overflow-x:auto}
-.acc-imp-textarea:focus{outline:none;border-color:var(--gold);border-style:solid;box-shadow:0 0 0 3px rgba(154,106,33,.1)}
-.acc-imp-actions{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
-.acc-imp-preview-btn{padding:10px 20px;border-radius:10px;border:1px solid rgba(154,106,33,.3);background:linear-gradient(135deg,#fff8e8,#f4eadb);color:#7a5118;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
-.acc-imp-summary{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 8px}
+.acc-imp-tpl{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:12px;font-weight:800;color:#7a5118;text-decoration:none;border:none;background:none;padding:0;cursor:pointer;font-family:inherit;border-bottom:1px dashed rgba(122,81,24,.35)}
+.acc-imp-drop{border:1.5px dashed rgba(154,106,33,.4);border-radius:14px;background:#fffdf8;padding:22px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:10px}
+.acc-imp-drop.is-drag{border-color:var(--gold);background:#fff8e8;border-style:solid}
+.acc-imp-drop-title{font-size:14px;font-weight:800;color:var(--ink2);margin:0 0 4px}
+.acc-imp-drop-sub{font-size:11px;color:var(--ink3);margin:0}
+.acc-imp-file-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 4px;font-size:12px;font-weight:700;color:var(--ink2)}
+.acc-imp-file-name{flex:1;min-width:120px;word-break:break-all}
+.acc-imp-clear{border:1px solid rgba(26,18,8,.12);background:#fff;border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;font-weight:800;color:var(--ink3);cursor:pointer}
+.acc-imp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px}
+.acc-imp-tab{padding:8px 14px;border-radius:9px;border:1.5px solid var(--cream3);background:#fff;color:var(--ink3);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.acc-imp-tab.is-on{border-color:var(--gold);background:linear-gradient(135deg,#fff8e8,#f4eadb);color:#7a5118;font-weight:800}
+.acc-imp-summary{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .acc-imp-pill{font-size:11px;font-weight:800;border-radius:999px;padding:5px 11px;background:#fff;border:1px solid rgba(26,18,8,.1);color:var(--ink2)}
 .acc-imp-pill.ok{color:var(--green);border-color:rgba(13,116,80,.3);background:#f2faf7}
 .acc-imp-pill.err{color:var(--red);border-color:rgba(193,68,14,.3);background:#fff5f2}
@@ -588,10 +587,9 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 .acc-imp-table th{position:sticky;top:0;background:#faf3e8;color:var(--ink3);font-size:10px;font-weight:900;text-align:left;padding:7px 8px;border-bottom:1px solid rgba(26,18,8,.08);white-space:nowrap;z-index:1}
 .acc-imp-table td{padding:6px 8px;border-bottom:1px solid rgba(26,18,8,.06);white-space:nowrap;background:#fff;color:var(--ink2)}
 .acc-imp-table tr.is-err td{background:#fff6f2}
-.acc-imp-table tr.is-head td{background:#f6f3ee;color:var(--ink3)}
 .acc-imp-table tr.is-saved td{background:#f2faf7}
 .acc-imp-status{font-size:10px;font-weight:800}
-.acc-imp-status.ok,.acc-imp-status.saved{color:var(--green)}.acc-imp-status.err{color:var(--red)}.acc-imp-status.head{color:var(--ink3)}
+.acc-imp-status.ok,.acc-imp-status.saved{color:var(--green)}.acc-imp-status.err{color:var(--red)}
 #acc-imp-save{margin-top:10px}
 /* ── Report workspace ── */
 .acc-ws{padding:0 4px 12px}
@@ -2776,12 +2774,18 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   function ensureAccountSettingsTopbar() { /* settings button এখন acc-add-btns-এ */ }
 
-  /* ══════════════ EXCEL IMPORT (পেস্ট → প্রিভিউ → সংরক্ষণ) ══════════════ */
-  var _impType = 'expense';   /* 'expense' | 'income' */
-  var _impAccount = 'matbakh';
-  var _impText = '';
-  var _impRows = null;        /* impParse() ফল; null = এখনো প্রিভিউ হয়নি */
+  /* ══════════════ EXCEL IMPORT (.xlsx ফাইল → প্রিভিউ → সংরক্ষণ) ══════════════ */
+  var _impFileName = '';
   var _impBusy = false;
+  var _impTab = 'expense'; /* expense | income | qard */
+  var _impParsed = null; /* { expense:[], income:[], qardGive:[], qardReturn:[] } */
+
+  var IMP_BOOK_MAP = {
+    'মাতবাখ': 'matbakh', matbakh: 'matbakh',
+    'মাদরাসা': 'madrasa', 'মাদ্রাসা': 'madrasa', madrasa: 'madrasa',
+    'তামিরাত': 'tamirat', tamirat: 'tamirat',
+    'সাধারণ': 'general', general: 'general',
+  };
 
   function impEnDigits(s) {
     return String(s == null ? '' : s)
@@ -2789,10 +2793,29 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       .replace(/[٠-٩]/g, function (d) { return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)); });
   }
 
-  /* তারিখ ঘর: হিজরী (১৪৪৭-১০-০৯ / ৯-১০-১৪৪৭) বা ইংরেজি (২০২৬-০৭-১৪ / ১৪-০৭-২০২৬)।
-     ইংরেজি হলে GREG_HIJRI_RANGES দিয়ে হিজরীতে বদলায়; রেঞ্জের বাইরে হলে err:'range'। */
+  function impNormHeader(h) {
+    return impEnDigits(String(h || ''))
+      .replace(/\*/g, '')
+      .replace(/[_\-–—]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function impCellStr(v) {
+    if (v == null || v === '') return '';
+    if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
+      return v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0') + '-' + String(v.getDate()).padStart(2, '0');
+    }
+    if (typeof v === 'number' && v > 20000 && v < 80000 && typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
+      var p = XLSX.SSF.parse_date_code(v);
+      if (p && p.y) return p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
+    }
+    return String(v).trim();
+  }
+
   function impParseDate(raw) {
-    var t = impEnDigits(String(raw || '').trim());
+    var t = impEnDigits(impCellStr(raw));
     if (!t) return { err: 'empty' };
     var p = t.split(/[-/.\s]+/).map(function (x) { return parseInt(x, 10); });
     if (p.length !== 3 || p.some(function (n) { return isNaN(n); })) return { err: 'format' };
@@ -2814,187 +2837,545 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return { year: g.hijriYear, month: g.month, day: g.day };
   }
 
-  function impParse(text) {
-    var lines = String(text || '').replace(/\r/g, '').split('\n').slice(0, 2000);
-    var rows = [];
-    lines.forEach(function (line, idx) {
-      if (!line.trim()) return;
-      var cols = line.split('\t').map(function (c) { return c.trim(); });
-      var row = { line: idx + 1, cols: cols, status: 'ok', msg: '' };
-      var d = impParseDate(cols[0]);
-      var amt;
-      if (_impType === 'income') {
-        amt = parseFloat(sanitizeNumStr(cols[1] || '')) || 0;
-        row.data = { hijriYear: d.year, month: d.month, day: d.day, amount: amt, note: cols[2] || '' };
-      } else {
-        var qty = sanitizeNumStr(cols[3] || '');
-        var price = sanitizeNumStr(cols[5] || '');
-        amt = parseFloat(sanitizeNumStr(cols[6] || '')) || 0;
-        if (!amt) amt = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
-        row.data = {
-          account: _impAccount, hijriYear: d.year, month: d.month, day: d.day,
-          category: cols[1] || '', description: cols[2] || '',
-          quantity: qty, unit: cols[4] || '', unitPrice: price,
-          amount: amt, supplier: cols[7] || '', receiptNo: cols[8] || '', paymentMethod: 'cash',
-        };
+  function impResolveBook(raw) {
+    var t = impNormHeader(raw);
+    if (!t) return null;
+    if (IMP_BOOK_MAP[t]) return IMP_BOOK_MAP[t];
+    var labels = A.ACCOUNT_LABELS || {};
+    var keys = Object.keys(labels);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] === 'qard' || keys[i] === 'qard_return') continue;
+      if (impNormHeader(labels[keys[i]]) === t || keys[i] === t) return keys[i];
+    }
+    return null;
+  }
+
+  function impResolvePay(raw) {
+    var t = impNormHeader(raw);
+    if (!t || t === 'নগদ' || t === 'cash' || t === 'paid') return 'cash';
+    if (t === 'বাকি' || t === 'due' || t === 'credit' || t === 'বাকী') return 'due';
+    return 'cash';
+  }
+
+  function impResolveQardKind(raw) {
+    var t = impNormHeader(raw);
+    if (t === 'দেওয়া' || t === 'দেওয়া' || t === 'দেয়া' || t === 'give' || t === 'given' || t === 'out') return 'give';
+    if (t === 'আদায়' || t === 'আদায়' || t === 'ফেরত' || t === 'return' || t === 'recovery' || t === 'in') return 'return';
+    return null;
+  }
+
+  function impHeaderIndex(headers, aliases) {
+    var norms = headers.map(impNormHeader);
+    for (var a = 0; a < aliases.length; a++) {
+      var want = impNormHeader(aliases[a]);
+      for (var i = 0; i < norms.length; i++) {
+        if (norms[i] === want || norms[i].indexOf(want) === 0) return i;
       }
-      row.amt = amt;
-      row.date = d;
-      if (d.err) {
+    }
+    return -1;
+  }
+
+  function impSheetKind(name) {
+    var n = impNormHeader(name).replace(/\s+/g, '');
+    if (/নির্দেশ|dashboard|ড্যাশবোর্ড|dash/.test(n)) return 'skip';
+    if (/^করজ|qard|loan/.test(n)) return 'qard';
+    if (/^আয়|^আয়|^income|^inc/.test(n)) return 'income';
+    if (/^ব্যয়|^ব্যয়|^expense|^exp|মাস্টার/.test(n)) return 'expense';
+    return 'skip';
+  }
+
+  function impTplHref() {
+    try {
+      if (/\/admin\/accounts\.html/i.test(location.pathname || '')) return '../templates/daftar-hisab-template.xlsx';
+    } catch (e) {}
+    return 'templates/daftar-hisab-template.xlsx';
+  }
+
+  window.downloadAccHisabTemplate = function () {
+    if (typeof XLSX === 'undefined') { showToast('Excel লাইব্রেরি লোড হয়নি'); return; }
+    try {
+      var wb = XLSX.utils.book_new();
+      var guide = [
+        ['দপ্তর হিসাব — স্ট্যান্ডার্ড Excel টেমপ্লেট'],
+        [],
+        ['শীট', 'ব্যয় · আয় · করজ · ড্যাশবোর্ড (ড্যাশবোর্ড অ্যাপ পড়ে না)'],
+        ['ব্যয়', 'হিসাব বই কলামে মাতবাখ/মাদরাসা/তামিরাত/সাধারণ'],
+        ['মোট টাকা', 'পরিমাণ × একক মূল্য দিলে মোট অটো (অ্যাপের মতো)। বিল হলে শুধু মোট লিখুন।'],
+        ['আয়', 'নিয়মিত আয় — করজ আদায় করজ শীটে'],
+        ['করজ', 'ধরন = দেওয়া বা আদায়; খাত নাম মিল রাখুন'],
+        ['অ্যাপে', 'হিসাব → এক্সেল ↧ → এই ফাইল ভরে আপলোড'],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(guide), 'নির্দেশনা');
+
+      var expHeader = ['হিসাব বই *', 'তারিখ *', 'খাত', 'বিবরণ', 'পরিমাণ', 'মাপ', 'একক মূল্য', 'মোট টাকা (অটো)', 'সরবরাহকারী', 'রশিদ নং', 'পরিশোধ'];
+      var expSamples = [
+        ['মাতবাখ', '1447-10-02', 'কাঁচামাল', 'চাল', 50, 'কেজি', 70, null, 'রহিম স্টোর', '১০১', 'নগদ'],
+        ['মাতবাখ', '1447-10-03', 'কাঁচামাল', 'ডাল', 20, 'কেজি', 120, null, 'রহিম স্টোর', '', 'নগদ'],
+        ['মাদরাসা', '1447-10-04', 'স্টেশনারি', 'খাতা ও কলম', 10, 'প্যাকেট', 80, null, 'বইঘর', '', 'নগদ'],
+        ['তামিরাত', '1447-09-20', 'মেরামত', 'ছাদের প্লাস্টার', 1, 'পিস', 15000, null, 'রাজমিস্ত্রি করিম', '', 'বাকি'],
+        ['সাধারণ', '1447-10-06', 'পরিবহন', 'বাজার আনা-নেওয়া', '', '', '', 500, '', '', 'নগদ'],
+        ['মাদরাসা', '2026-07-10', 'বিদ্যুৎ', 'বিদ্যুৎ বিল', '', '', '', 4500, 'পল্লী বিদ্যুৎ', 'বিল-৮৮', 'নগদ'],
+      ];
+      var expWs = XLSX.utils.aoa_to_sheet([expHeader].concat(expSamples));
+      var maxR = 500;
+      for (var r = 2; r <= maxR; r++) {
+        var isBill = r === 6 || r === 7;
+        if (!isBill) {
+          expWs['H' + r] = { t: 'n', f: 'IF(AND(E' + r + '<>"",G' + r + '<>""),E' + r + '*G' + r + ',"")' };
+        }
+      }
+      /* বিল নমুনা: ম্যানুয়াল মোট */
+      expWs.H6 = { t: 'n', v: 500 };
+      expWs.H7 = { t: 'n', v: 4500 };
+      if (!expWs['!ref']) expWs['!ref'] = 'A1:K' + maxR;
+      else {
+        var range = XLSX.utils.decode_range(expWs['!ref']);
+        if (range.e.r < maxR - 1) range.e.r = maxR - 1;
+        if (range.e.c < 10) range.e.c = 10;
+        expWs['!ref'] = XLSX.utils.encode_range(range);
+      }
+      XLSX.utils.book_append_sheet(wb, expWs, 'ব্যয়');
+
+      var inc = [
+        ['তারিখ *', 'টাকা *', 'উৎস / বিবরণ'],
+        ['1447-10-01', 50000, 'বিকাশ অনুদান'],
+        ['1447-10-05', 12000, 'ওয়াযিফা আদায় — শাওয়াল'],
+        ['2026-07-10', 3000, 'নগদ দান'],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(inc), 'আয়');
+      var qard = [
+        ['ধরন *', 'তারিখ *', 'টাকা *', 'খাত *', 'বিবরণ'],
+        ['দেওয়া', '1447-08-15', 20000, 'করিম ভাই', 'করজে হাসানা'],
+        ['দেওয়া', '1447-09-01', 10000, 'মাদরাসা ফান্ড', 'জরুরি করজ'],
+        ['আদায়', '1447-10-07', 5000, 'করিম ভাই', ''],
+        ['আদায়', '1447-10-11', 2000, 'মাদরাসা ফান্ড', ''],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(qard), 'করজ');
+      var dash = [
+        ['সামারি (অটো — অ্যাপে আপলোড হয় না)'],
+        ['বিবরণ', 'টাকা'],
+        ['মোট ব্যয়', { f: 'SUM(ব্যয়!H:H)' }],
+        ['মোট আয়', { f: 'SUM(আয়!B:B)' }],
+        ['করজ দেওয়া', { f: 'SUMIF(করজ!A:A,"দেওয়া",করজ!C:C)' }],
+        ['করজ আদায়', { f: 'SUMIF(করজ!A:A,"আদায়",করজ!C:C)' }],
+        ['করজ বাকি', { f: 'B5-B6' }],
+        ['নগদ (আনুমানিক)', { f: 'B4-B3-B5+B6' }],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dash), 'ড্যাশবোর্ড');
+      XLSX.writeFile(wb, 'daftar-hisab-template.xlsx');
+      showToast('টেমপ্লেট ডাউনলোড হয়েছে');
+    } catch (err) {
+      console.warn('[Accounts] template download failed', err);
+      try {
+        var a = document.createElement('a');
+        a.href = impTplHref();
+        a.download = 'daftar-hisab-template.xlsx';
+        a.click();
+      } catch (e2) {
+        showToast('টেমপ্লেট ডাউনলোড যায়নি');
+      }
+    }
+  };
+
+  function impMarkRow(row, d, amt) {
+    row.amt = amt;
+    row.date = d;
+    if (d.err) {
+      row.status = 'err';
+      row.msg = d.err === 'range' ? 'ইংরেজি তারিখ সীমার বাইরে' : 'তারিখ বোঝা যায়নি';
+    } else if (!amt || amt <= 0) {
+      row.status = 'err';
+      row.msg = 'টাকার অঙ্ক নেই';
+    }
+    return row;
+  }
+
+  function impParseExpenseSheet(matrix, sheetName) {
+    if (!matrix || !matrix.length) return [];
+    var headers = (matrix[0] || []).map(impCellStr);
+    var iBook = impHeaderIndex(headers, ['হিসাব বই', 'বই', 'account', 'book']);
+    var iDate = impHeaderIndex(headers, ['তারিখ', 'date']);
+    var iCat = impHeaderIndex(headers, ['খাত', 'category']);
+    var iDesc = impHeaderIndex(headers, ['বিবরণ', 'description', 'item']);
+    var iQty = impHeaderIndex(headers, ['পরিমাণ', 'quantity', 'qty']);
+    var iUnit = impHeaderIndex(headers, ['মাপ', 'unit']);
+    var iPrice = impHeaderIndex(headers, ['একক মূল্য', 'একক দর', 'দর', 'unit price', 'price']);
+    var iAmt = impHeaderIndex(headers, ['মোট টাকা', 'মোট টাকা (অটো)', 'মোট', 'টাকা', 'amount']);
+    var iSup = impHeaderIndex(headers, ['সরবরাহকারী', 'supplier']);
+    var iRec = impHeaderIndex(headers, ['রশিদ নং', 'রশিদ', 'receipt']);
+    var iPay = impHeaderIndex(headers, ['পরিশোধ', 'payment']);
+    if (iDate < 0) return [{ line: 1, sheet: sheetName, status: 'err', msg: 'ব্যয় শীটে «তারিখ» কলাম লাগবে', amt: 0 }];
+    if (iAmt < 0 && (iQty < 0 || iPrice < 0)) {
+      return [{ line: 1, sheet: sheetName, status: 'err', msg: 'ব্যয় শীটে «মোট টাকা» বা পরিমাণ+একক মূল্য কলাম লাগবে', amt: 0 }];
+    }
+    var rows = [];
+    for (var r = 1; r < matrix.length && rows.length < 2000; r++) {
+      var cols = matrix[r] || [];
+      if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
+      var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
+      var row = { line: r + 1, sheet: sheetName, status: 'ok', msg: '', kind: 'expense' };
+      var book = iBook >= 0 ? impResolveBook(get(iBook)) : null;
+      if (iBook >= 0 && !book) {
         row.status = 'err';
-        row.msg = d.err === 'range' ? 'ইংরেজি তারিখ সীমার বাইরে' : 'তারিখ বোঝা যায়নি';
-      } else if (!amt || amt <= 0) {
+        row.msg = 'হিসাব বই বোঝা যায়নি («' + get(iBook) + '»)';
+        row.amt = 0;
+        rows.push(row);
+        continue;
+      }
+      if (!book) book = 'general';
+      var d = impParseDate(get(iDate));
+      var qty = sanitizeNumStr(get(iQty));
+      var price = sanitizeNumStr(get(iPrice));
+      var amt = parseFloat(sanitizeNumStr(get(iAmt))) || 0;
+      if (!amt) amt = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
+      var pay = impResolvePay(get(iPay));
+      var supplier = get(iSup);
+      row.data = {
+        account: book, hijriYear: d.year, month: d.month, day: d.day,
+        category: get(iCat), description: get(iDesc),
+        quantity: qty, unit: get(iUnit), unitPrice: price,
+        amount: amt, supplier: supplier, receiptNo: get(iRec), paymentMethod: pay,
+      };
+      impMarkRow(row, d, amt);
+      if (row.status === 'ok' && pay === 'due' && !supplier) {
         row.status = 'err';
-        row.msg = 'টাকার অঙ্ক নেই';
+        row.msg = 'বাকি হলে সরবরাহকারী লাগবে';
       }
       rows.push(row);
-    });
-    /* প্রথম সারিতে কোনো সংখ্যাই না থাকলে সেটা শিরোনাম ধরে বাদ দেওয়া হয় */
-    if (rows.length && rows[0].status === 'err' && !/[0-9০-৯٠-٩]/.test(rows[0].cols.join(''))) {
-      rows[0].status = 'head';
-      rows[0].msg = 'শিরোনাম সারি — বাদ যাবে';
     }
     return rows;
   }
 
-  function impBookOptions() {
-    return expenseBookEntries().filter(function (e) { return e[0] !== 'qard'; }).map(function (e) {
-      return '<option value="' + esc(e[0]) + '"' + (_impAccount === e[0] ? ' selected' : '') + '>' + esc(e[1]) + '</option>';
-    }).join('');
+  function impParseIncomeSheet(matrix, sheetName) {
+    if (!matrix || !matrix.length) return [];
+    var headers = (matrix[0] || []).map(impCellStr);
+    var iDate = impHeaderIndex(headers, ['তারিখ', 'date']);
+    var iAmt = impHeaderIndex(headers, ['টাকা', 'পরিমাণ', 'amount', 'মোট']);
+    var iNote = impHeaderIndex(headers, ['উৎস / বিবরণ', 'উৎস', 'বিবরণ', 'note', 'source']);
+    if (iDate < 0 || iAmt < 0) return [{ line: 1, sheet: sheetName, status: 'err', msg: 'আয় শীটে «তারিখ» ও «টাকা» কলাম লাগবে', amt: 0 }];
+    var rows = [];
+    for (var r = 1; r < matrix.length && rows.length < 2000; r++) {
+      var cols = matrix[r] || [];
+      if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
+      var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
+      var row = { line: r + 1, sheet: sheetName, status: 'ok', msg: '', kind: 'income' };
+      var d = impParseDate(get(iDate));
+      var amt = parseFloat(sanitizeNumStr(get(iAmt))) || 0;
+      row.data = { hijriYear: d.year, month: d.month, day: d.day, amount: amt, note: get(iNote) };
+      rows.push(impMarkRow(row, d, amt));
+    }
+    return rows;
   }
 
-  function impColChips(cols) {
-    return '<div class="acc-imp-cols">' + cols.map(function (c, i) {
-      return '<span class="acc-imp-col' + (c.req ? ' req' : '') + '">' + bn(i + 1) + '. ' + esc(c.n) + (c.req ? ' *' : '') + '</span>';
-    }).join('') + '</div>';
+  function impParseQardSheet(matrix, sheetName) {
+    if (!matrix || !matrix.length) return { give: [], ret: [] };
+    var headers = (matrix[0] || []).map(impCellStr);
+    var iKind = impHeaderIndex(headers, ['ধরন', 'type', 'kind']);
+    var iDate = impHeaderIndex(headers, ['তারিখ', 'date']);
+    var iAmt = impHeaderIndex(headers, ['টাকা', 'পরিমাণ', 'amount', 'মোট']);
+    var iCat = impHeaderIndex(headers, ['খাত', 'category', 'নাম']);
+    var iNote = impHeaderIndex(headers, ['বিবরণ', 'মন্তব্য', 'note']);
+    if (iKind < 0 || iDate < 0 || iAmt < 0 || iCat < 0) {
+      var err = [{ line: 1, sheet: sheetName, status: 'err', msg: 'করজ শীটে ধরন/তারিখ/টাকা/খাত কলাম লাগবে', amt: 0 }];
+      return { give: err, ret: [] };
+    }
+    var give = [], ret = [];
+    for (var r = 1; r < matrix.length && (give.length + ret.length) < 2000; r++) {
+      var cols = matrix[r] || [];
+      if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
+      var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
+      var kind = impResolveQardKind(get(iKind));
+      var row = { line: r + 1, sheet: sheetName, status: 'ok', msg: '', kind: kind === 'return' ? 'qardReturn' : 'qardGive' };
+      if (!kind) {
+        row.status = 'err';
+        row.msg = 'ধরন «দেওয়া» বা «আদায়» হতে হবে';
+        row.amt = 0;
+        give.push(row);
+        continue;
+      }
+      var d = impParseDate(get(iDate));
+      var amt = parseFloat(sanitizeNumStr(get(iAmt))) || 0;
+      var cat = get(iCat);
+      var note = get(iNote);
+      if (!cat) {
+        row.status = 'err';
+        row.msg = 'খাতের নাম লাগবে';
+        row.amt = amt;
+        row.date = d;
+        (kind === 'give' ? give : ret).push(row);
+        continue;
+      }
+      if (kind === 'give') {
+        row.data = {
+          account: 'qard', hijriYear: d.year, month: d.month, day: d.day,
+          category: cat, description: note || '', quantity: '', unit: '', unitPrice: '',
+          amount: amt, supplier: '', receiptNo: '', paymentMethod: 'cash',
+        };
+        give.push(impMarkRow(row, d, amt));
+      } else {
+        row.data = {
+          account: 'qard_return', hijriYear: d.year, month: d.month, day: d.day,
+          amount: amt, note: 'করজে হাসানা আদায় — ' + cat + (note ? ' — ' + note : ''), source: 'করজে হাসানা',
+        };
+        ret.push(impMarkRow(row, d, amt));
+      }
+    }
+    return { give: give, ret: ret };
+  }
+
+  function impParseWorkbook(wb) {
+    var out = { expense: [], income: [], qardGive: [], qardReturn: [] };
+    var names = wb.SheetNames || [];
+    var found = false;
+    names.forEach(function (name) {
+      var kind = impSheetKind(name);
+      if (kind === 'skip') return;
+      found = true;
+      var sheet = wb.Sheets[name];
+      var matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+      if (kind === 'expense') out.expense = out.expense.concat(impParseExpenseSheet(matrix, name));
+      else if (kind === 'income') out.income = out.income.concat(impParseIncomeSheet(matrix, name));
+      else if (kind === 'qard') {
+        var q = impParseQardSheet(matrix, name);
+        out.qardGive = out.qardGive.concat(q.give);
+        out.qardReturn = out.qardReturn.concat(q.ret);
+      }
+    });
+    if (!found) {
+      out.expense = [{ line: 1, sheet: '', status: 'err', msg: 'ব্যয়/আয়/করজ নামের কোনো শীট পাওয়া যায়নি', amt: 0 }];
+    }
+    return out;
+  }
+
+  function impAllRows() {
+    if (!_impParsed) return [];
+    return [].concat(_impParsed.expense || [], _impParsed.income || [], _impParsed.qardGive || [], _impParsed.qardReturn || []);
+  }
+
+  function impTabRows() {
+    if (!_impParsed) return [];
+    if (_impTab === 'income') return _impParsed.income || [];
+    if (_impTab === 'qard') return [].concat(_impParsed.qardGive || [], _impParsed.qardReturn || []);
+    return _impParsed.expense || [];
+  }
+
+  function impOkRows() {
+    return impAllRows().filter(function (r) { return r.status === 'ok'; });
+  }
+
+  function bindAccImpDrop() {
+    var drop = document.getElementById('acc-imp-drop');
+    var input = document.getElementById('acc-imp-file');
+    if (!drop || !input) return;
+    drop.addEventListener('click', function () { input.click(); });
+    drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('is-drag'); });
+    drop.addEventListener('dragleave', function () { drop.classList.remove('is-drag'); });
+    drop.addEventListener('drop', function (e) {
+      e.preventDefault();
+      drop.classList.remove('is-drag');
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) window.handleAccImpFile(f);
+    });
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (f) window.handleAccImpFile(f);
+      input.value = '';
+    });
   }
 
   function renderAccImport() {
     var root = document.getElementById('acc-import-root');
     if (!root) return;
-    var isExp = _impType === 'expense';
-    var head =
-      '<div class="acc-imp-typerow">' +
-      '<button type="button" class="acc-imp-type-btn' + (isExp ? ' is-on is-exp' : '') + '" onclick="setAccImpType(\'expense\')">ব্যয়</button>' +
-      '<button type="button" class="acc-imp-type-btn' + (!isExp ? ' is-on is-inc' : '') + '" onclick="setAccImpType(\'income\')">আয়</button>' +
-      (isExp ? '<select class="form-input form-select acc-imp-acc" onchange="setAccImpAccount(this.value)">' + impBookOptions() + '</select>' : '') +
-      '</div>';
-    var chips = isExp
-      ? impColChips([{ n: 'তারিখ', req: 1 }, { n: 'খাত' }, { n: 'বিবরণ' }, { n: 'পরিমাণ' }, { n: 'মাপ' }, { n: 'একক দর' }, { n: 'মোট টাকা', req: 1 }, { n: 'সরবরাহকারী' }, { n: 'রশিদ নং' }])
-      : impColChips([{ n: 'তারিখ', req: 1 }, { n: 'টাকা', req: 1 }, { n: 'উৎস / বিবরণ' }]);
     var help =
-      '<div class="acc-imp-help"><b>Excel-এ কলামগুলো এই ক্রমে সাজিয়ে</b> সারিগুলো কপি (Ctrl+C) করে নিচের বক্সে পেস্ট (Ctrl+V) করুন:' +
-      chips +
-      '<b>*</b> চিহ্নিত ঘর আবশ্যক' + (isExp ? ' (পরিমাণ ও একক দর থাকলে মোট টাকা নিজে নিজে হিসাব হবে)' : '') + ', বাকি ঘর খালি থাকলেও চলবে। ' +
-      'তারিখ হিজরী (১৪৪৭-১০-০৯) বা ইংরেজি (২০২৬-০৭-১৪ / ১৪-০৭-২০২৬) — দুইভাবেই লেখা যায়।' +
-      (isExp ? ' সব এন্ট্রি <b>নগদ</b> হিসেবে যুক্ত হবে।' : '') +
+      '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>। ' +
+      'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বই</b> কলাম থেকে বই অটো-সাজানো হয়। ' +
+      'মোট টাকা = পরিমাণ × একক মূল্য (অটো); বিল হলে শুধু মোট দিলেই চলবে।' +
+      '<br><button type="button" class="acc-imp-tpl" onclick="downloadAccHisabTemplate()">⬇ খালি টেমপ্লেট ডাউনলোড</button></div>';
+    var drop =
+      '<div class="acc-imp-drop" id="acc-imp-drop" role="button" tabindex="0">' +
+      '<p class="acc-imp-drop-title">Excel ফাইল এখানে রাখুন বা বেছে নিন</p>' +
+      '<p class="acc-imp-drop-sub">শুধু .xlsx · ব্যয় + আয় + করজ একসাথে</p>' +
+      '<input type="file" id="acc-imp-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>' +
       '</div>';
-    var body =
-      '<textarea id="acc-imp-text" class="acc-imp-textarea" wrap="off" spellcheck="false" placeholder="এখানে পেস্ট করুন…">' + esc(_impText) + '</textarea>' +
-      '<div class="acc-imp-actions"><button type="button" class="acc-imp-preview-btn" onclick="previewAccImport()">প্রিভিউ দেখুন</button></div>';
-    root.innerHTML = head + help + body + '<div id="acc-imp-preview">' + buildImpPreview() + '</div>';
+    var fileRow = _impFileName
+      ? '<div class="acc-imp-file-row"><span class="acc-imp-file-name">📄 ' + esc(_impFileName) + '</span>' +
+        '<button type="button" class="acc-imp-clear" onclick="clearAccImpFile()">সরান</button></div>'
+      : '';
+    root.innerHTML = help + drop + fileRow + '<div id="acc-imp-preview">' + buildImpPreview() + '</div>';
+    bindAccImpDrop();
   }
 
   function buildImpPreview() {
-    if (!_impRows) return '';
-    if (!_impRows.length) return '<div class="acc-empty">বক্সে কোনো সারি পাওয়া যায়নি</div>';
-    var isExp = _impType === 'expense';
-    var okRows = _impRows.filter(function (r) { return r.status === 'ok'; });
-    var errN = _impRows.filter(function (r) { return r.status === 'err'; }).length;
-    var savedN = _impRows.filter(function (r) { return r.status === 'saved'; }).length;
-    var totalAmt = okRows.reduce(function (s, r) { return s + (r.amt || 0); }, 0);
-    var statusLabel = { ok: '✓ ঠিক আছে', err: '', head: '', saved: 'সংরক্ষিত ✓' };
-    var ths = isExp
-      ? '<th>#</th><th>তারিখ</th><th>খাত</th><th>বিবরণ</th><th>পরিমাণ</th><th>মাপ</th><th>দর</th><th>মোট</th><th>সরবরাহকারী</th><th>রশিদ</th><th>অবস্থা</th>'
-      : '<th>#</th><th>তারিখ</th><th>টাকা</th><th>উৎস / বিবরণ</th><th>অবস্থা</th>';
-    var trs = _impRows.map(function (r) {
+    if (!_impParsed) return '';
+    var all = impAllRows();
+    if (!all.length) return '<div class="acc-empty">ফাইলে কোনো ডেটা সারি পাওয়া যায়নি</div>';
+    var okAll = impOkRows();
+    var errN = all.filter(function (r) { return r.status === 'err'; }).length;
+    var savedN = all.filter(function (r) { return r.status === 'saved'; }).length;
+    var tabs =
+      '<div class="acc-imp-tabs">' +
+      '<button type="button" class="acc-imp-tab' + (_impTab === 'expense' ? ' is-on' : '') + '" onclick="setAccImpTab(\'expense\')">ব্যয় (' + bn((_impParsed.expense || []).length) + ')</button>' +
+      '<button type="button" class="acc-imp-tab' + (_impTab === 'income' ? ' is-on' : '') + '" onclick="setAccImpTab(\'income\')">আয় (' + bn((_impParsed.income || []).length) + ')</button>' +
+      '<button type="button" class="acc-imp-tab' + (_impTab === 'qard' ? ' is-on' : '') + '" onclick="setAccImpTab(\'qard\')">করজ (' + bn(((_impParsed.qardGive || []).length + (_impParsed.qardReturn || []).length)) + ')</button>' +
+      '</div>';
+    var rows = impTabRows();
+    var okTab = rows.filter(function (r) { return r.status === 'ok'; });
+    var totalAmt = okTab.reduce(function (s, r) { return s + (r.amt || 0); }, 0);
+    var statusLabel = { ok: '✓ ঠিক আছে', err: '', saved: 'সংরক্ষিত ✓' };
+    var ths;
+    if (_impTab === 'income') ths = '<th>#</th><th>তারিখ</th><th>টাকা</th><th>উৎস / বিবরণ</th><th>অবস্থা</th>';
+    else if (_impTab === 'qard') ths = '<th>#</th><th>ধরন</th><th>তারিখ</th><th>টাকা</th><th>খাত</th><th>অবস্থা</th>';
+    else ths = '<th>#</th><th>বই</th><th>তারিখ</th><th>খাত</th><th>বিবরণ</th><th>মোট</th><th>সরবরাহকারী</th><th>পরিশোধ</th><th>অবস্থা</th>';
+    var trs = rows.map(function (r) {
       var d = r.data || {};
       var okDate = r.status === 'ok' || r.status === 'saved';
-      var dateTxt = okDate ? bn(A.dateKey(r.date.year, r.date.month, r.date.day)) : esc(r.cols[0] || '');
-      var st = '<span class="acc-imp-status ' + r.status + '">' + esc(statusLabel[r.status] || r.msg) + '</span>';
-      var cells = isExp
-        ? '<td>' + dateTxt + '</td><td>' + esc(d.category || '') + '</td><td>' + esc(d.description || '') + '</td><td>' + bn(d.quantity || '') + '</td><td>' + esc(d.unit || '') + '</td><td>' + bn(d.unitPrice || '') + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.supplier || '') + '</td><td>' + esc(d.receiptNo || '') + '</td>'
-        : '<td>' + dateTxt + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.note || '') + '</td>';
+      var dateTxt = okDate && r.date && !r.date.err ? bn(A.dateKey(r.date.year, r.date.month, r.date.day)) : '—';
+      var st = '<span class="acc-imp-status ' + r.status + '">' + esc(statusLabel[r.status] || r.msg || '') + '</span>';
+      var cells;
+      if (_impTab === 'income') {
+        cells = '<td>' + dateTxt + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.note || '') + '</td>';
+      } else if (_impTab === 'qard') {
+        var qKind = r.kind === 'qardReturn' ? 'আদায়' : 'দেওয়া';
+        var qCat = r.kind === 'qardReturn'
+          ? String(d.note || '').replace(/^করজে হাসানা আদায় —\s*/, '').split(' — ')[0]
+          : (d.category || '');
+        cells = '<td>' + esc(qKind) + '</td><td>' + dateTxt + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(qCat) + '</td>';
+      } else {
+        cells = '<td>' + esc(A.ACCOUNT_LABELS[d.account] || d.account || '') + '</td><td>' + dateTxt + '</td><td>' + esc(d.category || '') + '</td><td>' + esc(d.description || '') + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.supplier || '') + '</td><td>' + esc(d.paymentMethod === 'due' ? 'বাকি' : 'নগদ') + '</td>';
+      }
       return '<tr class="is-' + r.status + '"><td>' + bn(r.line) + '</td>' + cells + '<td>' + st + '</td></tr>';
     }).join('');
+    if (!rows.length) trs = '<tr><td colspan="9" style="text-align:center;color:var(--ink3)">এই ট্যাবে সারি নেই</td></tr>';
     var pills =
       '<div class="acc-imp-summary">' +
-      '<span class="acc-imp-pill">মোট সারি: ' + bn(_impRows.length) + '</span>' +
-      '<span class="acc-imp-pill ok">ঠিক আছে: ' + bn(okRows.length) + '</span>' +
+      '<span class="acc-imp-pill">মোট সারি: ' + bn(all.length) + '</span>' +
+      '<span class="acc-imp-pill ok">ঠিক আছে: ' + bn(okAll.length) + '</span>' +
       (errN ? '<span class="acc-imp-pill err">সমস্যা: ' + bn(errN) + '</span>' : '') +
       (savedN ? '<span class="acc-imp-pill ok">সংরক্ষিত: ' + bn(savedN) + '</span>' : '') +
-      '<span class="acc-imp-pill">মোট টাকা: ৳' + fa(totalAmt) + '</span>' +
+      '<span class="acc-imp-pill">এই ট্যাব: ৳' + fa(totalAmt) + '</span>' +
       '</div>';
-    var saveBtn = '<button type="button" class="submit-btn gold" id="acc-imp-save" onclick="saveAccImport()"' + (okRows.length && !_impBusy ? '' : ' disabled') + '>' +
-      (okRows.length ? '✓ ' + count(okRows.length, 'টি') + ' এন্ট্রি সংরক্ষণ করুন' : 'সংরক্ষণের মতো সারি নেই') + '</button>';
-    return pills + '<div class="acc-imp-wrap"><table class="acc-imp-table"><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table></div>' + saveBtn;
+    var saveBtn = '<button type="button" class="submit-btn gold" id="acc-imp-save" onclick="saveAccImport()"' + (okAll.length && !_impBusy ? '' : ' disabled') + '>' +
+      (okAll.length ? '✓ ' + count(okAll.length, 'টি') + ' এন্ট্রি সংরক্ষণ করুন' : 'সংরক্ষণের মতো সারি নেই') + '</button>';
+    return tabs + pills + '<div class="acc-imp-wrap"><table class="acc-imp-table"><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table></div>' + saveBtn;
   }
 
   window.openAccImportModal = function () {
     if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না'); return; }
-    _impRows = null;
+    if (typeof XLSX === 'undefined') { showToast('Excel লাইব্রেরি লোড হয়নি — পেজ রিফ্রেশ করে আবার চেষ্টা করুন'); return; }
+    _impParsed = null;
+    _impFileName = '';
     _impBusy = false;
+    _impTab = 'expense';
     renderAccImport();
     openModal('account-import');
   };
 
-  window.setAccImpType = function (t) {
-    var ta = document.getElementById('acc-imp-text');
-    if (ta) _impText = ta.value;
-    _impType = t === 'income' ? 'income' : 'expense';
-    _impRows = null; /* কলাম বিন্যাস বদলায়, তাই আগের প্রিভিউ বাতিল */
-    renderAccImport();
-  };
-
-  window.setAccImpAccount = function (v) {
-    _impAccount = v;
-    if (_impRows) _impRows.forEach(function (r) { if (r.data) r.data.account = v; });
-  };
-
-  window.previewAccImport = function () {
-    var ta = document.getElementById('acc-imp-text');
-    _impText = ta ? ta.value : '';
-    if (!_impText.trim()) { showToast('Excel থেকে কপি করে বক্সে পেস্ট করুন'); return; }
-    _impRows = impParse(_impText);
-    renderAccImport();
+  window.setAccImpTab = function (t) {
+    _impTab = t === 'income' ? 'income' : (t === 'qard' ? 'qard' : 'expense');
     var pv = document.getElementById('acc-imp-preview');
-    if (pv) pv.scrollIntoView({ block: 'nearest' });
+    if (pv) pv.innerHTML = buildImpPreview();
+  };
+
+  window.clearAccImpFile = function () {
+    _impParsed = null;
+    _impFileName = '';
+    renderAccImport();
+  };
+
+  window.handleAccImpFile = function (file) {
+    if (!file) return;
+    var name = String(file.name || '');
+    if (!/\.xlsx$/i.test(name)) { showToast('শুধু .xlsx ফাইল দিন'); return; }
+    if (typeof XLSX === 'undefined') { showToast('Excel লাইব্রেরি লোড হয়নি'); return; }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      try {
+        var data = new Uint8Array(ev.target.result);
+        var wb = XLSX.read(data, { type: 'array', cellDates: true });
+        _impFileName = name;
+        _impParsed = impParseWorkbook(wb);
+        if ((_impParsed.expense || []).length) _impTab = 'expense';
+        else if ((_impParsed.income || []).length) _impTab = 'income';
+        else _impTab = 'qard';
+        renderAccImport();
+        var pv = document.getElementById('acc-imp-preview');
+        if (pv) pv.scrollIntoView({ block: 'nearest' });
+        var okN = impOkRows().length;
+        var errN = impAllRows().filter(function (r) { return r.status === 'err'; }).length;
+        showToast(okN ? (bn(okN) + 'টি ঠিক আছে' + (errN ? ', ' + bn(errN) + 'টি সমস্যা' : '')) : 'সঠিক সারি পাওয়া যায়নি');
+      } catch (err) {
+        console.warn('[Accounts] xlsx parse failed', err);
+        showToast('ফাইল পড়া যায়নি — টেমপ্লেট ফরম্যাট যাচাই করুন');
+      }
+    };
+    reader.onerror = function () { showToast('ফাইল পড়া যায়নি'); };
+    reader.readAsArrayBuffer(file);
   };
 
   window.saveAccImport = async function () {
     if (_impBusy) return;
     if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না'); return; }
-    var ta = document.getElementById('acc-imp-text');
-    if (ta && ta.value !== _impText) { window.previewAccImport(); showToast('ডেটা বদলেছে — নতুন প্রিভিউ দেখে আবার সংরক্ষণ চাপুন'); return; }
-    var rows = (_impRows || []).filter(function (r) { return r.status === 'ok'; });
-    if (!rows.length) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
+    var okExpense = (_impParsed && _impParsed.expense || []).filter(function (r) { return r.status === 'ok'; });
+    var okIncome = (_impParsed && _impParsed.income || []).filter(function (r) { return r.status === 'ok'; });
+    var okQardG = (_impParsed && _impParsed.qardGive || []).filter(function (r) { return r.status === 'ok'; });
+    var okQardR = (_impParsed && _impParsed.qardReturn || []).filter(function (r) { return r.status === 'ok'; });
+    var totalOk = okExpense.length + okIncome.length + okQardG.length + okQardR.length;
+    if (!totalOk) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
     if (!A.remoteReady || !A.remoteReady()) { showToast('সার্ভার সংযোগ নেই — নেট/লগইন দেখে আবার চেষ্টা করুন'); return; }
     _impBusy = true;
     var btn = document.getElementById('acc-imp-save');
-    function prog(done, total) { if (btn) btn.textContent = 'আপলোড হচ্ছে… ' + bn(done) + '/' + bn(total); }
-    if (btn) { btn.disabled = true; prog(0, rows.length); }
+    var done = 0;
+    function prog() { if (btn) btn.textContent = 'আপলোড হচ্ছে… ' + bn(done) + '/' + bn(totalOk); }
+    function markListSaved(list) {
+      (list || []).forEach(function (r) { r.status = 'saved'; r.msg = ''; });
+    }
+    if (btn) { btn.disabled = true; prog(); }
     try {
-      var list = rows.map(function (r) { return r.data; });
-      if (_impType === 'income') await A.Income.bulkAdd(list, prog);
-      else await A.Expense.bulkAdd(list, prog);
+      var expList = okExpense.concat(okQardG).map(function (r) { return r.data; });
+      var incList = okIncome.concat(okQardR).map(function (r) { return r.data; });
+      if (expList.length) {
+        await A.Expense.bulkAdd(expList, function (d) { done = d; prog(); });
+        markListSaved(okExpense);
+        markListSaved(okQardG);
+        done = expList.length;
+        prog();
+      }
+      if (incList.length) {
+        var base = done;
+        await A.Income.bulkAdd(incList, function (d) { done = base + d; prog(); });
+        markListSaved(okIncome);
+        markListSaved(okQardR);
+        done = expList.length + incList.length;
+        prog();
+      }
+      for (var i = 0; i < okExpense.length; i++) {
+        var ed = (okExpense[i].data || {});
+        if (ed.paymentMethod === 'due' && ed.supplier) {
+          try { await A.Dues.addOrUpdate(ed.supplier, ed.account, ed.amount); } catch (eDue) {
+            console.warn('[Accounts] import due update failed', eDue);
+          }
+        }
+      }
       _impBusy = false;
-      _impRows = null;
-      _impText = '';
+      _impParsed = null;
+      _impFileName = '';
       closeModal('account-import');
       refreshAccountsViews();
-      showToast(count(rows.length, 'টি') + ' এন্ট্রি যুক্ত হয়েছে ✓');
+      showToast(count(totalOk, 'টি') + ' এন্ট্রি যুক্ত হয়েছে ✓');
     } catch (err) {
       console.warn('[Accounts] excel import failed', err);
       _impBusy = false;
       var up = err && err.uploadedCount ? err.uploadedCount : 0;
+      /* বর্তমান ব্যাচের আংশিক আপলোড মার্ক — আগে ব্যয়, পরে আয় */
       if (up > 0) {
-        /* যেগুলো সার্ভারে গেছে সেগুলো তালিকায় "সংরক্ষিত" হয়ে যায় — আবার সেভ চাপলে ডাবল হবে না */
         var left = up;
-        _impRows.forEach(function (r) { if (r.status === 'ok' && left > 0) { r.status = 'saved'; r.msg = ''; left--; } });
-        showToast(bn(up) + 'টি সংরক্ষিত হয়েছে — বাকিগুলোর জন্য আবার "সংরক্ষণ" চাপুন');
-      } else {
-        showToast('ডাটাবেজে সংরক্ষণ হয়নি — আবার চেষ্টা করুন');
+        [].concat(okExpense, okQardG, okIncome, okQardR).forEach(function (r) {
+          if (r.status === 'ok' && left > 0) { r.status = 'saved'; r.msg = ''; left--; }
+        });
       }
+      showToast(up > 0
+        ? (bn(up) + 'টি এই ধাপে সংরক্ষিত — বাকিগুলোর জন্য আবার "সংরক্ষণ" চাপুন')
+        : 'ডাটাবেজে সংরক্ষণ হয়নি — আবার চেষ্টা করুন');
       refreshAccountsViews();
       renderAccImport();
     }

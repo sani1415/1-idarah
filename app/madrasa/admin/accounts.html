@@ -194,6 +194,14 @@
   </div>
 </div>
 
+<!-- EXCEL IMPORT MODAL -->
+<div class="modal-bg" id="modal-account-import">
+  <div class="modal">
+    <div class="modal-title">Excel ফাইল থেকে হিসাব আনুন <button type="button" class="modal-close" onclick="closeModal('account-import')">✕</button></div>
+    <div id="acc-import-root"></div>
+  </div>
+</div>
+
 <!-- কর্মসূচি মডাল (হাব ট্যাব) -->
 <div class="modal-bg" id="modal-program">
   <div class="modal">
@@ -287,8 +295,9 @@
 <script src="../../js/api/api-shared.js"></script>
 <script src="../../js/core/mm-session.js"></script>
 <script src="../../js/core/mm-hijri.js"></script>
-<script src="../../js/madrasa/madrasa-accounts-api.js?v=20260714-excel-import"></script>
-<script src="../../js/madrasa/madrasa-daftar-accounts.js?v=20260714-main-qard-cash"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="../../js/madrasa/madrasa-accounts-api.js?v=20260714-xlsx-auto-total"></script>
+<script src="../../js/madrasa/madrasa-daftar-accounts.js?v=20260714-xlsx-auto-total"></script>
 <script src="../../js/madrasa/madrasa-accounts-reports.js?v=20260714-rpt-qard-supplier"></script>
 <script src="../../js/api/api.js"></script>
 <script src="../../js/shared/mm-student-modal.js"></script>
