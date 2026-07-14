@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""দপ্তর হিসাব — স্ট্যান্ডার্ড .xlsx টেমপ্লেট (অ্যাপ ফাইল-আপলোড ইমপোর্ট)।"""
+"""দপ্তর হিসাব — স্ট্যান্ডার্ড .xlsx টেমপ্লেট (অ্যাপ ফাইল-আপলোড ইমপোর্ট)।
+
+Source of truth for in-app «টেমপ্লেট ডাউনলোড».
+Writes:
+  app/madrasa/templates/daftar-hisab-template.xlsx  (served by the app)
+  output/daftar-hisab-template.xlsx                 (local copy)
+"""
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter

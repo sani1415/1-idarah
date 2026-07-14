@@ -587,9 +587,11 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 .acc-imp-table th{position:sticky;top:0;background:#faf3e8;color:var(--ink3);font-size:10px;font-weight:900;text-align:left;padding:7px 8px;border-bottom:1px solid rgba(26,18,8,.08);white-space:nowrap;z-index:1}
 .acc-imp-table td{padding:6px 8px;border-bottom:1px solid rgba(26,18,8,.06);white-space:nowrap;background:#fff;color:var(--ink2)}
 .acc-imp-table tr.is-err td{background:#fff6f2}
+.acc-imp-table tr.is-dup td{background:#fff8e8}
 .acc-imp-table tr.is-saved td{background:#f2faf7}
 .acc-imp-status{font-size:10px;font-weight:800}
-.acc-imp-status.ok,.acc-imp-status.saved{color:var(--green)}.acc-imp-status.err{color:var(--red)}
+.acc-imp-status.ok,.acc-imp-status.saved{color:var(--green)}.acc-imp-status.err{color:var(--red)}.acc-imp-status.dup{color:#a67c1f}
+.acc-imp-pill.dup{color:#a67c1f;border-color:rgba(154,106,33,.35);background:#fff8e8}
 #acc-imp-save{margin-top:10px}
 /* ── Report workspace ── */
 .acc-ws{padding:0 4px 12px}
@@ -1427,10 +1429,10 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var regularMetrics = '<div class="acc-summary-section">' +
       '<div class="acc-summary-head"><div class="acc-summary-title">সারসংক্ষেপ</div><div class="acc-summary-note">নগদ = আয় − ব্যয় − করজ দেওয়া + করজ আদায়</div></div>' +
       '<div class="acc-metrics">' +
-      '<button type="button" class="acc-metric acc-metric-click good" onclick="openAccMetricModal(\'income\')"><div class="acc-metric-lbl">নিয়মিত আয়</div><div class="acc-metric-val">৳' + fa(s.regularIncome) + '</div></button>' +
-      '<button type="button" class="acc-metric acc-metric-click bad" onclick="openAccMetricModal(\'expense\')"><div class="acc-metric-lbl">নিয়মিত ব্যয়</div><div class="acc-metric-val">৳' + fa(s.regularExpense) + '</div></button>' +
-      '<div class="acc-metric ' + balCls + '"><div class="acc-metric-lbl">আয়-ব্যয় ব্যালেন্স</div><div class="acc-metric-val">' + (s.operatingBalance < 0 ? '−' : '+') + '৳' + fa(Math.abs(s.operatingBalance)) + '</div></div>' +
-      '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccMetricModal(\'dues\')"><div class="acc-metric-lbl">বর্তমান বকেয়া</div><div class="acc-metric-val">৳' + fa(s.supplierDue) + '</div></button>' +
+      '<button type="button" class="acc-metric acc-metric-click good" onclick="openAccMetricModal(\'income\')"><div class="acc-metric-lbl">আয়</div><div class="acc-metric-val">৳' + fa(s.regularIncome) + '</div></button>' +
+      '<button type="button" class="acc-metric acc-metric-click bad" onclick="openAccMetricModal(\'expense\')"><div class="acc-metric-lbl">ব্যয়</div><div class="acc-metric-val">৳' + fa(s.regularExpense) + '</div></button>' +
+      '<div class="acc-metric ' + balCls + '"><div class="acc-metric-lbl">বর্তমান</div><div class="acc-metric-val">' + (s.operatingBalance < 0 ? '−' : '+') + '৳' + fa(Math.abs(s.operatingBalance)) + '</div></div>' +
+      '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccMetricModal(\'dues\')"><div class="acc-metric-lbl">বকেয়া</div><div class="acc-metric-val">৳' + fa(s.supplierDue) + '</div></button>' +
       '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ</div><div class="acc-metric-val">৳' + fa(s.qardRemaining) + '</div></button>' +
       '<div class="acc-metric ' + cashCls + '"><div class="acc-metric-lbl">নগদ</div><div class="acc-metric-val">' + (s.cashFlow < 0 ? '−' : '') + '৳' + fa(Math.abs(s.cashFlow)) + '</div></div>' +
       '</div></div>';
@@ -2884,6 +2886,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return 'skip';
   }
 
+  /** openpyxl স্ক্রিপ্টের একই ফাইল — scripts/make-hisab-excel-template.py */
   function impTplHref() {
     try {
       if (/\/admin\/accounts\.html/i.test(location.pathname || '')) return '../templates/daftar-hisab-template.xlsx';
@@ -2892,118 +2895,28 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   }
 
   window.downloadAccHisabTemplate = function () {
-    if (typeof XLSX === 'undefined') { showToast('Excel লাইব্রেরি লোড হয়নি'); return; }
-    try {
-      var wb = XLSX.utils.book_new();
-      var guide = [
-        ['দপ্তর হিসাব — স্ট্যান্ডার্ড Excel টেমপ্লেট'],
-        [],
-        ['শীট', 'ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড'],
-        ['ব্যয়', 'হিসাব বই + বাকি হলে পরিশোধ=বাকি ও সরবরাহকারী'],
-        ['মোট টাকা', 'পরিমাণ × একক মূল্য হলে অটো; বিল হলে শুধু মোট'],
-        ['বকেয়া', 'নাম তালিকা এখানে → ব্যয়/পরিশোধ ড্রপডাউন; অবশিষ্ট = বাকি − পরিশোধ'],
-        ['পরিশোধ', 'বকেয়া মেটানো; সরবরাহকারী ড্রপডাউন থেকে'],
-        ['আয় / করজ', 'নিয়মিত আয়; করজ দেওয়া/আদায়'],
-        ['অ্যাপে', 'দিনশেষে এক্সেল ↧ দিয়ে আপলোড — একই সারি দুবার নয়'],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(guide), 'নির্দেশনা');
-
-      var expHeader = ['হিসাব বই *', 'তারিখ *', 'খাত', 'বিবরণ', 'পরিমাণ', 'মাপ', 'একক মূল্য', 'মোট টাকা (অটো)', 'সরবরাহকারী', 'রশিদ নং', 'পরিশোধ'];
-      var expSamples = [
-        ['মাতবাখ', '1447-10-02', 'কাঁচামাল', 'চাল', 50, 'কেজি', 70, null, 'রহিম স্টোর', '১০১', 'নগদ'],
-        ['মাতবাখ', '1447-10-03', 'কাঁচামাল', 'ডাল', 20, 'কেজি', 120, null, 'রহিম স্টোর', '', 'নগদ'],
-        ['মাদরাসা', '1447-10-04', 'স্টেশনারি', 'খাতা ও কলম', 10, 'প্যাকেট', 80, null, 'বইঘর', '', 'নগদ'],
-        ['তামিরাত', '1447-09-20', 'মেরামত', 'ছাদের প্লাস্টার', 1, 'পিস', 15000, null, 'রাজমিস্ত্রি করিম', '', 'বাকি'],
-        ['সাধারণ', '1447-10-06', 'পরিবহন', 'বাজার আনা-নেওয়া', '', '', '', 500, '', '', 'নগদ'],
-        ['মাদরাসা', '2026-07-10', 'বিদ্যুৎ', 'বিদ্যুৎ বিল', '', '', '', 4500, 'পল্লী বিদ্যুৎ', 'বিল-৮৮', 'নগদ'],
-      ];
-      var expWs = XLSX.utils.aoa_to_sheet([expHeader].concat(expSamples));
-      var maxR = 500;
-      for (var r = 2; r <= maxR; r++) {
-        var isBill = r === 6 || r === 7;
-        if (!isBill) {
-          expWs['H' + r] = { t: 'n', f: 'IF(AND(E' + r + '<>"",G' + r + '<>""),E' + r + '*G' + r + ',"")' };
-        }
-      }
-      expWs.H6 = { t: 'n', v: 500 };
-      expWs.H7 = { t: 'n', v: 4500 };
-      if (!expWs['!ref']) expWs['!ref'] = 'A1:K' + maxR;
-      else {
-        var range = XLSX.utils.decode_range(expWs['!ref']);
-        if (range.e.r < maxR - 1) range.e.r = maxR - 1;
-        if (range.e.c < 10) range.e.c = 10;
-        expWs['!ref'] = XLSX.utils.encode_range(range);
-      }
-      XLSX.utils.book_append_sheet(wb, expWs, 'ব্যয়');
-
-      var inc = [
-        ['তারিখ *', 'টাকা *', 'উৎস / বিবরণ'],
-        ['1447-10-01', 50000, 'বিকাশ অনুদান'],
-        ['1447-10-05', 12000, 'ওয়াযিফা আদায় — শাওয়াল'],
-        ['2026-07-10', 3000, 'নগদ দান'],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(inc), 'আয়');
-      var qard = [
-        ['ধরন *', 'তারিখ *', 'টাকা *', 'খাত *', 'বিবরণ'],
-        ['দেওয়া', '1447-08-15', 20000, 'করিম ভাই', 'করজে হাসানা'],
-        ['দেওয়া', '1447-09-01', 10000, 'মাদরাসা ফান্ড', 'জরুরি করজ'],
-        ['আদায়', '1447-10-07', 5000, 'করিম ভাই', ''],
-        ['আদায়', '1447-10-11', 2000, 'মাদরাসা ফান্ড', ''],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(qard), 'করজ');
-
-      var pay = [
-        ['তারিখ *', 'সরবরাহকারী *', 'টাকা *', 'মন্তব্য'],
-        ['1447-10-15', 'রাজমিস্ত্রি করিম', 5000, 'আংশিক পরিশোধ'],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pay), 'পরিশোধ');
-
-      var dueWs = XLSX.utils.aoa_to_sheet([
-        ['সরবরাহকারী বকেয়া (লাইভ)'],
-        ['বাকি কেনা − পরিশোধ = অবশিষ্ট। নতুন নাম এখানে লিখুন → ব্যয়/পরিশোধ ড্রপডাউনে আসবে।'],
-        [],
-        ['মোট বাকি কেনা', { f: 'SUMIF(ব্যয়!K:K,"বাকি",ব্যয়!H:H)' }],
-        ['মোট পরিশোধ', { f: 'SUM(পরিশোধ!C:C)' }],
-        ['এখন মোট বাকি', { f: 'B4-B5' }],
-        [],
-        ['সরবরাহকারী', 'বাকি কেনা', 'পরিশোধ', 'অবশিষ্ট বাকি', 'বার'],
-        ['রাজমিস্ত্রি করিম', null, null, null, null],
-      ]);
-      for (var dr = 9; dr <= 58; dr++) {
-        if (dr > 9) dueWs['A' + dr] = { t: 's', v: '' };
-        dueWs['B' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",SUMIFS(ব্যয়!$H$2:$H$500,ব্যয়!$I$2:$I$500,A' + dr + ',ব্যয়!$K$2:$K$500,"বাকি"))' };
-        dueWs['C' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",SUMIF(পরিশোধ!$B$2:$B$500,A' + dr + ',পরিশোধ!$C$2:$C$500))' };
-        dueWs['D' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",B' + dr + '-C' + dr + ')' };
-        dueWs['E' + dr] = { t: 'n', f: 'IF(A' + dr + '="","",COUNTIFS(ব্যয়!$I$2:$I$500,A' + dr + ',ব্যয়!$K$2:$K$500,"বাকি"))' };
-      }
-      dueWs['!ref'] = 'A1:E58';
-      XLSX.utils.book_append_sheet(wb, dueWs, 'বকেয়া');
-
-      var dash = [
-        ['সামারি (লাইভ)'],
-        ['বিবরণ', 'টাকা'],
-        ['মোট ব্যয়', { f: 'SUM(ব্যয়!H:H)' }],
-        ['মোট আয়', { f: 'SUM(আয়!B:B)' }],
-        ['করজ দেওয়া', { f: 'SUMIF(করজ!A:A,"দেওয়া",করজ!C:C)' }],
-        ['করজ আদায়', { f: 'SUMIF(করজ!A:A,"আদায়",করজ!C:C)' }],
-        ['করজ বাকি', { f: 'B5-B6' }],
-        ['সরবরাহকারী বাকি', { f: 'বকেয়া!B6' }],
-        ['নগদ (আনুমানিক)', { f: 'B4-B3-B5+B6' }],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dash), 'ড্যাশবোর্ড');
-      XLSX.writeFile(wb, 'daftar-hisab-template.xlsx');
-      showToast('টেমপ্লেট ডাউনলোড হয়েছে');
-    } catch (err) {
-      console.warn('[Accounts] template download failed', err);
-      try {
+    var href = impTplHref();
+    fetch(href, { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('template missing (' + res.status + ')');
+        return res.blob();
+      })
+      .then(function (blob) {
+        if (!blob || !blob.size) throw new Error('empty template');
+        var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
-        a.href = impTplHref();
+        a.href = url;
         a.download = 'daftar-hisab-template.xlsx';
+        document.body.appendChild(a);
         a.click();
-      } catch (e2) {
-        showToast('টেমপ্লেট ডাউনলোড যায়নি');
-      }
-    }
+        a.remove();
+        setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) {} }, 2500);
+        showToast('টেমপ্লেট ডাউনলোড হয়েছে');
+      })
+      .catch(function (err) {
+        console.warn('[Accounts] template download failed', err);
+        showToast('টেমপ্লেট পাওয়া যায়নি — পেজ রিফ্রেশ করুন');
+      });
   };
 
   function impMarkRow(row, d, amt) {
@@ -3017,6 +2930,82 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       row.msg = 'টাকার অঙ্ক নেই';
     }
     return row;
+  }
+
+  function impNormTxt(s) {
+    return A.clean ? A.clean(s, '') : String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  }
+
+  function impAmtKey(n) {
+    return String(Math.round((Number(n) || 0) * 100) / 100);
+  }
+
+  function impFpExpense(data) {
+    if (!data) return '';
+    return [
+      'e',
+      data.account || '',
+      A.dateKey(data.hijriYear, data.month, data.day),
+      impAmtKey(data.amount),
+      impNormTxt(data.category),
+      impNormTxt(data.description),
+      impNormTxt(data.supplier),
+      data.paymentMethod === 'due' ? 'due' : 'cash',
+      impNormTxt(data.receiptNo),
+    ].join('|');
+  }
+
+  function impFpIncome(data) {
+    if (!data) return '';
+    return [
+      'i',
+      data.account || '',
+      A.dateKey(data.hijriYear, data.month, data.day),
+      impAmtKey(data.amount),
+      impNormTxt(data.note),
+    ].join('|');
+  }
+
+  function impRowFingerprint(row) {
+    if (!row || !row.data || row.status !== 'ok') return '';
+    if (row.kind === 'income' || row.kind === 'qardReturn') return impFpIncome(row.data);
+    return impFpExpense(row.data);
+  }
+
+  /** অ্যাপে আগের এন্ট্রি + ফাইলের ভিতরের ডুপ্লিকেট স্কিপ */
+  function impApplyDupGuard(parsed) {
+    if (!parsed) return parsed;
+    var seen = Object.create(null);
+    try {
+      (A.Expense.getAll() || []).forEach(function (e) {
+        var fp = impFpExpense(e);
+        if (fp) seen[fp] = 1;
+      });
+      (A.Income.getAll() || []).forEach(function (e) {
+        var fp = impFpIncome(e);
+        if (fp) seen[fp] = 1;
+      });
+    } catch (err) {
+      console.warn('[Accounts] dup guard index failed', err);
+    }
+    function markList(list) {
+      (list || []).forEach(function (row) {
+        if (row.status !== 'ok') return;
+        var fp = impRowFingerprint(row);
+        if (!fp) return;
+        if (seen[fp]) {
+          row.status = 'dup';
+          row.msg = 'আগে থেকে আছে — বাদ';
+        } else {
+          seen[fp] = 1;
+        }
+      });
+    }
+    markList(parsed.expense);
+    markList(parsed.income);
+    markList(parsed.qardGive);
+    markList(parsed.qardReturn);
+    return parsed;
   }
 
   function impParseExpenseSheet(matrix, sheetName) {
@@ -3218,7 +3207,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var help =
       '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>। ' +
       'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বই</b> কলাম থেকে বই অটো-সাজানো হয়। ' +
-      'মোট টাকা = পরিমাণ × একক মূল্য (অটো)। বকেয়া/পরিশোধ শীট Excel-এ লাইভ দেখার জন্য।' +
+      'মোট টাকা = পরিমাণ × একক মূল্য (অটো)। বকেয়া/পরিশোধ শীট Excel-এ লাইভ দেখার জন্য। ' +
+      'আগে থেকে থাকা একই এন্ট্রি (তারিখ+টাকা+বিবরণ…) অটো বাদ যাবে।' +
       '<br><button type="button" class="acc-imp-tpl" onclick="downloadAccHisabTemplate()">⬇ খালি টেমপ্লেট ডাউনলোড</button></div>';
     var drop =
       '<div class="acc-imp-drop" id="acc-imp-drop" role="button" tabindex="0">' +
@@ -3240,6 +3230,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (!all.length) return '<div class="acc-empty">ফাইলে কোনো ডেটা সারি পাওয়া যায়নি</div>';
     var okAll = impOkRows();
     var errN = all.filter(function (r) { return r.status === 'err'; }).length;
+    var dupN = all.filter(function (r) { return r.status === 'dup'; }).length;
     var savedN = all.filter(function (r) { return r.status === 'saved'; }).length;
     var tabs =
       '<div class="acc-imp-tabs">' +
@@ -3250,14 +3241,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var rows = impTabRows();
     var okTab = rows.filter(function (r) { return r.status === 'ok'; });
     var totalAmt = okTab.reduce(function (s, r) { return s + (r.amt || 0); }, 0);
-    var statusLabel = { ok: '✓ ঠিক আছে', err: '', saved: 'সংরক্ষিত ✓' };
+    var statusLabel = { ok: '✓ ঠিক আছে', err: '', saved: 'সংরক্ষিত ✓', dup: 'ডুপ্লিকেট — বাদ' };
     var ths;
     if (_impTab === 'income') ths = '<th>#</th><th>তারিখ</th><th>টাকা</th><th>উৎস / বিবরণ</th><th>অবস্থা</th>';
     else if (_impTab === 'qard') ths = '<th>#</th><th>ধরন</th><th>তারিখ</th><th>টাকা</th><th>খাত</th><th>অবস্থা</th>';
     else ths = '<th>#</th><th>বই</th><th>তারিখ</th><th>খাত</th><th>বিবরণ</th><th>মোট</th><th>সরবরাহকারী</th><th>পরিশোধ</th><th>অবস্থা</th>';
     var trs = rows.map(function (r) {
       var d = r.data || {};
-      var okDate = r.status === 'ok' || r.status === 'saved';
+      var okDate = r.status === 'ok' || r.status === 'saved' || r.status === 'dup';
       var dateTxt = okDate && r.date && !r.date.err ? bn(A.dateKey(r.date.year, r.date.month, r.date.day)) : '—';
       var st = '<span class="acc-imp-status ' + r.status + '">' + esc(statusLabel[r.status] || r.msg || '') + '</span>';
       var cells;
@@ -3279,6 +3270,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<div class="acc-imp-summary">' +
       '<span class="acc-imp-pill">মোট সারি: ' + bn(all.length) + '</span>' +
       '<span class="acc-imp-pill ok">ঠিক আছে: ' + bn(okAll.length) + '</span>' +
+      (dupN ? '<span class="acc-imp-pill dup">ডুপ্লিকেট: ' + bn(dupN) + '</span>' : '') +
       (errN ? '<span class="acc-imp-pill err">সমস্যা: ' + bn(errN) + '</span>' : '') +
       (savedN ? '<span class="acc-imp-pill ok">সংরক্ষিত: ' + bn(savedN) + '</span>' : '') +
       '<span class="acc-imp-pill">এই ট্যাব: ৳' + fa(totalAmt) + '</span>' +
@@ -3322,7 +3314,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         var data = new Uint8Array(ev.target.result);
         var wb = XLSX.read(data, { type: 'array', cellDates: true });
         _impFileName = name;
-        _impParsed = impParseWorkbook(wb);
+        _impParsed = impApplyDupGuard(impParseWorkbook(wb));
         if ((_impParsed.expense || []).length) _impTab = 'expense';
         else if ((_impParsed.income || []).length) _impTab = 'income';
         else _impTab = 'qard';
@@ -3331,7 +3323,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         if (pv) pv.scrollIntoView({ block: 'nearest' });
         var okN = impOkRows().length;
         var errN = impAllRows().filter(function (r) { return r.status === 'err'; }).length;
-        showToast(okN ? (bn(okN) + 'টি ঠিক আছে' + (errN ? ', ' + bn(errN) + 'টি সমস্যা' : '')) : 'সঠিক সারি পাওয়া যায়নি');
+        var dupN = impAllRows().filter(function (r) { return r.status === 'dup'; }).length;
+        var parts = [];
+        if (okN) parts.push(bn(okN) + 'টি নতুন');
+        if (dupN) parts.push(bn(dupN) + 'টি ডুপ্লিকেট বাদ');
+        if (errN) parts.push(bn(errN) + 'টি সমস্যা');
+        showToast(parts.length ? parts.join(', ') : 'সঠিক সারি পাওয়া যায়নি');
       } catch (err) {
         console.warn('[Accounts] xlsx parse failed', err);
         showToast('ফাইল পড়া যায়নি — টেমপ্লেট ফরম্যাট যাচাই করুন');

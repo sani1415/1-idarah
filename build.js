@@ -156,6 +156,17 @@ for (const d of dirs) {
   copyDir(path.join(SRC, d), path.join(OUT, d));
 }
 
+const hisabTemplate = path.join(SRC, 'madrasa', 'templates', 'daftar-hisab-template.xlsx');
+const hisabTemplateOut = path.join(OUT, 'madrasa', 'templates', 'daftar-hisab-template.xlsx');
+if (!fs.existsSync(hisabTemplate)) {
+  throw new Error(
+    'Missing app/madrasa/templates/daftar-hisab-template.xlsx — run: python scripts/make-hisab-excel-template.py'
+  );
+}
+if (!fs.existsSync(hisabTemplateOut)) {
+  throw new Error('Build copy failed for daftar-hisab-template.xlsx');
+}
+
 try {
   for (const name of fs.readdirSync(SRC)) {
     if (!name.endsWith('.html')) continue;

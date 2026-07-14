@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "make:hisab-template": "python scripts/make-hisab-excel-template.py"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.105.4",
