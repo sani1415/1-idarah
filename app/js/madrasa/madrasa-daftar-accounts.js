@@ -125,8 +125,8 @@ var _qardGiveInlineOpen = false; /* করজ বিস্তারিত মড
 body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-shell{padding-top:2px}
 .acc-add-btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:2px 4px 8px}
-.acc-add-btns.has-month{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-bottom:6px}
-.acc-add-btns.acc-readonly{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.acc-add-btns.has-month{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-bottom:6px}
+.acc-add-btns.acc-readonly{grid-template-columns:1fr;align-items:stretch}
 .acc-btn{position:relative;overflow:hidden;height:38px;padding:0 4px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 18px rgba(26,18,8,.08);white-space:nowrap}
 .acc-add-btns.has-month .acc-btn{height:38px;padding:0 4px;font-size:12px;border-radius:12px}
 .acc-filter-icon-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(26,18,8,.12);background:#fff;color:var(--ink2);border-radius:12px;padding:0 10px;height:38px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(26,18,8,.06);white-space:nowrap;width:100%}
@@ -165,7 +165,7 @@ body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-topline{display:flex;align-items:center;gap:8px;margin-bottom:6px;position:relative}
 .acc-topline .acc-sel{max-width:180px;margin-left:auto;background:#fff}
 .acc-period{font-size:12px;color:var(--ink3);font-weight:700}
-.acc-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px;position:relative}
+.acc-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;position:relative}
 .acc-metric{min-width:0;max-width:100%;border:none;background:#fff;border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:10px 4px;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;overflow:hidden;-webkit-appearance:none;appearance:none;color:inherit}
 .acc-metric-click{cursor:pointer;font-family:inherit}
 .acc-metric-click:hover{background:#fff8e8;box-shadow:0 5px 13px rgba(26,18,8,.08)}
@@ -173,6 +173,8 @@ body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-metric-lbl{width:100%;font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:4px;line-height:1.2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .acc-metric-val{width:100%;max-width:100%;font-family:'Tiro Bangla',serif;font-size:17px;font-weight:700;color:var(--ink2);line-height:1.12;overflow:hidden;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word}
 .acc-metric.good .acc-metric-val{color:var(--green)}.acc-metric.bad .acc-metric-val{color:var(--red)}.acc-metric.warn .acc-metric-val{color:var(--gold)}
+@media (min-width:960px){.acc-metrics{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.acc-metric{min-height:100px}.acc-metric-val{font-size:16px}}
+@media (max-width:520px){.acc-metric{padding:10px 4px;min-height:88px}.acc-metric-val{font-size:15px}}
 .acc-summary-section{margin-bottom:10px}
 .acc-summary-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 6px}
 .acc-summary-title{font-family:'Tiro Bangla',serif;font-size:14px;font-weight:900;color:var(--ink2)}
@@ -212,9 +214,26 @@ body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-ledger-table{margin-top:8px;border-top:1px dashed rgba(26,18,8,.12);padding-top:7px;display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:10px;color:var(--ink3)}
 .acc-ledger-table b{color:var(--ink2);font-size:11px}
 .acc-table-wrap{overflow:auto;border:1px solid rgba(26,18,8,.07);border-radius:16px;background:#fff;max-height:none;flex:1;min-height:0}
-body.page-daftar #modal-account-details .modal-title{margin-bottom:10px;gap:8px;align-items:flex-start}
-body.page-daftar #account-details-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden}
-body.page-daftar #account-details-title.acc-title-root--qard{flex-direction:column;align-items:stretch;gap:0;padding-right:2px;overflow:visible}
+body.page-daftar #modal-account-details .modal-title,
+body.page-admin-accounts #modal-account-details .modal-title,
+#modal-account-details .modal-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+#modal-account-details .modal-close{
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;min-width:36px;padding:0;margin:0;
+  border:1px solid rgba(26,18,8,.12);border-radius:9px;background:#fff;color:var(--ink2);
+  z-index:6;position:relative;cursor:pointer;line-height:1;box-sizing:border-box
+}
+#modal-account-details .modal-close:hover{background:#faf7f2;border-color:rgba(26,18,8,.2)}
+#modal-account-details .modal-close svg{
+  width:16px;height:16px;max-width:16px;max-height:16px;
+  stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;display:block;flex-shrink:0
+}
+body.page-daftar #account-details-title,
+body.page-admin-accounts #account-details-title,
+#modal-account-details #account-details-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden}
+body.page-daftar #account-details-title.acc-title-root--qard,
+body.page-admin-accounts #account-details-title.acc-title-root--qard,
+#modal-account-details #account-details-title.acc-title-root--qard{flex-direction:column;align-items:stretch;gap:0;padding-right:2px;overflow:hidden;max-width:calc(100% - 48px)}
 .acc-title-main{font-size:15px;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .acc-title-meta{font-size:10px;color:var(--ink3);font-family:'Tiro Bangla',serif;font-weight:800;flex-shrink:0}
 .acc-title-total{font-family:'Tiro Bangla',serif;font-size:12px;font-weight:900;color:var(--red);background:#fff4d9;border:1px solid rgba(154,106,33,.16);border-radius:999px;padding:4px 7px;white-space:nowrap;flex-shrink:0}
@@ -416,9 +435,9 @@ body.page-daftar #modal-account-entry .modal,body.page-admin-accounts #modal-acc
 body #modal-account-details.acc-income-detail-open{padding:16px;backdrop-filter:blur(5px);background:rgba(26,18,8,.52)}
 body #modal-account-details.acc-income-detail-open .modal{width:min(1180px,calc(100vw - 32px));height:min(820px,calc(100vh - 32px));max-width:none;max-height:calc(100vh - 32px);padding:0;overflow:hidden;border:1px solid rgba(26,18,8,.08);border-radius:22px;background:#fff;box-shadow:0 28px 80px rgba(26,18,8,.24);display:flex;flex-direction:column}
 body #modal-account-details.acc-income-detail-open .modal-title{flex:0 0 auto;align-items:center;margin:0;padding:14px 24px 12px;border-bottom:1px solid rgba(26,18,8,.08);font-family:'Tiro Bangla',serif;font-size:22px;font-weight:900;line-height:1.15;color:var(--ink);background:#fff}
-body #modal-account-details.acc-income-detail-open .modal-close{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:1px solid rgba(26,18,8,.12);border-radius:9px;background:#fff;color:var(--ink2);transition:background .16s,border-color .16s,transform .16s}
+body #modal-account-details.acc-income-detail-open .modal-close{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;padding:0;border:1px solid rgba(26,18,8,.12);border-radius:9px;background:#fff;color:var(--ink2);transition:background .16s,border-color .16s,transform .16s;z-index:6;position:relative}
 body #modal-account-details.acc-income-detail-open .modal-close:hover{background:#faf7f2;border-color:rgba(26,18,8,.2);transform:translateY(-1px)}
-body #modal-account-details.acc-income-detail-open .modal-close svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+body #modal-account-details.acc-income-detail-open .modal-close svg{width:16px;height:16px;max-width:16px;max-height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;display:block}
 body #modal-account-details.acc-income-detail-open #account-details-root{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:12px 20px 16px;box-sizing:border-box;background:#fff}
 .acc-income-shell{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0}
 .acc-income-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;border:1px solid rgba(13,116,80,.2);border-radius:12px;background:#fbfdfc;overflow:hidden}
@@ -475,11 +494,6 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
 .acc-income-action.delete{border:1px solid rgba(193,68,14,.32);color:var(--red)}
 .acc-income-action:hover{transform:translateY(-1px)}
 .acc-income-action.edit:hover{background:#effaf5}.acc-income-action.delete:hover{background:#fff3ef}
-@media (max-width:520px){
-.acc-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.acc-metric{padding:10px 6px;min-height:88px}
-.acc-metric-val{font-size:18px}
-}
 @media (max-width:700px){
  body #modal-account-details.acc-income-detail-open{padding:12px 0 0;align-items:flex-end}
  body #modal-account-details.acc-income-detail-open .modal{width:100vw;height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);border-radius:24px 24px 0 0;border-bottom:0}
@@ -531,9 +545,25 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
  .col-flt-panel{max-height:min(330px,calc(100vh - 16px))}
 }
 @media (prefers-reduced-motion:reduce){.acc-income-tool,.acc-income-action,body #modal-account-details.acc-income-detail-open .modal-close{transition:none}}
+/* করজ বিস্তারিত মডাল — ডেস্কটপে চওড়া */
+body #modal-account-details.acc-qard-detail-open{padding:16px;backdrop-filter:blur(5px);background:rgba(26,18,8,.52)}
+body #modal-account-details.acc-qard-detail-open .modal{width:min(1120px,calc(100vw - 32px));max-width:none;height:min(820px,calc(100vh - 32px));max-height:calc(100vh - 32px);padding:18px 20px 16px;overflow:hidden;border:1px solid rgba(26,18,8,.08);border-radius:22px;background:#fff;box-shadow:0 28px 80px rgba(26,18,8,.24);display:flex;flex-direction:column;box-sizing:border-box}
+body #modal-account-details.acc-qard-detail-open #account-details-root{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard{flex:1;min-height:0}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table{width:100%;min-width:0;table-layout:fixed}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th,body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td{min-width:0!important}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(1),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(1){width:12%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(2),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(2){width:14%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(3),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(3){width:28%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(4),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(4){width:12%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(5),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(5){width:12%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(6),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(6){width:12%}
+body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table th:nth-child(7),body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table td:nth-child(7){width:10%}
+body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:normal;overflow-wrap:anywhere}
+@media (max-width:700px){body #modal-account-details.acc-qard-detail-open{padding:12px 0 0;align-items:flex-end}body #modal-account-details.acc-qard-detail-open .modal{width:100vw;height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);border-radius:24px 24px 0 0;border-bottom:0;padding:16px 14px}body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table{min-width:640px;table-layout:auto}}
 /* ── Excel import ── */
 .acc-imp-open{display:none}
-@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(5,minmax(0,1fr))}.acc-imp-open{display:block}}
+@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(4,minmax(0,1fr))}.acc-imp-open{display:block}}
 #modal-account-import .modal{width:min(980px,calc(100vw - 24px));max-width:980px;max-height:calc(100vh - 24px);overflow:auto;padding:22px 20px 26px;box-sizing:border-box}
 .acc-imp-typerow{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
 .acc-imp-type-btn{flex:0 0 auto;padding:9px 22px;border-radius:9px;border:1.5px solid var(--cream3);background:#fff;color:var(--ink3);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
@@ -562,7 +592,24 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
 .acc-imp-table tr.is-saved td{background:#f2faf7}
 .acc-imp-status{font-size:10px;font-weight:800}
 .acc-imp-status.ok,.acc-imp-status.saved{color:var(--green)}.acc-imp-status.err{color:var(--red)}.acc-imp-status.head{color:var(--ink3)}
-#acc-imp-save{margin-top:10px}`;
+#acc-imp-save{margin-top:10px}
+/* ── Report workspace ── */
+.acc-ws{padding:0 4px 12px}
+.acc-ws-top{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
+.acc-ws-back{border:1px solid rgba(26,18,8,.12);background:#fff;border-radius:12px;padding:9px 13px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink2);cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(26,18,8,.06)}
+.acc-ws-back:active{transform:scale(.98)}
+.acc-ws-title{flex:1;font-family:'Tiro Bangla',serif;font-size:17px;font-weight:900;color:var(--ink2)}
+.acc-ws-filter{width:auto;flex:0 0 auto;padding:0 12px}
+.acc-ws-layout{display:flex;flex-direction:column;gap:10px}
+.acc-ws-menu{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px;background:rgba(255,255,255,.72);border:1px solid rgba(26,18,8,.07);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.acc-ws-menu-item{flex:0 0 auto;border:none;border-radius:10px;background:none;padding:8px 12px;font-family:inherit;font-size:12px;color:var(--ink3);cursor:pointer;white-space:nowrap}
+.acc-ws-menu-item.active{color:#fff;background:linear-gradient(135deg,var(--gold),#9a6a21);font-weight:800;box-shadow:0 6px 14px rgba(154,106,33,.23)}
+.acc-ws-body{min-width:0}
+@media (min-width:900px){
+.acc-ws-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;align-items:start}
+.acc-ws-menu{flex-direction:column;overflow:visible;position:sticky;top:10px;padding:6px}
+.acc-ws-menu-item{width:100%;text-align:left;padding:10px 12px;font-size:13px}
+}`;
     document.head.appendChild(cs);
   }
 
@@ -1355,14 +1402,9 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     normalizeMonthFilters();
     var AL   = A.ACCOUNT_LABELS;
     var accs = expenseBookKeys();
-    var allExp = A.Expense.getAll().filter(function (r) {
-      return (!_monFs.length || _monFs.indexOf(A.monthKey(r.month)) >= 0) &&
-             (!_yearFs.length || _yearFs.indexOf(String(r.hijriYear)) >= 0);
-    });
-    var allInc = A.Income.getAll().filter(function (r) {
-      return (!_monFs.length || _monFs.indexOf(A.monthKey(r.month)) >= 0) &&
-             (!_yearFs.length || _yearFs.indexOf(String(r.hijriYear)) >= 0);
-    });
+    /* মূল পেইজ সব সময় সার্বিক বর্তমান অবস্থা দেখায়; মাস/বছর ভাগ করে দেখা এখন রিপোর্ট ওয়ার্কস্পেসে */
+    var allExp = A.Expense.getAll();
+    var allInc = A.Income.getAll();
     var allDues = A.Dues.getAll();
     var s = A.Summary.fromRows(allInc, allExp, allDues);
     var rows = accs.filter(function (acc) { return acc !== 'qard'; }).map(function (acc) {
@@ -1385,28 +1427,21 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     var balCls = s.operatingBalance >= 0 ? 'good' : 'bad';
     var cashCls = s.cashFlow >= 0 ? 'good' : 'bad';
     var regularMetrics = '<div class="acc-summary-section">' +
-      '<div class="acc-summary-head"><div class="acc-summary-title">নিয়মিত হিসাব</div><div class="acc-summary-note">করজ দেওয়া ও আদায় বাদে</div></div>' +
+      '<div class="acc-summary-head"><div class="acc-summary-title">সারসংক্ষেপ</div><div class="acc-summary-note">নগদ = আয় − ব্যয় − করজ দেওয়া + করজ আদায়</div></div>' +
       '<div class="acc-metrics">' +
       '<button type="button" class="acc-metric acc-metric-click good" onclick="openAccMetricModal(\'income\')"><div class="acc-metric-lbl">নিয়মিত আয়</div><div class="acc-metric-val">৳' + fa(s.regularIncome) + '</div></button>' +
       '<button type="button" class="acc-metric acc-metric-click bad" onclick="openAccMetricModal(\'expense\')"><div class="acc-metric-lbl">নিয়মিত ব্যয়</div><div class="acc-metric-val">৳' + fa(s.regularExpense) + '</div></button>' +
       '<div class="acc-metric ' + balCls + '"><div class="acc-metric-lbl">আয়-ব্যয় ব্যালেন্স</div><div class="acc-metric-val">' + (s.operatingBalance < 0 ? '−' : '+') + '৳' + fa(Math.abs(s.operatingBalance)) + '</div></div>' +
       '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccMetricModal(\'dues\')"><div class="acc-metric-lbl">বর্তমান বকেয়া</div><div class="acc-metric-val">৳' + fa(s.supplierDue) + '</div></button>' +
-      '</div></div>';
-    var cashMetrics = '<div class="acc-summary-section secondary">' +
-      '<div class="acc-summary-head"><div class="acc-summary-title">করজ ও নগদ চলাচল</div><div class="acc-summary-note">নিয়মিত হিসাব থেকে আলাদা</div></div>' +
-      '<div class="acc-metrics">' +
-      '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ দেওয়া</div><div class="acc-metric-val">৳' + fa(s.qardGiven) + '</div></button>' +
-      '<button type="button" class="acc-metric acc-metric-click good" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ আদায়</div><div class="acc-metric-val">৳' + fa(s.qardReturned) + '</div></button>' +
-      '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ বাকি</div><div class="acc-metric-val">৳' + fa(s.qardRemaining) + '</div></button>' +
-      '<div class="acc-metric ' + cashCls + '"><div class="acc-metric-lbl">নেট নগদ প্রবাহ</div><div class="acc-metric-val">' + (s.cashFlow < 0 ? '−' : '+') + '৳' + fa(Math.abs(s.cashFlow)) + '</div></div>' +
+      '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ</div><div class="acc-metric-val">৳' + fa(s.qardRemaining) + '</div></button>' +
+      '<div class="acc-metric ' + cashCls + '"><div class="acc-metric-lbl">নগদ</div><div class="acc-metric-val">' + (s.cashFlow < 0 ? '−' : '') + '৳' + fa(Math.abs(s.cashFlow)) + '</div></div>' +
       '</div></div>';
     var thead = '<tr><th>হিসাব বই</th><th>ব্যয়</th><th>শতকরা</th><th>বর্তমান বকেয়া</th></tr>';
     var tfoot = '<tr><td><strong>সর্বমোট</strong></td>' +
       '<td style="color:var(--red);font-weight:700">৳' + fa(s.te) + '</td>' +
       '<td>' + pct(100) + '</td><td style="color:var(--red);font-weight:700">৳' + fa(s.td) + '</td></tr>';
     return '<div class="acc-dashboard">' +
-      regularMetrics + cashMetrics +
-      '<div class="acc-cash-formula">নেট নগদ প্রবাহ = নিয়মিত আয় + করজ আদায় − নিয়মিত ব্যয় − করজ দেওয়া</div>' +
+      regularMetrics +
       '<div class="acc-ledger-card"><div class="acc-ledger-title acc-ledger-title--center"><span>খাতওয়ারী হিসাব</span></div>' +
       '<div style="overflow-x:auto"><table class="acc-sum-tbl"><thead>' + thead + '</thead>' +
       '<tbody>' + (tblRows || '<tr><td colspan="4" style="text-align:center;color:var(--ink3)">তথ্য নেই</td></tr>') + '</tbody>' +
@@ -1749,13 +1784,16 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     renderAccAccountDetails(_detailAccount);
   };
 
-  window.openAccAccountDetails = function (account) {
+  window.openAccAccountDetails = function (account, tab) {
     _metricModalKind = '';
     _settingsModalOpen = false;
     var detailsModal = document.getElementById('modal-account-details');
-    if (detailsModal) detailsModal.classList.remove('acc-income-detail-open');
+    if (detailsModal) {
+      detailsModal.classList.remove('acc-income-detail-open');
+      detailsModal.classList.toggle('acc-qard-detail-open', account === 'qard');
+    }
     _detailAccount = account;
-    _qardTab = 'entries'; /* modal খুললে সর্বদা এন্ট্রি ট্যাব প্রথমে */
+    _qardTab = (account === 'qard' && (tab === 'recovery' || tab === 'entries')) ? tab : 'entries';
     _payQardOpenBucket = null;
     _qardGiveInlineOpen = false;
     _detailMonthFs = _monFs.length ? _monFs.slice() : [];
@@ -1771,6 +1809,8 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
   window.openAccDueDetails = function (account) {
     _metricModalKind = 'dues';
     _settingsModalOpen = false;
+    var detailsModal = document.getElementById('modal-account-details');
+    if (detailsModal) detailsModal.classList.remove('acc-qard-detail-open');
     _dueAccFs = account && account !== 'all' ? [account] : [];
     renderAccMetricModal();
     openModal('account-details');
@@ -1799,7 +1839,10 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     var title = document.getElementById('account-details-title');
     var modal = document.getElementById('modal-account-details');
     if (!root) return;
-    if (modal) modal.classList.toggle('acc-income-detail-open', _metricModalKind === 'income' || _metricModalKind === 'expense');
+    if (modal) {
+      modal.classList.toggle('acc-income-detail-open', _metricModalKind === 'income' || _metricModalKind === 'expense');
+      modal.classList.remove('acc-qard-detail-open');
+    }
     _detailAccount = '';
     if (title) {
       title.className = '';
@@ -2644,27 +2687,91 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     _detailAccount = '';
     _settingsModalOpen = true;
     var detailsModal = document.getElementById('modal-account-details');
-    if (detailsModal) detailsModal.classList.remove('acc-income-detail-open');
+    if (detailsModal) detailsModal.classList.remove('acc-income-detail-open', 'acc-qard-detail-open');
     renderAccSettingsModal();
     openModal('account-details');
+  };
+
+  /* ══════════════ REPORT WORKSPACE (মডাল নয় — পূর্ণ-স্ক্রিন ইন-পেইজ ভিউ) ══════════════ */
+
+  /* রিপোর্টের গ্লোবাল ফিল্টার: ফিল্টার শিটের state-ই (_yearFs/_monFs/_accFs/_catFs/
+     _fromKey/_toKey/_dayF) রিপোর্টে খাটে। reports.js প্রতিটি সারিতে এটা ডাকে। */
+  window.MdrAccRptRowFilter = function (r, kind) {
+    if (_yearFs.length && _yearFs.indexOf(String(r.hijriYear)) < 0) return false;
+    if (_monFs.length && _monFs.indexOf(A.monthKey(r.month)) < 0) return false;
+    if ((_fromKey !== 'all' || _toKey !== 'all') && !A.inRange(r, _fromKey, _toKey)) return false;
+    if (_dayF !== 'all') {
+      if (_dayF === '__none') { if (A.num(r.day)) return false; }
+      else if (String(A.num(r.day)) !== String(_dayF)) return false;
+    }
+    if (kind === 'expense') {
+      if (_accFs.length && _accFs.indexOf(r.account) < 0) return false;
+      if (_catFs.length && _catFs.indexOf(A.clean(r.category, '')) < 0) return false;
+    }
+    return true;
+  };
+
+  function accWsFilterCount() {
+    return _yearFs.length + _monFs.length + _accFs.length + _catFs.length +
+      (_dayF !== 'all' ? 1 : 0) + ((_fromKey !== 'all' || _toKey !== 'all') ? 1 : 0);
+  }
+
+  var ACC_WS_MENU = [
+    ['overview', 'সারসংক্ষেপ'],
+    ['qard', 'করজে হাসানা'],
+    ['health', 'নিয়মিত হিসাব ও নগদ'],
+    ['monthly', 'মাসিক তুলনা'],
+    ['item', 'পণ্য / দর'],
+    ['account', 'হিসাব বই'],
+    ['supplier', 'সরবরাহকারী'],
+    ['due', 'বকেয়া'],
+  ];
+
+  function buildReportsWorkspace() {
+    var fCount = accWsFilterCount();
+    var view = window._rptView || 'overview';
+    var menu = ACC_WS_MENU.map(function (m) {
+      return '<button type="button" class="acc-ws-menu-item' + (view === m[0] ? ' active' : '') + '" data-ws-kind="' + m[0] + '" onclick="accWsShow(\'' + m[0] + '\')">' + esc(m[1]) + '</button>';
+    }).join('');
+    return '<div class="acc-ws">' +
+      '<div class="acc-ws-top">' +
+      '<button type="button" class="acc-ws-back" onclick="closeAccReports()">← হিসাব</button>' +
+      '<div class="acc-ws-title">হিসাব রিপোর্ট</div>' +
+      '<button type="button" class="acc-filter-icon-btn acc-ws-filter' + (fCount ? ' is-on' : '') + '" onclick="openAccFilterSheet(this)">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>ফিল্টার' +
+      (fCount ? '<span class="acc-filter-badge">' + bn(fCount) + '</span>' : '') + '</button>' +
+      '</div>' +
+      '<div class="acc-ws-layout">' +
+      '<nav class="acc-ws-menu">' + menu + '</nav>' +
+      '<div class="acc-ws-body"><div id="acc-ws-reports"></div></div>' +
+      '</div></div>';
+  }
+
+  window.MdrAccWsSyncMenu = function (view) {
+    document.querySelectorAll('.acc-ws-menu-item').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-ws-kind') === (view || 'overview'));
+    });
+  };
+
+  window.accWsShow = function (kind) {
+    if (kind === 'overview') window.showRptOverview();
+    else window.openRptDetail(kind);
   };
 
   window.openAccReportsPanel = function () {
     _metricModalKind = '';
     _settingsModalOpen = false;
     var detailsModal = document.getElementById('modal-account-details');
-    if (detailsModal) detailsModal.classList.remove('acc-income-detail-open');
-    var title = document.getElementById('account-details-title');
-    var root = document.getElementById('account-details-root');
-    if (title) {
-      title.className = '';
-      title.textContent = 'হিসাব রিপোর্ট';
-    }
-    if (root) {
-      if (typeof window.renderAccountsReports === 'function') window.renderAccountsReports(root, { reset: true });
-      else root.innerHTML = '<div class="acc-empty">রিপোর্ট লোড হয়নি</div>';
-    }
-    openModal('account-details');
+    if (detailsModal) detailsModal.classList.remove('open', 'acc-income-detail-open', 'acc-qard-detail-open');
+    window._rptView = 'overview';
+    _tab = 'reports';
+    window.renderAccounts();
+    try { window.scrollTo({ top: 0 }); } catch (e) {}
+  };
+
+  window.closeAccReports = function () {
+    _tab = 'summary';
+    window.renderAccounts();
   };
 
   function ensureAccountSettingsTopbar() { /* settings button এখন acc-add-btns-এ */ }
@@ -2900,13 +3007,20 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
     normalizeMonthFilters();
     var root = document.getElementById('accounts-root');
     if (!root) return;
-    var filterCount = _monFs.length + _yearFs.length;
-    var filterBtnTop = filterIconBtn(filterCount > 0, filterCount);
+    if (_tab === 'reports') {
+      root.innerHTML = '<div class="acc-shell">' + buildReportsWorkspace() + '</div>';
+      var wsC = document.getElementById('acc-ws-reports');
+      if (wsC) {
+        if (typeof window.renderAccountsReports === 'function') window.renderAccountsReports(wsC);
+        else wsC.innerHTML = '<div class="acc-empty">রিপোর্ট লোড হয়নি</div>';
+      }
+      return;
+    }
     var readOnly = isAccountsReadOnly();
     var actionBtns = '<button type="button" class="acc-report-top" onclick="openAccReportsPanel()">রিপোর্ট</button>';
     var topControls = readOnly
-      ? '<div class="acc-add-btns acc-readonly">' + filterBtnTop + actionBtns + '</div>'
-      : '<div class="acc-add-btns has-month"><button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + filterBtnTop + actionBtns +
+      ? '<div class="acc-add-btns acc-readonly">' + actionBtns + '</div>'
+      : '<div class="acc-add-btns has-month"><button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + actionBtns +
         '<button type="button" class="acc-report-top acc-imp-open" onclick="openAccImportModal()">এক্সেল ↧</button></div>';
     root.innerHTML =
       '<div class="acc-shell">' +
@@ -3016,5 +3130,110 @@ body #modal-account-details.acc-income-detail-open #account-details-root{display
       }
     }
   };
+
+  /* ── Modal dismiss: visible close + backdrop + Escape ── */
+  function dismissAccNestedOverlays() {
+    if (typeof window.closeColFilter === 'function') window.closeColFilter();
+    if (typeof window.closeAccDatePicker === 'function') window.closeAccDatePicker();
+    if (typeof window.closeAccSheet === 'function') window.closeAccSheet();
+    if (typeof window.closeMainFilterDropdown === 'function') window.closeMainFilterDropdown();
+    if (typeof window.closeAccFilterDropdown === 'function') window.closeAccFilterDropdown();
+    if (typeof window.closeDuesFilterDropdown === 'function') window.closeDuesFilterDropdown();
+  }
+
+  function hasAccNestedOverlay() {
+    return !!(
+      document.getElementById('acc-date-picker') ||
+      document.getElementById('acc-sheet') ||
+      document.querySelector('.acc-dd-backdrop') ||
+      document.querySelector('.col-flt-dropdown')
+    );
+  }
+
+  window.closeAccountDetailsModal = function () {
+    dismissAccNestedOverlays();
+    _metricModalKind = '';
+    _settingsModalOpen = false;
+    _detailAccount = '';
+    _payQardOpenBucket = null;
+    _qardGiveInlineOpen = false;
+    var detailsModal = document.getElementById('modal-account-details');
+    if (detailsModal) detailsModal.classList.remove('open', 'show', 'acc-income-detail-open', 'acc-qard-detail-open');
+  };
+
+  function closeAccNamedModal(id) {
+    if (id === 'account-details') {
+      window.closeAccountDetailsModal();
+      return;
+    }
+    dismissAccNestedOverlays();
+    var modal = document.getElementById('modal-' + id);
+    if (modal) modal.classList.remove('open', 'show');
+  }
+
+  function wireAccountModalDismiss() {
+    if (window.__accModalDismissWired) return;
+    window.__accModalDismissWired = true;
+
+    ['modal-account-details', 'modal-account-entry', 'modal-account-import'].forEach(function (id) {
+      var bg = document.getElementById(id);
+      if (!bg) return;
+      bg.addEventListener('click', function (e) {
+        if (e.target !== bg) return;
+        if (id === 'modal-account-details') window.closeAccountDetailsModal();
+        else closeAccNamedModal(id.replace(/^modal-/, ''));
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' && e.key !== 'Esc') return;
+      if (hasAccNestedOverlay()) {
+        dismissAccNestedOverlays();
+        e.preventDefault();
+        return;
+      }
+      var details = document.getElementById('modal-account-details');
+      if (details && (details.classList.contains('open') || details.classList.contains('show'))) {
+        window.closeAccountDetailsModal();
+        e.preventDefault();
+        return;
+      }
+      var entry = document.getElementById('modal-account-entry');
+      if (entry && entry.classList.contains('open')) {
+        closeAccNamedModal('account-entry');
+        e.preventDefault();
+        return;
+      }
+      var imp = document.getElementById('modal-account-import');
+      if (imp && imp.classList.contains('open')) {
+        closeAccNamedModal('account-import');
+        e.preventDefault();
+      }
+    });
+
+    /* পেজের closeModal পরে ডিফাইন হয় — hook করে account-details স্টেট ক্লিন রাখি */
+    function installCloseModalHook() {
+      if (window.closeModal && window.closeModal.__accDetailsHook) return;
+      var prev = window.closeModal;
+      function hooked(id) {
+        if (id === 'account-details') {
+          window.closeAccountDetailsModal();
+          return;
+        }
+        if (typeof prev === 'function') prev(id);
+        else closeAccNamedModal(id);
+      }
+      hooked.__accDetailsHook = true;
+      window.closeModal = hooked;
+    }
+    setTimeout(installCloseModalHook, 0);
+    window.addEventListener('load', function () { setTimeout(installCloseModalHook, 0); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireAccountModalDismiss);
+  } else {
+    wireAccountModalDismiss();
+  }
 
 })();

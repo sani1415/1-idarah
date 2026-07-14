@@ -892,7 +892,7 @@ body.page-daftar #modal-account-entry .modal {
 <!-- ACCOUNT DETAILS MODAL -->
 <div class="modal-bg" id="modal-account-details">
   <div class="modal modal-wide">
-    <div class="modal-title"><span id="account-details-title">বিস্তারিত হিসাব</span> <button type="button" class="modal-close" aria-label="বিস্তারিত হিসাব বন্ধ করুন" onclick="closeModal('account-details')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="modal-title"><span id="account-details-title">বিস্তারিত হিসাব</span> <button type="button" class="modal-close" aria-label="বিস্তারিত হিসাব বন্ধ করুন" onclick="closeAccountDetailsModal()"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div id="account-details-root"></div>
   </div>
 </div>
@@ -991,8 +991,8 @@ body.page-daftar #modal-account-entry .modal {
 <script src="../js/core/mm-hijri.js"></script>
 <script src="../js/madrasa/madrasa-accounts-api.js?v=20260714-excel-import"></script>
 <script src="../js/shared/chat-api.js"></script>
-<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-excel-import"></script>
-<script src="../js/madrasa/madrasa-accounts-reports.js?v=20260614-live-import-refresh"></script>
+<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-main-qard-cash"></script>
+<script src="../js/madrasa/madrasa-accounts-reports.js?v=20260714-rpt-qard-supplier"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260517-attendance-consistency"></script>
 <script src="../js/core/mm-session.js?v=20260516-attendance-persist"></script>
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
@@ -2028,7 +2028,8 @@ body.page-daftar #modal-account-entry .modal {
   /* ── INIT ── */
   async function initDaftarPage() {
     var initialHash = location.hash || '';
-    var wantsAccounts = initialHash === '#fees' || initialHash === '#accounts';
+    var wantsReports = initialHash === '#reports';
+    var wantsAccounts = initialHash === '#fees' || initialHash === '#accounts' || wantsReports;
     var wasWarm = MMSession.isAppDataWarm && MMSession.isAppDataWarm();
     if (MMSession.ensureDaftarDataReady) {
       try {
@@ -2064,6 +2065,7 @@ body.page-daftar #modal-account-entry .modal {
     const navType = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0] && performance.getEntriesByType('navigation')[0].type) || '';
     if (wantsAccounts) {
       renderAccounts();
+      if (wantsReports && window.openAccReportsPanel) openAccReportsPanel();
     } else if (navType === 'reload') {
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       switchPanel('home');
@@ -2086,7 +2088,7 @@ body.page-daftar #modal-account-entry .modal {
     e.textContent='Saving...';
     var result=await MMSession.changeStaffPin(c,n,function(uid,cur,next){return API.Teachers.changeOwnPin(uid,cur,next);});
     if(!result.ok){e.textContent=(MMSession.pinChangeErrorMessage&&MMSession.pinChangeErrorMessage(result.error))||'PIN change failed';return;}
-    closeModal('account-details');
+    closeAccountDetailsModal();
     if(typeof showToast==='function')showToast('PIN সফলভাবে পরিবর্তন হয়েছে');
   }
 
