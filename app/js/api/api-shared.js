@@ -158,6 +158,13 @@ const MMSharedAPI = (() => {
         p_document_id: documentId,
       });
     },
+    authorizeStudentPhoto(actorId, pin, studentId) {
+      return rpc('mdr_rel_student_photo_authorize', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_student_id: studentId,
+      });
+    },
     settingsBooksBootstrap(actorId, pin) {
       return rpc('mdr_rel_settings_books_bootstrap', {
         p_actor_id: actorId || null,

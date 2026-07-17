@@ -225,6 +225,22 @@
   }
 
   var PHOTO_STORAGE_URL = 'https://bbdtoucanihtrymzpynq.supabase.co/storage/v1/object/public/student-photos/';
+  var PHOTO_MAX_BYTES = 512000;
+  var _photoBust = Object.create(null);
+  var _photoGone = Object.create(null);
+  var _photoBusy = false;
+
+  function canManagePhoto() {
+    return !!(global.MMSession && global.MMSession.getRole && global.MMSession.getRole() === 'daftar');
+  }
+
+  function photoActor() {
+    if (!global.MMSession) return null;
+    var id = global.MMSession.getId && global.MMSession.getId();
+    var pin = global.MMSession.getPin && global.MMSession.getPin();
+    if (!id || !pin) return null;
+    return { id: id, pin: pin };
+  }
 
   function photoBase() {
     if (global.MMPhotoBase) return global.MMPhotoBase;
@@ -234,14 +250,32 @@
     return ['madrasa', 'dept', 'khedmat'].indexOf(dir) >= 0 ? '../photos/' : 'photos/';
   }
 
+  function studentPid(s) {
+    if (!s) return '';
+    return String(s.permanent_id || s.student_id || '').trim();
+  }
+
   function photoUrl(s) {
-    var p = s.photo || s.photo_url;
+    var p = s && (s.photo || s.photo_url);
     if (p && typeof p === 'string' && p.trim()) return p.trim();
-    if (s.permanent_id && String(s.permanent_id).trim()) {
-      var pid = String(s.permanent_id).trim();
-      return PHOTO_STORAGE_URL + pid + '.jpg';
-    }
-    return null;
+    var pid = studentPid(s);
+    if (!pid || _photoGone[pid]) return null;
+    var url = PHOTO_STORAGE_URL + pid + '.jpg';
+    if (_photoBust[pid]) url += '?t=' + _photoBust[pid];
+    return url;
+  }
+
+  function syncAvatarManageUi(hasPhoto) {
+    var root = document.getElementById('st-modal-avatar');
+    if (!root) return;
+    var manage = canManagePhoto();
+    root.classList.toggle('st-avatar--manage', manage);
+    root.classList.toggle('st-avatar--clickable', manage || !!hasPhoto);
+    root.setAttribute('aria-label', manage
+      ? (hasPhoto ? 'ছবি দেখুন বা সম্পাদনা করুন' : 'ছবি যুক্ত করুন')
+      : 'ছবি বড় করে দেখুন');
+    var badge = document.getElementById('st-modal-avatar-badge');
+    if (badge) badge.hidden = !manage;
   }
 
   function setAvatar(s) {
@@ -264,37 +298,69 @@
         img.style.display = '';
         ph.style.display = 'none';
         root.classList.remove('st-avatar--empty');
-        root.classList.add('st-avatar--clickable');
-        root.dataset.photoUrl = url;
+        root.dataset.photoUrl = url.split('?')[0];
+        var pidOk = studentPid(s);
+        if (pidOk) delete _photoGone[pidOk];
+        syncAvatarManageUi(true);
       };
       img.onerror = function () {
         img.style.display = 'none';
         ph.style.display = '';
         ph.textContent = initialChar(s.name);
         root.classList.add('st-avatar--empty');
-        root.classList.remove('st-avatar--clickable');
         root.dataset.photoUrl = '';
+        var pidMiss = studentPid(s);
+        if (pidMiss) _photoGone[pidMiss] = 1;
+        syncAvatarManageUi(false);
       };
       img.src = url;
+      root.classList.remove('st-avatar--empty');
+      syncAvatarManageUi(true);
     } else {
       img.style.display = 'none';
       ph.style.display = '';
       ph.textContent = initialChar(s.name);
       root.dataset.photoUrl = '';
+      root.classList.add('st-avatar--empty');
+      syncAvatarManageUi(false);
     }
-    root.classList.toggle('st-avatar--empty', !url);
   }
 
   function ensurePhotoPreview() {
-    if (document.getElementById('modal-student-photo-preview')) return;
+    var existing = document.getElementById('modal-student-photo-preview');
+    if (existing && !existing.querySelector('.st-photo-toolbar')) {
+      existing.remove();
+      existing = null;
+    }
+    if (existing) return;
     var wrap = document.createElement('div');
     wrap.id = 'modal-student-photo-preview';
     wrap.className = 'modal-bg st-photo-preview-bg';
     wrap.innerHTML =
       '<div class="st-photo-preview" id="st-photo-preview-inner">' +
+      '<div class="st-photo-toolbar" id="st-photo-toolbar">' +
+      '<div class="st-photo-actions" id="st-photo-actions" hidden>' +
+      '<button type="button" class="st-photo-action-btn st-photo-action-ico" id="st-photo-act-add" hidden title="যুক্ত করুন" aria-label="যুক্ত করুন">' +
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>' +
+      '</button>' +
+      '<button type="button" class="st-photo-action-btn st-photo-action-ico" id="st-photo-act-edit" hidden title="পরিবর্তন" aria-label="পরিবর্তন করুন">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' +
+      '</button>' +
+      '<button type="button" class="st-photo-action-btn st-photo-action-ico st-photo-action-btn--danger" id="st-photo-act-del" hidden title="মুছুন" aria-label="ডিলিট করুন">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>' +
+      '</button>' +
+      '</div>' +
       '<button type="button" class="st-photo-close" id="st-photo-close" aria-label="বন্ধ">×</button>' +
+      '</div>' +
+      '<div class="st-photo-frame">' +
       '<img id="st-photo-preview-img" class="st-photo-preview-img" alt="" />' +
-      '</div>';
+      '<div class="st-photo-empty" id="st-photo-empty" hidden>' +
+      '<span class="st-photo-empty-ico" aria-hidden="true">' +
+      '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5.5-5.5L7 19"/></svg>' +
+      '</span>' +
+      '<span>ছবি নেই</span>' +
+      '</div>' +
+      '</div></div>';
 
     wrap.addEventListener('click', function (e) {
       if (e.target.id === 'modal-student-photo-preview') closePhotoPreview();
@@ -303,22 +369,67 @@
     if (inner) inner.addEventListener('click', function (e) { e.stopPropagation(); });
     var btn = wrap.querySelector('#st-photo-close');
     if (btn) btn.addEventListener('click', closePhotoPreview);
+    var addBtn = wrap.querySelector('#st-photo-act-add');
+    var editBtn = wrap.querySelector('#st-photo-act-edit');
+    var delBtn = wrap.querySelector('#st-photo-act-del');
+    if (addBtn) addBtn.addEventListener('click', pickStudentPhoto);
+    if (editBtn) editBtn.addEventListener('click', pickStudentPhoto);
+    if (delBtn) delBtn.addEventListener('click', deleteStudentPhoto);
     document.body.appendChild(wrap);
+  }
+
+  function hasAvatarPhoto() {
+    var root = document.getElementById('st-modal-avatar');
+    return !!(root && root.dataset && root.dataset.photoUrl);
+  }
+
+  function syncPhotoPreviewActions(hasPhoto) {
+    var actions = document.getElementById('st-photo-actions');
+    var addBtn = document.getElementById('st-photo-act-add');
+    var editBtn = document.getElementById('st-photo-act-edit');
+    var delBtn = document.getElementById('st-photo-act-del');
+    var manage = canManagePhoto();
+    if (actions) actions.hidden = !manage;
+    if (addBtn) addBtn.hidden = !manage || !!hasPhoto;
+    if (editBtn) editBtn.hidden = !manage || !hasPhoto;
+    if (delBtn) delBtn.hidden = !manage || !hasPhoto;
+  }
+
+  function refreshPhotoPreviewIfOpen() {
+    var preview = document.getElementById('modal-student-photo-preview');
+    if (!preview || !preview.classList.contains('open')) return;
+    openPhotoPreview();
   }
 
   function openPhotoPreview() {
     var root = document.getElementById('st-modal-avatar');
     var img = document.getElementById('st-modal-avatar-img');
+    var s = getOpenStudent();
     var url = root && root.dataset ? root.dataset.photoUrl : '';
     if (!url && img && img.style.display !== 'none') url = img.currentSrc || img.src || '';
-    if (!url) return;
+    if (s && _photoBust[studentPid(s)]) {
+      url = photoUrl(s) || url;
+    }
+    var hasPhoto = !!url;
+    if (!hasPhoto && !canManagePhoto()) return;
+
     ensurePhotoPreview();
     var preview = document.getElementById('modal-student-photo-preview');
     var previewImg = document.getElementById('st-photo-preview-img');
+    var empty = document.getElementById('st-photo-empty');
     if (previewImg) {
-      previewImg.src = url;
-      previewImg.alt = img && img.alt ? img.alt : '';
+      if (hasPhoto) {
+        previewImg.hidden = false;
+        previewImg.src = url;
+        previewImg.alt = (img && img.alt) || (s && s.name) || '';
+      } else {
+        previewImg.hidden = true;
+        previewImg.removeAttribute('src');
+        previewImg.alt = '';
+      }
     }
+    if (empty) empty.hidden = hasPhoto;
+    syncPhotoPreviewActions(hasPhoto);
     if (preview) preview.classList.add('open');
   }
 
@@ -326,7 +437,190 @@
     var preview = document.getElementById('modal-student-photo-preview');
     var previewImg = document.getElementById('st-photo-preview-img');
     if (preview) preview.classList.remove('open');
-    if (previewImg) previewImg.removeAttribute('src');
+    if (previewImg) {
+      previewImg.removeAttribute('src');
+      previewImg.hidden = false;
+    }
+    var empty = document.getElementById('st-photo-empty');
+    if (empty) empty.hidden = true;
+  }
+
+  function getOpenStudent() {
+    var API = getApi();
+    if (!API || !API.Students || !_openSid) return null;
+    return API.Students.getById(_openSid);
+  }
+
+  function ensurePhotoFileInput() {
+    var inp = document.getElementById('st-photo-file-inp');
+    if (inp) return inp;
+    inp = document.createElement('input');
+    inp.type = 'file';
+    inp.id = 'st-photo-file-inp';
+    inp.accept = 'image/jpeg,image/png,image/webp,image/*';
+    inp.style.display = 'none';
+    inp.addEventListener('change', function () {
+      var file = inp.files && inp.files[0];
+      inp.value = '';
+      if (file) uploadStudentPhoto(file);
+    });
+    document.body.appendChild(inp);
+    return inp;
+  }
+
+  function onAvatarActivate(e) {
+    if (e) e.preventDefault();
+    openPhotoPreview();
+  }
+
+  function pickStudentPhoto() {
+    if (!canManagePhoto()) {
+      toast('শুধু দপ্তর দায়িত্বশীল ছবি যুক্ত করতে পারবেন');
+      return;
+    }
+    var inp = ensurePhotoFileInput();
+    inp.click();
+  }
+
+  function canvasToJpegBlob(bitmap, width, height, quality) {
+    return new Promise(function (resolve, reject) {
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('canvas_unavailable'));
+        return;
+      }
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      canvas.toBlob(function (blob) {
+        if (!blob) reject(new Error('blob_failed'));
+        else resolve(blob);
+      }, 'image/jpeg', quality);
+    });
+  }
+
+  async function compressProfilePhoto(file) {
+    if (!/^image\//i.test(file.type || '')) throw new Error('bad_type');
+    if (file.type === 'image/jpeg' && file.size <= PHOTO_MAX_BYTES) return file;
+    if (!global.createImageBitmap) {
+      if (file.size <= PHOTO_MAX_BYTES) return file;
+      throw new Error('compress_unsupported');
+    }
+    var bitmap = await createImageBitmap(file);
+    var w = bitmap.width;
+    var h = bitmap.height;
+    var maxSide = 900;
+    var baseScale = Math.min(1, maxSide / Math.max(w, h));
+    var scale = baseScale;
+    try {
+      while (scale >= 0.2) {
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        for (var q = 0.9; q >= 0.4; q -= 0.1) {
+          var blob = await canvasToJpegBlob(bitmap, cw, ch, q);
+          if (blob.size <= PHOTO_MAX_BYTES) {
+            return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+          }
+        }
+        scale *= 0.75;
+      }
+    } finally {
+      if (bitmap && bitmap.close) bitmap.close();
+    }
+    throw new Error('too_large_after_compress');
+  }
+
+  async function authorizePhoto() {
+    var a = photoActor();
+    if (!a || !global.MMSharedAPI || !MMSharedAPI.authorizeStudentPhoto) {
+      throw new Error('no_api');
+    }
+    if (!_openSid) throw new Error('no_student');
+    var res = await MMSharedAPI.authorizeStudentPhoto(a.id, a.pin, _openSid);
+    if (!res || !res.ok) throw new Error((res && res.error) || 'not_allowed');
+    return res;
+  }
+
+  async function uploadStudentPhoto(rawFile) {
+    if (_photoBusy) return;
+    if (!canManagePhoto()) {
+      toast('শুধু দপ্তর দায়িত্বশীল ছবি যুক্ত করতে পারবেন');
+      return;
+    }
+    if (!rawFile) return;
+    _photoBusy = true;
+    try {
+      var auth = await authorizePhoto();
+      var file = await compressProfilePhoto(rawFile);
+      var client = MMSharedAPI.supabaseClient;
+      if (!client) throw new Error('no_client');
+      var path = auth.objectPath || (auth.permanentId + '.jpg');
+      var bucket = auth.bucketId || 'student-photos';
+      var up = await client.storage.from(bucket).upload(path, file, {
+        cacheControl: '60',
+        upsert: true,
+        contentType: 'image/jpeg',
+      });
+      if (up.error) throw up.error;
+      var pid = auth.permanentId || studentPid(getOpenStudent());
+      if (pid) {
+        _photoBust[pid] = Date.now();
+        delete _photoGone[pid];
+      }
+      var s = getOpenStudent();
+      if (s) setAvatar(s);
+      toast('ছবি সংরক্ষিত ✓');
+      refreshPhotoPreviewIfOpen();
+    } catch (e) {
+      console.warn('[StudentPhoto] upload failed', e);
+      var msg = (e && e.message) || '';
+      if (msg === 'not_allowed') toast('শুধু দপ্তর দায়িত্বশীল ছবি যুক্ত করতে পারবেন');
+      else if (msg === 'no_permanent_id') toast('এই ছাত্রের স্থায়ী আইডি নেই — ছবি যোগ যায় না');
+      else if (msg === 'bad_type') toast('শুধু ছবি ফাইল দিন');
+      else if (msg === 'too_large_after_compress') toast('ছবি ৫০০ KB-এর নিচে নামানো যায়নি');
+      else toast('ছবি সংরক্ষণ হয়নি');
+    } finally {
+      _photoBusy = false;
+    }
+  }
+
+  async function deleteStudentPhoto() {
+    if (_photoBusy) return;
+    if (!canManagePhoto()) {
+      toast('শুধু দপ্তর দায়িত্বশীল ছবি মুছতে পারবেন');
+      return;
+    }
+    if (!hasAvatarPhoto()) {
+      toast('মুছার মতো ছবি নেই');
+      return;
+    }
+    if (!confirm('এই ছাত্রের ছবি মুছে ফেলবেন?')) return;
+    _photoBusy = true;
+    try {
+      var auth = await authorizePhoto();
+      var client = MMSharedAPI.supabaseClient;
+      if (!client) throw new Error('no_client');
+      var path = auth.objectPath || (auth.permanentId + '.jpg');
+      var bucket = auth.bucketId || 'student-photos';
+      var rm = await client.storage.from(bucket).remove([path]);
+      if (rm.error) throw rm.error;
+      var pid = auth.permanentId || studentPid(getOpenStudent());
+      if (pid) {
+        _photoBust[pid] = Date.now();
+        _photoGone[pid] = 1;
+      }
+      var s = getOpenStudent();
+      if (s) setAvatar(s);
+      toast('ছবি মুছে ফেলা হয়েছে');
+      refreshPhotoPreviewIfOpen();
+    } catch (e) {
+      console.warn('[StudentPhoto] delete failed', e);
+      if (e && e.message === 'not_allowed') toast('শুধু দপ্তর দায়িত্বশীল ছবি মুছতে পারবেন');
+      else toast('ছবি মুছা যায়নি');
+    } finally {
+      _photoBusy = false;
+    }
   }
 
   function ensureModal() {
@@ -338,9 +632,10 @@
       '<div class="modal modal--student" id="st-modal-inner">' +
       '<div class="st-modal-hd">' +
       '<div class="st-modal-hd-main">' +
-      '<div class="st-avatar st-avatar--empty" id="st-modal-avatar" role="button" tabindex="0" aria-label="ছবি বড় করে দেখুন">' +
+      '<div class="st-avatar st-avatar--empty" id="st-modal-avatar" role="button" tabindex="0" aria-label="ছবি বড় করে দেখুন">' +
       '<img class="st-avatar-img" id="st-modal-avatar-img" alt="" />' +
       '<span class="st-avatar-ph" id="st-modal-avatar-ph">?</span>' +
+      '<span class="st-avatar-badge" id="st-modal-avatar-badge" hidden title="ছবি সম্পাদনা">✎</span>' +
       '</div>' +
       '<div class="st-modal-texts">' +
       '<h2 id="st-modal-title">ছাত্র</h2>' +
@@ -358,11 +653,11 @@
     if (btn) btn.addEventListener('click', function () { close(); });
     var avatar = wrap.querySelector('#st-modal-avatar');
     if (avatar) {
-      avatar.addEventListener('click', openPhotoPreview);
+      avatar.addEventListener('click', onAvatarActivate);
       avatar.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          openPhotoPreview();
+          onAvatarActivate(e);
         }
       });
     }
@@ -987,7 +1282,17 @@
     }
   }
 
-  global.MMStudentModal = { open: open, close: close, switchTab: switchTab, submitStudentLog: submitStudentLog, submitStatusChange: submitStatusChange, openPhotoPreview: openPhotoPreview, attCalShift: attCalShift };
+  global.MMStudentModal = {
+    open: open,
+    close: close,
+    switchTab: switchTab,
+    submitStudentLog: submitStudentLog,
+    submitStatusChange: submitStatusChange,
+    openPhotoPreview: openPhotoPreview,
+    pickStudentPhoto: pickStudentPhoto,
+    deleteStudentPhoto: deleteStudentPhoto,
+    attCalShift: attCalShift,
+  };
   global.switchStudentTab = switchTab;
   global.openStudentDetail = function (sid) {
     return open(sid);

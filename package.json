@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
+    "start": "npm run build && serve app -l 5502 --no-clipboard",
     "make:hisab-template": "python scripts/make-hisab-excel-template.py"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.105.4",
-    "playwright": "^1.52.0"
+    "playwright": "^1.52.0",
+    "serve": "^14.2.6"
   }
 }
