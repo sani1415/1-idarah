@@ -70,19 +70,27 @@
     (rows || []).forEach(function (r) {
       var id = String(r.id || r.student_id || '');
       var prev = existingById[id] || {};
+      var studentUuid = String(r.student_id || r.id || '');
+      var lastClass = CLASS_CODE_TO_LOCAL_ID[r.class_code] || r.class_code || '';
+      var division = String(r.division_code || '').trim();
+      if (!division && lastClass) {
+        if (String(lastClass).indexOf('cls_k') === 0 || String(lastClass).indexOf('kitab') === 0) division = 'kitab';
+        else if (String(lastClass).indexOf('cls_m') === 0 || String(lastClass).indexOf('maktab') === 0) division = 'maktab';
+      }
       withdrawals.push({
         id: id,
-        student_id: String(r.student_id || ''),
+        student_id: studentUuid,
         student_name: r.name || '',
         permanent_id: r.permanent_id || '',
-        last_class_id: CLASS_CODE_TO_LOCAL_ID[r.class_code] || r.class_code || '',
+        last_class_id: lastClass,
+        division_code: division,
         reason: r.left_reason || (r.left_type === 'completed' ? 'পড়া শেষ' : 'মাঝপথে বিদায়'),
         note: r.left_reason || '',
         date: String(r.left_date || ''),
       });
       alumni.push(Object.assign({}, prev, {
         id: id,
-        student_id: String(r.student_id || ''),
+        student_id: studentUuid,
         name: r.name || '',
         permanent_id: r.permanent_id || '',
         phone: r.phone || prev.phone || '',
@@ -96,6 +104,7 @@
         left_type: r.left_type || '',
         class_code: r.class_code || '',
         class_name: r.class_name || '',
+        division_code: division || prev.division_code || '',
       }));
     });
     if (API.persistSaveArr) {
@@ -534,7 +543,21 @@
 
   async function ensureAdminBootstrap(options) {
     options = options || {};
-    if (!options.force && isAdminMadrasaExtrasWarm()) return true;
+    var pin = global.MMSession && MMSession.getAdminPin && MMSession.getAdminPin();
+    var actorId = global.MMSession && MMSession.getAdminUserId && MMSession.getAdminUserId();
+
+    async function refreshWithdrawals() {
+      try {
+        if (pin && actorId) await syncAlumni(actorId, pin);
+      } catch (e) {
+        console.warn('[MDRSupabaseSync] alumni/withdrawals sync failed', e);
+      }
+    }
+
+    if (!options.force && isAdminMadrasaExtrasWarm()) {
+      await refreshWithdrawals();
+      return true;
+    }
     var ok = false;
     try {
       if (await syncAdminUsers()) ok = true;
@@ -551,6 +574,7 @@
     } catch (e) {
       console.warn('[MDRSupabaseSync] admin dars sync failed', e);
     }
+    await refreshWithdrawals();
     return ok || isAdminMadrasaExtrasWarm();
   }
 

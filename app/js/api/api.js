@@ -728,7 +728,12 @@ const API = (() => {
       let list = w.filter((x) => x.last_class_id === classId);
       if (hijriYearFilter != null && String(hijriYearFilter).trim() !== '' && String(hijriYearFilter) !== '—') {
         const y = String(hijriYearFilter);
-        list = list.filter((x) => String(x.hijri_year || '') === y);
+        list = list.filter((x) => {
+          const hy = String(x.hijri_year || '').trim();
+          // সিঙ্ক করা রেকর্ডে হিজরি বছর না থাকলে বাদ দিও না
+          if (!hy) return true;
+          return hy === y;
+        });
       }
       return list.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     },

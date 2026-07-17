@@ -454,10 +454,10 @@
 <script src="../supabase-config.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
 <script src="../js/api/api-mdr.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/api/api.js?v=20260521-akhlaq-consistency"></script>
+<script src="../js/api/api.js?v=20260717-wd-count"></script>
 <script src="../js/core/mm-sample-data.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/core/mm-session.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/madrasa/mdr-supabase-sync.js?v=20260521-akhlaq-consistency"></script>
+<script src="../js/madrasa/mdr-supabase-sync.js?v=20260717-wd-count"></script>
 <script src="../js/core/hijri-utils.js"></script>
 <script src="../js/core/mm-hijri.js"></script>
 <script src="../js/madrasa/madrasa-accounts-api.js?v=20260614-live-import-refresh"></script>
@@ -583,11 +583,33 @@
     }
   }
 
+  function withdrawalDeptOf(w) {
+    if (!w) return '';
+    var div = String(w.division_code || '').trim();
+    if (div === 'kitab' || div === 'maktab') return div;
+    var last = String(w.last_class_id || '');
+    if (last.indexOf('cls_k') === 0 || last.indexOf('kitab') === 0) return 'kitab';
+    if (last.indexOf('cls_m') === 0 || last.indexOf('maktab') === 0) return 'maktab';
+    if (last) {
+      var cls = API.Classes.getById(last);
+      if (cls && (cls.dept === 'kitab' || cls.dept === 'maktab')) return cls.dept;
+    }
+    var s = API.Students.getById(w.student_id);
+    if (s && s.class_id) {
+      var sc = API.Classes.getById(s.class_id);
+      if (sc && (sc.dept === 'kitab' || sc.dept === 'maktab')) return sc.dept;
+    }
+    return '';
+  }
+
   function countWithdrawalsByDept(dept) {
-    if (dept === 'all') return getScopeDepts().reduce((sum, d) => sum + countWithdrawalsByDept(d), 0);
+    const list = API.persistLoadArr('mm_withdrawals') || [];
+    if (dept === 'all') return list.length;
     if (dept !== 'kitab' && dept !== 'maktab') return 0;
     const cids = new Set(API.Classes.getByDept(dept).map(c => c.id));
-    return API.persistLoadArr('mm_withdrawals').filter(w => {
+    return list.filter(w => {
+      const d = withdrawalDeptOf(w);
+      if (d === dept) return true;
       if (w.last_class_id && cids.has(w.last_class_id)) return true;
       const s = API.Students.getById(w.student_id);
       return !!(s && cids.has(s.class_id));
@@ -1317,7 +1339,6 @@
   function renderClassList() {
     const iso = new Date().toISOString().split('T')[0];
     const sessionStart = getSessionStartIso();
-    const hijriYear = getCurrentHijriYear();
     const classes = getClassesForScope(currentDept);
 
     let lastDept = '';
@@ -1327,7 +1348,7 @@
       const latestAbsent = classLatestAbsentCount(cls.id);
       const shokr = students.filter(s => s.alhamdulillah).length;
       const nazor = students.filter(s => s.special_watch).length;
-      const bidayi = API.Students.getWithdrawalsFromClass(cls.id, hijriYear).length;
+      const bidayi = API.Students.getWithdrawalsFromClass(cls.id).length;
       const khAvg   = API.Khuluk.getClassAvg(cls.id);
       const section = currentDept === 'all' && cls.dept !== lastDept
         ? `<tr class="dept-section-row"><td colspan="8">${deptLabel(cls.dept)}</td></tr>`
