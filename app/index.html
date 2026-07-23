@@ -247,6 +247,21 @@
   let currentRole = '';
   let pinVal = '';
 
+  (function resumeDedicatedDeviceSession() {
+    const role = MMSession.getRole();
+    if (!role) return;
+    let href = '';
+    if (role === 'admin') href = '/admin/madrasa.html';
+    else if (MMSession.getDeptRole() === 'dept') href = 'dept/dept-staff.html';
+    else if (role === 'teacher') href = 'madrasa/madrasa-class.html';
+    else if (role === 'daftar') href = 'madrasa/madrasa-daftar.html';
+    else if (role === 'hifz') href = 'madrasa/madrasa-hifz.html';
+    else if (role === 'library') href = 'madrasa/madrasa-library.html';
+    else if (role === 'alumni') href = 'madrasa/madrasa-alumni.html';
+    else if (role === 'khedmat') href = 'khedmat/khedmat-staff.html';
+    if (href) location.replace(href);
+  })();
+
   const BN_MAP = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
 
   function iconSvg(name) {

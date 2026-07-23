@@ -23,6 +23,39 @@
     K.deptRole, K.deptId, K.deptName, K.deptEmoji,
   ];
 
+  // Dedicated-device login: keep the selected actor until explicit logout.
+  var APP_PERSIST_KEY = 'mm_app_persist_v1';
+
+  function persistAppSession() {
+    try {
+      if (!sessionStorage.getItem(K.role)) return;
+      var data = {};
+      ALL_APP_KEYS.forEach(function (key) {
+        var value = sessionStorage.getItem(key);
+        if (value != null) data[key] = value;
+      });
+      localStorage.setItem(APP_PERSIST_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function restorePersistedAppSession() {
+    try {
+      if (sessionStorage.getItem(K.role)) return true;
+      var raw = localStorage.getItem(APP_PERSIST_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data || !data[K.role]) return false;
+      ALL_APP_KEYS.forEach(function (key) {
+        if (data[key] != null) sessionStorage.setItem(key, String(data[key]));
+      });
+      return !!sessionStorage.getItem(K.role);
+    } catch (e) { return false; }
+  }
+
+  function clearPersistedAppSession() {
+    try { localStorage.removeItem(APP_PERSIST_KEY); } catch (e) {}
+  }
+
   // ── Persistent admin login (admin subdomain only) ──
   // sessionStorage অ্যাপ বন্ধ হলে মুছে যায়; admin PWA-তে যাতে বারবার লগইন না
   // লাগে, admin session localStorage-এ রাখি ও fresh entry-র পর restore করি।
@@ -154,11 +187,13 @@
     setTeacherProfile: function (profile) {
       if (!profile || !profile.id) {
         sessionStorage.removeItem(K.teacherProfile);
+        persistAppSession();
         return;
       }
       sessionStorage.setItem(K.teacherProfile, JSON.stringify(profile));
+      persistAppSession();
     },
-    clearTeacherProfile: function () { sessionStorage.removeItem(K.teacherProfile); },
+    clearTeacherProfile: function () { sessionStorage.removeItem(K.teacherProfile); persistAppSession(); },
     /** Volatile API cache reset হলে login session থেকে teacher row পুনরায় লোড */
     hydrateTeacherRecord: function () {
       var tid = this.getTeacherId();
@@ -216,8 +251,9 @@
       sessionStorage.removeItem(K.adminUserId);
       sessionStorage.removeItem(K.adminPin);
       sessionStorage.removeItem(K.adminPerms);
+      persistAppSession();
     },
-    setTeacherId: function (v) { sessionStorage.setItem(K.teacherId, v); },
+    setTeacherId: function (v) { sessionStorage.setItem(K.teacherId, v); persistAppSession(); },
     setAdminSession: function (name, perms, userId, pin) {
       sessionStorage.setItem(K.role, 'admin');
       sessionStorage.setItem(K.name, name || 'জিম্মাদার');
@@ -239,6 +275,7 @@
           adminPerms: perms ? JSON.stringify(perms) : '',
         });
       }
+      persistAppSession();
     },
 
     setDeptSession: function (id, name, emoji, userId, pin) {
@@ -257,6 +294,7 @@
       sessionStorage.removeItem(K.adminPerms);
       sessionStorage.removeItem(K.teacherId);
       sessionStorage.removeItem(K.teacherProfile);
+      persistAppSession();
     },
     changeStaffPin: async function (currentPin, newPin, localChangeFn) {
       var uid = this.getStaffUserId();
@@ -423,8 +461,20 @@
     },
 
     /** Clear app session then go to role selection (use from madrasa/*, khedmat staff, etc.). */
-    logoutToIndex: function (href) {
+    logoutToIndex: async function (href) {
+      var actorId = this.getChatActorId();
+      var pin = this.getChatPin();
+      var isAdmin = this.isAdmin();
+      if (global.MMPush && MMPush.disableForSession) {
+        try {
+          await Promise.race([
+            MMPush.disableForSession(actorId, pin, isAdmin),
+            new Promise(function (resolve) { setTimeout(resolve, 1800); })
+          ]);
+        } catch (e) {}
+      }
       this.clearAppSession();
+      clearPersistedAppSession();
       clearPersistedAdminSession();
       // Admin app runs on its own subdomain with a dedicated login entry,
       // so logout there must return to /admin/ — not the shared staff login.
@@ -473,6 +523,7 @@
     } catch (e2) {}
     if (!sameOriginReferrer) MMSession.clearAppSession();
   })();
+  restorePersistedAppSession();
   // Fresh-entry stale-clear-এর পর persisted admin login ফিরিয়ে আনি (admin host)।
   restorePersistedAdminSession();
   var chatUnreadCount = 0;

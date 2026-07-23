@@ -382,8 +382,13 @@ const MMSharedAPI = (() => {
         p_user_agent: userAgent || null,
       });
     },
-    pushUnsubscribe(endpoint) {
-      return rpc('mdr_rel_push_unsubscribe', { p_endpoint: endpoint });
+    pushUnsubscribe(actorId, pin, endpoint, isAdmin) {
+      return rpc('mdr_rel_push_unsubscribe', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_endpoint: endpoint,
+        p_is_admin: !!isAdmin,
+      });
     },
     examBootstrap(actorId, pin) {
       return rpc('mdr_rel_exam_bootstrap', { p_actor_id: actorId, p_pin: pin });

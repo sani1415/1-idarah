@@ -115,6 +115,12 @@ function injectBootScript(html, relativeRoot, version) {
   return html;
 }
 
+function injectPushScript(html, relativeRoot, version) {
+  if (!/mm-session\.js/i.test(html) || /mm-push\.js/i.test(html)) return html;
+  const tag = `<script src="${relativeRoot}js/core/mm-push.js?v=${encodeURIComponent(version)}"></script>`;
+  return html.replace(/(<script\b[^>]*\bsrc=["'][^"']*mm-session\.js[^"']*["'][^>]*><\/script>)/i, `$1\n${tag}`);
+}
+
 function transformHtml(html, relativeRoot, version) {
   let next = html
     .replace(/(<script\b[^>]*\bsrc=["'])([^"']+)(["'][^>]*>)/gi, function (_, before, url, after) {
@@ -125,6 +131,7 @@ function transformHtml(html, relativeRoot, version) {
       return before + versionAssetUrl(url, version) + after;
     });
   next = injectBootScript(next, relativeRoot, version);
+  next = injectPushScript(next, relativeRoot, version);
   next = injectAppUpdate(next, relativeRoot, version);
   return injectInstallPrompt(next, relativeRoot, version);
 }

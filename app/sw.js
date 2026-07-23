@@ -21,7 +21,7 @@ self.addEventListener('push', function (event) {
   var options = {
     body: data.body || '',
     icon: '/admin/icons/icon.svg',
-    tag: data.tag || 'admin-chat',
+    tag: data.tag || 'personal-chat',
     renotify: true,
     data: { url: data.url || '/chat.html' }
   };

@@ -120,11 +120,42 @@
     return false;
   }
 
+  async function disableForSession(actorId, pin, isAdmin) {
+    if (!supported()) return true;
+    var reg = await navigator.serviceWorker.getRegistration('/');
+    if (!reg) return true;
+    var sub = await reg.pushManager.getSubscription();
+    if (!sub) return true;
+    var endpoint = sub.endpoint || '';
+    // Server unbind is best-effort; local unsubscribe is the hard logout boundary.
+    if (endpoint && global.MMSharedAPI && MMSharedAPI.pushUnsubscribe && pin) {
+      try { await MMSharedAPI.pushUnsubscribe(actorId || null, pin, endpoint, !!isAdmin); } catch (e) {}
+    }
+    try { await sub.unsubscribe(); } catch (e2) {}
+    return true;
+  }
+
+  async function refreshCurrentSession() {
+    if (!global.MMSession || !MMSession.getRole || !MMSession.getRole()) return false;
+    return refreshSub();
+  }
+
+  function scheduleSessionRefresh() {
+    if (permission() !== 'granted') return;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', refreshCurrentSession, { once: true });
+    } else {
+      setTimeout(refreshCurrentSession, 0);
+    }
+  }
+
   global.MMPush = {
     supported: supported,
     permission: permission,
     registerSW: registerSW,
     enablePush: enablePush,
-    refreshSub: refreshSub
+    refreshSub: refreshSub,
+    disableForSession: disableForSession
   };
+  scheduleSessionRefresh();
 })(window);

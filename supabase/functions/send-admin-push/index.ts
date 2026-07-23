@@ -2,8 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
-// staff → admin নতুন বার্তা এলে admin-এর PWA-তে web push নোটিফিকেশন পাঠায়।
-// mdr_shared_messages-এর AFTER INSERT trigger (private.mdr_notify_admin_new_message)
+// Existing one-to-one chat-এর বিপরীত পক্ষের active PWA subscription-এ push পাঠায়।
+// mdr_shared_messages-এর AFTER INSERT trigger (private.mdr_notify_chat_message)
 // pg_net দিয়ে এটিকে x-notify-secret header সহ কল করে।
 //
 // deploy: verify_jwt = false (নিজস্ব secret auth)।
@@ -56,25 +56,25 @@ Deno.serve(async (req: Request) => {
 
   const isLogReview = payloadIn.kind === "log_review";
 
-  // admin নিজের পাঠানো বার্তা হলে admin-কে notify করার দরকার নেই (log_review payload-এ from_role থাকে না)।
-  if (!isLogReview && String(payloadIn.from_role || "") === "admin") {
-    return jsonResponse({ ok: true, skipped: "admin_message" });
-  }
-
-  // admin subscriptions
-  const { data: subs, error: subErr } = await admin
+  const fromAdmin = String(payloadIn.from_role || "") === "admin";
+  const threadId = String(payloadIn.thread_id || "").trim();
+  let subscriptionsQuery = admin
     .from("mdr_shared_push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .eq("actor_role", "admin");
+    .select("id, endpoint, p256dh, auth");
+  if (isLogReview || !fromAdmin) subscriptionsQuery = subscriptionsQuery.eq("actor_role", "admin");
+  else subscriptionsQuery = subscriptionsQuery.eq("actor_thread", threadId);
+  const { data: subs, error: subErr } = await subscriptionsQuery;
   if (subErr) return jsonResponse({ ok: false, error: subErr.message }, 500);
 
   // অপঠিত admin বার্তার সংখ্যা → app-icon badge।
   let count = 0;
-  const { count: unread } = await admin
-    .from("mdr_shared_messages")
-    .select("id", { count: "exact", head: true })
-    .neq("from_role", "admin")
-    .eq("read_admin", false);
+  let unreadQuery = admin.from("mdr_shared_messages").select("id", { count: "exact", head: true });
+  if (fromAdmin && !isLogReview) {
+    unreadQuery = unreadQuery.eq("thread_id", threadId).eq("from_role", "admin").eq("read_staff", false);
+  } else {
+    unreadQuery = unreadQuery.neq("from_role", "admin").eq("read_admin", false);
+  }
+  const { count: unread } = await unreadQuery;
   if (typeof unread === "number") count = unread;
 
   let title: string;
@@ -101,9 +101,8 @@ Deno.serve(async (req: Request) => {
       ? (preview.length > 80 ? preview.slice(0, 80) + "…" : preview)
       : "আপনাকে একটি নতুন বার্তা পাঠানো হয়েছে।";
     // নোটিফিকেশনে ক্লিক করলে সরাসরি সংশ্লিষ্ট thread-এ নিয়ে যায়।
-    const threadId = String(payloadIn.thread_id || "").trim();
-    url = threadId ? `/chat.html?thread=${encodeURIComponent(threadId)}` : "/chat.html";
-    tag = "admin-chat";
+    url = fromAdmin ? "/chat.html" : (threadId ? `/chat.html?thread=${encodeURIComponent(threadId)}` : "/chat.html");
+    tag = threadId ? `personal-chat-${threadId}` : "personal-chat";
   }
 
   const payload = JSON.stringify({ title, body, url, tag, count });

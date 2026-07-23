@@ -41,6 +41,7 @@
       <div class="chat-peer-name" id="peer-name">—</div>
       <div class="chat-peer-role" id="peer-role">—</div>
     </div>
+    <button type="button" class="topbar-btn" id="staff-notif-enable-btn" style="display:none;flex-shrink:0;" onclick="onEnableNotif()">🔔 চালু</button>
   </div>
   <div class="chat-staff-notice" id="chat-staff-notice" style="display:none;">
     এই বার্তা শুধু জিম্মাদারের কাছে যায়। অন্য স্টাফের সাথে এখানে যোগাযোগ নেই।
@@ -349,6 +350,7 @@
     } else if (myThread) {
       document.body.classList.add('chat-page', 'chat-has-bottom-nav', 'chat-staff');
       setupStaffChatNav();
+      setupNotifButton();
       await syncChatRemote();
       const inp0 = document.getElementById('chat-inp');
       if (inp0) inp0.placeholder = 'বার্তা লিখুন…';
@@ -798,7 +800,7 @@
       return toBn(p[2]+'/'+p[1]+'/'+p[0]);
     } catch { return dateStr; }
   }
-  /* ── নোটিফিকেশন (Web Push) — শুধু জিম্মাদার inbox ── */
+  /* ── নোটিফিকেশন (Web Push) — বর্তমান ব্যক্তিগত chat ── */
   function notifToast(msg) {
     let t = document.getElementById('mm-notif-toast');
     if (!t) {
@@ -816,22 +818,28 @@
   }
 
   async function setupNotifButton() {
-    const btn = document.getElementById('notif-enable-btn');
-    if (!btn || !window.MMPush || !MMPush.supported()) return;
+    const buttons = [
+      document.getElementById('notif-enable-btn'),
+      document.getElementById('staff-notif-enable-btn')
+    ].filter(Boolean);
+    if (!buttons.length || !window.MMPush || !MMPush.supported()) return;
     const perm = MMPush.permission();
     if (perm === 'granted') {
-      btn.style.display = 'none';
+      buttons.forEach(btn => { btn.style.display = 'none'; });
       MMPush.refreshSub();
     } else if (perm === 'denied') {
-      btn.style.display = 'none';
+      buttons.forEach(btn => { btn.style.display = 'none'; });
     } else {
-      btn.style.display = '';
+      buttons.forEach(btn => {
+        const isStaffButton = btn.id === 'staff-notif-enable-btn';
+        btn.style.display = (isStaffButton === !isAdmin) ? '' : 'none';
+      });
     }
   }
 
   async function onEnableNotif() {
-    const btn = document.getElementById('notif-enable-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ চালু হচ্ছে…'; }
+    const btn = isAdmin ? document.getElementById('notif-enable-btn') : document.getElementById('staff-notif-enable-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ হচ্ছে…'; }
     const res = await MMPush.enablePush();
     if (res && res.ok) {
       notifToast('🔔 নোটিফিকেশন চালু হয়েছে');
@@ -841,7 +849,7 @@
         : res && res.error === 'unsupported' ? 'এই ব্রাউজারে সমর্থিত নয়'
         : 'চালু করা যায়নি, আবার চেষ্টা করুন';
       notifToast(msg);
-      if (btn) { btn.disabled = false; btn.textContent = '🔔 নোটিফিকেশন চালু'; }
+      if (btn) { btn.disabled = false; btn.textContent = isAdmin ? '🔔 নোটিফিকেশন চালু' : '🔔 চালু'; }
     }
   }
   window.onEnableNotif = onEnableNotif;
