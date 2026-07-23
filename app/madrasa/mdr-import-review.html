@@ -49,7 +49,7 @@
   <div class="review-card">
     <div class="review-title">পুরনো backup থেকে pending ছাত্র</div>
     <div class="muted">
-      এখানে ছাত্ররা এখনো final ছাত্র তালিকায় যায়নি। প্রতিটি ছাত্র দেখে স্থায়ী দাখেলা, শ্রেণি ও রোল ঠিক করে অনুমোদন করলে মূল ছাত্র তালিকায় যাবে।
+      এখানে ছাত্ররা এখনো final ছাত্র তালিকায় যায়নি। প্রতিটি ছাত্র দেখে স্থায়ী দাখেলা, শ্রেণি ও পরিচিতি ঠিক করে অনুমোদন করলে মূল ছাত্র তালিকায় যাবে।
     </div>
     <div class="toolbar">
       <input class="form-input" id="admin-pin" type="password" maxlength="4" placeholder="জিম্মাদার PIN">
@@ -72,7 +72,7 @@
       <select class="form-input form-select" id="class-filter" onchange="renderList()">
         <option value="">সব বর্ষ/শ্রেণি</option>
       </select>
-      <input class="form-input wide" id="search-box" placeholder="নাম, বাবার নাম, পুরনো দাখেলা বা রোল দিয়ে খুঁজুন" oninput="renderList()">
+      <input class="form-input wide" id="search-box" placeholder="নাম, বাবার নাম, পুরনো দাখেলা বা পরিচিতি দিয়ে খুঁজুন" oninput="renderList()">
     </div>
     <div id="student-list" class="student-list"></div>
     <div class="pager">
@@ -97,7 +97,7 @@
       <select class="form-input form-select" id="approve-class"></select>
     </div>
     <div class="form-group">
-      <label class="form-label">বর্তমান রোল</label>
+      <label class="form-label">বর্তমান পরিচিতি</label>
       <input class="form-input" id="approve-roll" placeholder="যেমন: 101 / মক্তব: ম১০১">
     </div>
     <div class="form-group">
@@ -213,7 +213,7 @@
             <div class="student-name">${esc(c.name)}</div>
             <div class="student-meta">
               পুরনো দাখেলা: ${esc(c.old_student_id)} · পিতা: ${esc(c.guardian_name || '—')}<br>
-              পুরনো শ্রেণি/রোল: ${esc(c.old_class_name || '—')} / ${esc(c.old_roll || '—')} · নতুন mapping: ${esc(className(c.class_code))}
+              পুরনো শ্রেণি/পরিচিতি: ${esc(c.old_class_name || '—')} / ${esc(c.old_roll || '—')} · নতুন mapping: ${esc(className(c.class_code))}
             </div>
           </div>
           <span class="tag">${sourceName(c.source)}</span>
@@ -236,7 +236,7 @@
     if (!c) return;
     state.current = c;
     document.getElementById('approve-summary').innerHTML =
-      `<b>${esc(c.name)}</b><br>পিতা: ${esc(c.guardian_name || '—')} · পুরনো রোল: ${esc(c.old_roll || '—')}`;
+      `<b>${esc(c.name)}</b><br>পিতা: ${esc(c.guardian_name || '—')} · পুরনো পরিচিতি: ${esc(c.old_roll || '—')}`;
     document.getElementById('student-id').value = '';
     document.getElementById('approve-class').value = c.class_code === 'kitab_hifz' ? '' : c.class_code;
     document.getElementById('approve-roll').value = c.old_roll || '';
@@ -257,12 +257,12 @@
     const hijriYear = document.getElementById('approve-hijri').value.trim();
     if (!studentId) { showToast('স্থায়ী দাখেলা দিন'); return; }
     if (!classCode) { showToast('বর্তমান মূল বর্ষ নির্বাচন করুন'); return; }
-    if (!roll) { showToast('রোল দিন'); return; }
+    if (!roll) { showToast('পরিচিতি দিন'); return; }
     if (state.current.source === 'moktob_backup' && !/^0\d+$/.test(studentId)) {
       if (!confirm('মক্তব ছাত্রের স্থায়ী দাখেলা সাধারণত 0 দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
     }
     if (state.current.source === 'moktob_backup' && !roll.startsWith('ম')) {
-      if (!confirm('মক্তব ছাত্রের রোল সাধারণত “ম” দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
+      if (!confirm('মক্তব ছাত্রের পরিচিতি সাধারণত “ম” দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
     }
     try {
       setLoading(true);

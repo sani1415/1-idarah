@@ -93,6 +93,12 @@ const MMSharedAPI = (() => {
         p_pin: pin,
       });
     },
+    teacherClassAbsentSummary(actorId, pin) {
+      return rpc('mdr_rel_teacher_class_absent_summary', {
+        p_actor_id: actorId,
+        p_pin: pin,
+      });
+    },
     saveMadrasaUser(pin, user) {
       return rpc('mdr_rel_save_user', {
         p_pin: pin,
@@ -232,12 +238,13 @@ const MMSharedAPI = (() => {
         p_special_watch: !!specialWatch,
       });
     },
-    setAlhamdulillah(actorId, pin, studentId, value) {
+    setAlhamdulillah(actorId, pin, studentId, value, reason) {
       return rpc('mdr_rel_set_alhamdulillah', {
         p_actor_id: actorId,
         p_pin: pin,
         p_student_id: studentId,
         p_alhamdulillah: !!value,
+        p_reason: value ? String(reason || '').trim() : null,
       });
     },
     setStudentStatus(actorId, pin, studentId, status, reason) {
@@ -512,6 +519,13 @@ const MMSharedAPI = (() => {
         p_pin: pin,
         p_due_id: dueId,
         p_amount: Number(amount || 0),
+      });
+    },
+    importAccountsBatch(actorId, pin, payload) {
+      return rpc('mdr_rel_accounts_import_batch', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_payload: payload || {},
       });
     },
     addAccountCategory(actorId, pin, name) {

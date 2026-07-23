@@ -628,7 +628,7 @@
   }
   function chatTagStudentLabel(s) {
     if (!s) return '';
-    return [s.name, s.roll != null && String(s.roll) !== '' ? 'রোল ' + s.roll : ''].filter(Boolean).join(' · ');
+    return [s.name, s.roll != null && String(s.roll) !== '' ? 'পরিচিতি ' + s.roll : ''].filter(Boolean).join(' · ');
   }
   function populateChatTagStudentList() {
     const list = document.getElementById('chat-tag-student-list');

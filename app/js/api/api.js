@@ -62,7 +62,10 @@ const API = (() => {
   const SESSION_CACHE_VERSION = 1;
   const SESSION_CACHE_META = 'mm_data_cache_meta';
   const SESSION_CACHE_PREFIX = 'mm_sc_';
-  const ABSENT_SUMMARY_KEY = 'mm_absent_summary_v1';
+  /* v2 = absent_streak সহ; পুরনো v1 ক্যাশ টানা ০/১ ভুল দেখাত */
+  const ABSENT_SUMMARY_KEY = 'mm_absent_summary_v2';
+  const ABSENT_SUMMARY_SCHEMA = 2;
+  try { sessionStorage.removeItem('mm_absent_summary_v1'); } catch (e) { /* ignore */ }
   /** হাজিরা অডিট — শুধু তারিখের তালিকা (হালকা; সেশন জুড়ে নেভে টিকে থাকে) */
   const ATTENDANCE_DATES_KEY = 'mm_attendance_dates_v1';
   let sessionHydrateAttempted = false;
@@ -311,15 +314,43 @@ const API = (() => {
     return false;
   }
 
+  function absentSummaryRowsHaveStreak(rows) {
+    if (!Array.isArray(rows) || !rows.length) return true;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || typeof r.absentStreak !== 'number') return false;
+    }
+    return true;
+  }
+
   function loadDaftarAbsentSummaryRaw() {
     try {
       const raw = sessionStorage.getItem(ABSENT_SUMMARY_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed || parsed.actor !== sessionActorKey()) return null;
+      /* streak ছাড়া পুরনো ক্যাশ = অসম্পূর্ণ → refetch বাধ্য */
+      if (parsed.schemaVersion !== ABSENT_SUMMARY_SCHEMA ||
+          (parsed.source === 'server' && !absentSummaryRowsHaveStreak(parsed.rows))) {
+        try { sessionStorage.removeItem(ABSENT_SUMMARY_KEY); } catch (e2) { /* ignore */ }
+        return null;
+      }
       return parsed;
     } catch (e) {
       return null;
+    }
+  }
+
+  function writeAbsentSummaryCache(payload) {
+    try {
+      sessionStorage.setItem(ABSENT_SUMMARY_KEY, JSON.stringify({
+        actor: sessionActorKey(),
+        ts: Date.now(),
+        ...payload,
+        schemaVersion: ABSENT_SUMMARY_SCHEMA,
+      }));
+    } catch (e) {
+      console.warn('[API] absent summary cache write failed', e);
     }
   }
 
@@ -333,6 +364,10 @@ const API = (() => {
 
   function rebuildDaftarAbsentSummary() {
     const existing = loadDaftarAbsentSummaryRaw();
+    /* সার্ভার aggregate থাকলে লোকাল ~৩০ দিনের হাজিরা দিয়ে overwrite করা যাবে না */
+    if (existing && existing.source === 'server' && Array.isArray(existing.rows) && existing.rows.length) {
+      return existing.rows;
+    }
     const attList = load(KEYS.attendance);
     if (!attList.length && existing && Array.isArray(existing.rows) && existing.rows.length) {
       return existing.rows;
@@ -341,17 +376,20 @@ const API = (() => {
     const rows = [];
     Students.getAll().forEach((s) => {
       if (!s || !s.active) return;
-      const absentDays = studentAbsentDayCount(by, s);
+      const fromField = Number(s.session_absent_days) || 0;
+      const absentDays = Math.max(fromField, studentAbsentDayCount(by, s));
       if (absentDays <= 0) return;
       const cls = Classes.getById(s.class_id);
       rows.push({
         student: {
           id: s.id,
+          supabase_id: s.supabase_id || '',
           name: s.name || '',
           roll: s.roll || '',
           class_id: s.class_id || '',
         },
         absentDays,
+        absentStreak: Number(s.session_absent_streak) || 0,
         dept: cls && cls.dept === 'maktab' ? 'maktab' : 'kitab',
       });
     });
@@ -359,15 +397,7 @@ const API = (() => {
     if (!rows.length && existing && Array.isArray(existing.rows) && existing.rows.length) {
       return existing.rows;
     }
-    try {
-      sessionStorage.setItem(ABSENT_SUMMARY_KEY, JSON.stringify({
-        actor: sessionActorKey(),
-        rows,
-        ts: Date.now(),
-      }));
-    } catch (e) {
-      console.warn('[API] absent summary cache write failed', e);
-    }
+    writeAbsentSummaryCache({ source: 'local', rows });
     return rows;
   }
 
@@ -382,6 +412,7 @@ const API = (() => {
       const student = byId[String(item && item.student_id || '')];
       const absentDays = Number(item && item.absent_days) || 0;
       if (!student || student.active === false || absentDays <= 0) return null;
+      const absentStreak = Number(item && item.absent_streak) || 0;
       return {
         student: {
           id: student.id,
@@ -391,18 +422,113 @@ const API = (() => {
           class_id: student.class_id || '',
         },
         absentDays,
+        absentStreak,
         dept: item.dept === 'maktab' ? 'maktab' : 'kitab',
       };
     }).filter(Boolean).sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
-    try {
-      sessionStorage.setItem(ABSENT_SUMMARY_KEY, JSON.stringify({
-        actor: sessionActorKey(),
-        rows,
-        ts: Date.now(),
-      }));
-    } catch (e) {
-      console.warn('[API] server absent summary cache write failed', e);
-    }
+    /* ছাত্র অবজেক্টেও session total + streak বসাও — সব UI এক সোর্স পায় */
+    const daysById = Object.create(null);
+    const streakById = Object.create(null);
+    rows.forEach((x) => {
+      if (x.student.id) {
+        daysById[String(x.student.id)] = x.absentDays;
+        streakById[String(x.student.id)] = x.absentStreak || 0;
+      }
+      if (x.student.supabase_id) {
+        daysById[String(x.student.supabase_id)] = x.absentDays;
+        streakById[String(x.student.supabase_id)] = x.absentStreak || 0;
+      }
+    });
+    let dirty = false;
+    const nextStudents = students.map((s) => {
+      let days = daysById[String(s.id || '')];
+      if (days == null) days = daysById[String(s.supabase_id || '')];
+      let streak = streakById[String(s.id || '')];
+      if (streak == null) streak = streakById[String(s.supabase_id || '')];
+      if (days == null && streak == null) return s;
+      const nextDays = days != null ? days : s.session_absent_days;
+      const nextStreak = streak != null ? streak : s.session_absent_streak;
+      if (Number(s.session_absent_days) === Number(nextDays) &&
+          Number(s.session_absent_streak || 0) === Number(nextStreak || 0)) return s;
+      dirty = true;
+      return { ...s, session_absent_days: nextDays, session_absent_streak: nextStreak || 0 };
+    });
+    if (dirty) save(KEYS.students, nextStudents);
+    writeAbsentSummaryCache({ source: 'server', rows });
+    return rows;
+  }
+
+  /** শিক্ষক বর্ষ-summary: নিজ ক্লাসের ছাত্রদের session total + streak মার্জ */
+  function applyTeacherClassAbsentSummary(items) {
+    const students = Students.getAll();
+    const byId = Object.create(null);
+    students.forEach((s) => {
+      if (s.id) byId[String(s.id)] = s;
+      if (s.supabase_id) byId[String(s.supabase_id)] = s;
+    });
+    const daysById = Object.create(null);
+    const streakById = Object.create(null);
+    (Array.isArray(items) ? items : []).forEach((item) => {
+      const sid = String(item && item.student_id || '');
+      const days = Number(item && item.absent_days) || 0;
+      const streak = Number(item && item.absent_streak) || 0;
+      if (!sid || days <= 0) return;
+      daysById[sid] = days;
+      streakById[sid] = streak;
+      const st = byId[sid];
+      if (st && st.id) {
+        daysById[String(st.id)] = days;
+        streakById[String(st.id)] = streak;
+      }
+      if (st && st.supabase_id) {
+        daysById[String(st.supabase_id)] = days;
+        streakById[String(st.supabase_id)] = streak;
+      }
+    });
+
+    const nextStudents = students.map((s) => {
+      let days = daysById[String(s.id || '')];
+      if (days == null) days = daysById[String(s.supabase_id || '')];
+      let streak = streakById[String(s.id || '')];
+      if (streak == null) streak = streakById[String(s.supabase_id || '')];
+      if (days == null) return s;
+      if (Number(s.session_absent_days) === days &&
+          Number(s.session_absent_streak || 0) === Number(streak || 0)) return s;
+      return { ...s, session_absent_days: days, session_absent_streak: streak || 0 };
+    });
+    save(KEYS.students, nextStudents);
+
+    const existing = loadDaftarAbsentSummaryRaw();
+    const keep = (existing && Array.isArray(existing.rows) ? existing.rows : []).filter((x) => {
+      if (!x || !x.student) return false;
+      const id = String(x.student.id || '');
+      const supa = String(x.student.supabase_id || '');
+      return !daysById[id] && !daysById[supa];
+    });
+    const fresh = [];
+    Object.keys(daysById).forEach((key) => {
+      const student = byId[key];
+      if (!student || student.active === false) return;
+      if (fresh.some((r) => String(r.student.id) === String(student.id))) return;
+      const cls = Classes.getById(student.class_id);
+      let streak = streakById[String(student.id || '')];
+      if (streak == null) streak = streakById[String(student.supabase_id || '')];
+      if (streak == null) streak = streakById[key];
+      fresh.push({
+        student: {
+          id: student.id,
+          supabase_id: student.supabase_id || '',
+          name: student.name || '',
+          roll: student.roll || '',
+          class_id: student.class_id || '',
+        },
+        absentDays: daysById[String(student.id)] != null ? daysById[String(student.id)] : daysById[key],
+        absentStreak: streak || 0,
+        dept: cls && cls.dept === 'maktab' ? 'maktab' : 'kitab',
+      });
+    });
+    const rows = keep.concat(fresh).sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+    writeAbsentSummaryCache({ source: 'server', rows });
     return rows;
   }
 
@@ -411,6 +537,39 @@ const API = (() => {
     if (!parsed || !Array.isArray(parsed.rows)) return null;
     const allowed = Array.isArray(depts) && depts.length ? depts : ['kitab', 'maktab'];
     return parsed.rows.filter((x) => allowed.indexOf(x.dept) >= 0);
+  }
+
+  function lookupSummaryRow(student) {
+    if (!student) return null;
+    const fromSummary = loadDaftarAbsentSummaryRaw();
+    if (!fromSummary || !Array.isArray(fromSummary.rows)) return null;
+    for (let i = 0; i < fromSummary.rows.length; i++) {
+      const x = fromSummary.rows[i];
+      if (!x || !x.student) continue;
+      if (String(x.student.id) === String(student.id) ||
+          (student.supabase_id && String(x.student.supabase_id || x.student.id) === String(student.supabase_id))) {
+        return x;
+      }
+    }
+    return null;
+  }
+
+  /** শিক্ষাবর্ষের মোট অনুপস্থিত দিন — summary → student.session_absent_days → লোকাল fallback */
+  function getSessionAbsentDays(student) {
+    if (!student) return 0;
+    const row = lookupSummaryRow(student);
+    if (row) return Number(row.absentDays) || 0;
+    const fromField = Number(student.session_absent_days) || 0;
+    if (fromField > 0) return fromField;
+    return studentAbsentDayCount(Attendance.getAbsentStatsByStudent(), student);
+  }
+
+  /** আজসহ টানা অনুপস্থিত — সার্ভার streak (বর্ষ শুরু থেকে) */
+  function getSessionAbsentStreak(student) {
+    if (!student) return 0;
+    const row = lookupSummaryRow(student);
+    if (row && typeof row.absentStreak === 'number') return row.absentStreak || 0;
+    return Number(student.session_absent_streak) || 0;
   }
 
   function load(key) {
@@ -545,7 +704,7 @@ const API = (() => {
     ['mm_lib_books', 'mm_lib_issues', 'mm_hifz_groups', 'mm_hifz_progress', 'mm_hifz_members', 'mm_hifz_activity', 'mm_alumni', 'mm_alumni_contacts'].forEach((key) => filterKey(key, sampleRef));
   }
 
-  /** মক্তব: স্থায়ী আইডি digit-only, leading zero সহ; রোল/পরিচিতি `ম` দিয়ে শুরু */
+  /** মক্তব: স্থায়ী আইডি digit-only, leading zero সহ; পরিচিতি `ম` দিয়ে শুরু */
   function bnDigitsToInt(str) {
     if (!str) return 0;
     const t = String(str).trim().replace(/[০-৯]/g, (ch) => {
@@ -593,6 +752,15 @@ const API = (() => {
         let out = { ...s };
         if (prev && prev.special_watch && s.special_watch == null) out = { ...out, special_watch: true };
         if (prev && prev.alhamdulillah && s.alhamdulillah == null) out = { ...out, alhamdulillah: true };
+        if (prev && prev.alhamdulillah && prev.alhamdulillah_reason && (s.alhamdulillah_reason == null || s.alhamdulillah_reason === '')) {
+          out = { ...out, alhamdulillah_reason: prev.alhamdulillah_reason };
+        }
+        if (prev && prev.session_absent_days != null && s.session_absent_days == null) {
+          out = { ...out, session_absent_days: prev.session_absent_days };
+        }
+        if (prev && prev.session_absent_streak != null && s.session_absent_streak == null) {
+          out = { ...out, session_absent_streak: prev.session_absent_streak };
+        }
         if (prev && Array.isArray(prev.program_history) && !Array.isArray(s.program_history)) out = { ...out, program_history: prev.program_history };
         return out;
       });
@@ -996,7 +1164,7 @@ const API = (() => {
       const holiday = all.filter((a) => st(a) === 'holiday').length;
       return { present, absent, holiday, total: present + absent };
     },
-    /** ছাত্র প্রতি মোট অনুপস্থিত দিন (স্ট্যাটাস absent, holiday বাদ) */
+    /** ছাত্র প্রতি মোট অনুপস্থিত দিন (স্ট্যাটাস absent, holiday বাদ) — শুধু লোকাল ক্যাশ */
     getAbsentStatsByStudent() {
       const byStudent = {};
       load(KEYS.attendance).forEach((a) => {
@@ -1007,8 +1175,28 @@ const API = (() => {
       });
       return byStudent;
     },
+    /** শিক্ষাবর্ষের মোট অনুপস্থিত — summary/RPC অগ্রাধিকার */
+    getSessionAbsentDays(student) {
+      return getSessionAbsentDays(student);
+    },
+    getSessionAbsentStreak(student) {
+      return getSessionAbsentStreak(student);
+    },
     /** যে ছাত্রদের কমপক্ষে এক দিন অনুপস্থিত রেকর্ড আছে — অনুপস্থিত দিন বেশি থেকে কম */
     getStudentsWithAbsentSorted() {
+      const cached = loadDaftarAbsentSummaryRows(['kitab', 'maktab']);
+      if (cached && cached.length) {
+        return cached.map((x) => ({
+          student: Students.getById(x.student.id) || x.student,
+          absentDays: x.absentDays,
+        })).filter((x) => x.student && x.student.active !== false);
+      }
+      const fromField = Students.getAll()
+        .filter((s) => s.active)
+        .map((s) => ({ student: s, absentDays: Number(s.session_absent_days) || 0 }))
+        .filter((x) => x.absentDays > 0)
+        .sort((a, b) => b.absentDays - a.absentDays);
+      if (fromField.length) return fromField;
       const by = this.getAbsentStatsByStudent();
       return Students.getAll()
         .filter((s) => s.active)
@@ -1018,7 +1206,20 @@ const API = (() => {
     },
     getStudentsWithAbsentSortedByDept(dept) {
       if (dept !== 'kitab' && dept !== 'maktab') return this.getStudentsWithAbsentSorted();
+      const cached = loadDaftarAbsentSummaryRows([dept]);
+      if (cached && cached.length) {
+        return cached.map((x) => ({
+          student: Students.getById(x.student.id) || x.student,
+          absentDays: x.absentDays,
+        })).filter((x) => x.student && x.student.active !== false);
+      }
       const cids = new Set(Classes.getByDept(dept).map((c) => c.id));
+      const fromField = Students.getAll()
+        .filter((s) => s.active && cids.has(s.class_id))
+        .map((s) => ({ student: s, absentDays: Number(s.session_absent_days) || 0 }))
+        .filter((x) => x.absentDays > 0)
+        .sort((a, b) => b.absentDays - a.absentDays);
+      if (fromField.length) return fromField;
       const by = this.getAbsentStatsByStudent();
       return Students.getAll()
         .filter((s) => s.active && cids.has(s.class_id))
@@ -1458,7 +1659,8 @@ const API = (() => {
     hydrateSessionCache, clearSessionCache, isSessionCacheWarm, isDaftarSessionCacheWarm, hasSessionCacheEntry,
     markDaftarBootstrapComplete, persistDaftarAttendanceSessionCache, applyAttendanceDateIndexFromServer,
     isAdminMadrasaExtrasWarm, markAdminMadrasaBootstrapComplete,
-    rebuildDaftarAbsentSummary, applyDaftarAbsentSummaryFromServer, loadDaftarAbsentSummaryRows, loadDaftarAbsentSummaryRaw,
+    rebuildDaftarAbsentSummary, applyDaftarAbsentSummaryFromServer, applyTeacherClassAbsentSummary,
+    loadDaftarAbsentSummaryRows, loadDaftarAbsentSummaryRaw, getSessionAbsentDays, getSessionAbsentStreak,
     uid, today, now, esc, escBn, toBn,
   };
 

@@ -178,7 +178,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
           <div class="form-group"><label class="form-label">বর্ষ</label><select class="form-input form-select" id="add-class"></select></div>
         </div>
         <div class="form-group"><label class="form-label">পূর্ণ নাম <span style="color:var(--red)">*</span></label><input class="form-input" id="add-name" placeholder="ছাত্রের পূর্ণ নাম"></div>
-        <div class="form-group"><label class="form-label">রোল নম্বর <span style="color:var(--red)">*</span></label><input class="form-input" id="add-roll" placeholder="যেমন: ১০১"></div>
+        <div class="form-group"><label class="form-label">পরিচিতি নম্বর <span style="color:var(--red)">*</span></label><input class="form-input" id="add-roll" placeholder="যেমন: ১০১"></div>
         <div class="form-group"><label class="form-label">স্থায়ী দাখেলা <span style="color:var(--red)">*</span></label><input class="form-input" id="add-pid" placeholder="যেমন: ৪৭০১২" autocomplete="off"></div>
         <div class="form-group"><label class="form-label">অভিভাবকের নাম</label><input class="form-input" id="add-guardian" placeholder="অভিভাবকের নাম"></div>
         <div class="form-row">
@@ -199,7 +199,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
       <div class="student-section" id="panel-csv">
         <div style="background:var(--cream2);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;font-size:12px;color:var(--ink2);line-height:1.7;">
           <strong>CSV ফরম্যাট:</strong> প্রথম সারি হেডার।<br>
-          <strong>নয় কলাম:</strong> <code style="background:#fff;padding:1px 5px;border-radius:4px;">নাম, বর্ষ, রোল, অভিভাবক, পেশা, ফোন, জেলা, উপজেলা, স্থায়ী_দাখেলা</code>
+          <strong>নয় কলাম:</strong> <code style="background:#fff;padding:1px 5px;border-radius:4px;">নাম, বর্ষ, পরিচিতি, অভিভাবক, পেশা, ফোন, জেলা, উপজেলা, স্থায়ী_দাখেলা</code>
         </div>
         <button class="dl-btn" onclick="downloadTemplate()">⬇ নমুনা CSV ডাউনলোড</button>
         <div class="csv-box" id="csv-drop" onclick="document.getElementById('csv-file').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
@@ -226,19 +226,19 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js"></script>
-<script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
+<script src="../js/api/api-shared.js?v=20260723-daftar-absent"></script>
 <script src="../js/core/mm-sample-data.js"></script>
-<script src="../js/api/api.js?v=20260517-attendance-consistency"></script>
-<script src="../js/madrasa/mdr-daftar-supabase.js"></script>
+<script src="../js/api/api.js?v=20260723-absent-streak2"></script>
+<script src="../js/madrasa/mdr-daftar-supabase.js?v=20260723-daftar-absent"></script>
 <script src="../js/madrasa/madrasa-accounts-api.js?v=20260614-live-import-refresh"></script>
 <script src="../js/madrasa/madrasa-kormosuchi.js"></script>
 <script src="../js/madrasa/mdr-khadimin-supabase.js"></script>
-<script src="../js/core/mm-session.js"></script>
+<script src="../js/core/mm-session.js?v=20260723-daftar-absent"></script>
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script src="../js/shared/daftar-bottom-nav.js"></script>
-<script src="../js/madrasa/mdr-home-panels.js?v=20260714-absent-streak"></script>
+<script src="../js/madrasa/mdr-home-panels.js?v=20260723-absent-streak2"></script>
 <script src="../js/madrasa/mdr-dastarkhan.js"></script>
 <script src="../js/madrasa/mdr-daftar-notes.js"></script>
 <script>
@@ -372,7 +372,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     const classId = document.getElementById('add-class').value;
     const pid = document.getElementById('add-pid').value.trim();
     if (!name) { showToast('নাম আবশ্যক'); return; }
-    if (!roll) { showToast('রোল নম্বর আবশ্যক'); return; }
+    if (!roll) { showToast('পরিচিতি নম্বর আবশ্যক'); return; }
     if (!classId) { showToast('বর্ষ নির্বাচন করুন'); return; }
     if (!pid) { showToast('স্থায়ী দাখেলা আবশ্যক'); return; }
     if (API.Students.isPermanentIdTaken(pid)) { showToast('এই স্থায়ী দাখেলা ইতিমধ্যে কারো আছে'); return; }
@@ -395,7 +395,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
   let csvRows = [];
   function downloadTemplate() {
     const clsNames = API.Classes.getAll().map(c=>c.name).join(', ');
-    const header = 'নাম,বর্ষ,রোল,অভিভাবক,পেশা,ফোন,জেলা,উপজেলা,স্থায়ী_দাখেলা';
+    const header = 'নাম,বর্ষ,পরিচিতি,অভিভাবক,পেশা,ফোন,জেলা,উপজেলা,স্থায়ী_দাখেলা';
     const sample = 'মুহাম্মাদ আব্দুল্লাহ,১ম বর্ষ,১০১,আব্দুর রহীম,চাষাবাদ,০১৭০০-০০০০০০,ঢাকা,দোহার,৪৭০১২';
     const blob = new Blob(['\uFEFF# বর্ষের নাম: ' + clsNames + '\n' + header + '\n' + sample], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -436,7 +436,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
       const idCell = r.err ? '—' : API.escBn(r.resolved_pid || '—');
       return `<tr class="${r.err ? 'row-err' : ''}"><td>${toBn(r.idx)}</td><td>${API.esc(r.name)}</td><td>${API.esc(r.clsName)}</td><td>${API.escBn(r.roll)}</td><td>${API.esc(r.district || '—')}</td><td>${API.esc(r.upazila || '—')}</td><td>${idCell}</td><td>${API.esc(r.guardian)}</td><td>${API.escBn(r.phone)}</td><td>${st}</td></tr>`;
     }).join('');
-    document.getElementById('csv-table').innerHTML = '<thead><tr><th>#</th><th>নাম</th><th>বর্ষ</th><th>রোল</th><th>জেলা</th><th>উপজেলা</th><th>স্থায়ী দাখেলা</th><th>অভিভাবক</th><th>ফোন</th><th>অবস্থা</th></tr></thead><tbody>' + rows + '</tbody>';
+    document.getElementById('csv-table').innerHTML = '<thead><tr><th>#</th><th>নাম</th><th>বর্ষ</th><th>পরিচিতি</th><th>জেলা</th><th>উপজেলা</th><th>স্থায়ী দাখেলা</th><th>অভিভাবক</th><th>ফোন</th><th>অবস্থা</th></tr></thead><tbody>' + rows + '</tbody>';
     document.getElementById('csv-confirm-btn').textContent = toBn(validN) + ' জন ছাত্র ভর্তি করুন';
     document.getElementById('csv-confirm-btn').disabled = validN === 0;
   }
@@ -451,7 +451,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
         const cols = line.split(',').map(s=>s.trim());
         const [name, clsName, roll, guardian, job, phone, district, upazila, manualPid] = cols;
         const cls = clsMap[clsName];
-        let baseErr = (!name ? 'নাম নেই ' : '') + ((!cls && clsName) ? 'বর্ষ খুঁজে পাওয়া যায়নি ' : '') + (!roll ? 'রোল নেই ' : '') + (!manualPid ? 'স্থায়ী দাখেলা আবশ্যক' : '');
+        let baseErr = (!name ? 'নাম নেই ' : '') + ((!cls && clsName) ? 'বর্ষ খুঁজে পাওয়া যায়নি ' : '') + (!roll ? 'পরিচিতি নেই ' : '') + (!manualPid ? 'স্থায়ী দাখেলা আবশ্যক' : '');
         if (cols.length < 8) baseErr += (baseErr.trim() ? ' ' : '') + 'কমপক্ষে ৮ কলাম লাগবে।';
         return { idx:i+1, name:name||'', clsName:clsName||'', cls, roll:roll||'', guardian:guardian||'', job:job||'', phone:phone||'', district:district||'', upazila:upazila||'', manual_pid:(manualPid||'').trim(), _baseErr:baseErr, err:baseErr, resolved_pid:'' };
       });

@@ -35,12 +35,13 @@
   .watch-tab { border:1px solid rgba(26,18,8,.1); background:var(--cream); color:var(--ink2); border-radius:10px; padding:8px 5px; font-family:'Tiro Bangla',serif; font-size:11px; font-weight:700; cursor:pointer; }
   .watch-tab.is-active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
   .watch-list { display:flex; flex-direction:column; gap:8px; }
-  .watch-row { display:flex; align-items:center; gap:10px; width:100%; box-sizing:border-box; border:1px solid rgba(26,18,8,.08); border-radius:12px; background:#fff; padding:10px 12px; text-align:left; color:inherit; font-family:'Tiro Bangla',serif; cursor:pointer; }
-  .watch-rank { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--cream2); color:var(--ink3); font-size:11px; flex-shrink:0; }
-  .watch-info { flex:1; min-width:0; }
-  .watch-name { font-size:13px; font-weight:800; color:var(--ink); }
-  .watch-meta { margin-top:2px; font-size:10px; color:var(--ink3); }
-  .watch-value { font-size:12px; font-weight:800; color:#b45309; flex-shrink:0; }
+  .watch-row { display:flex; align-items:flex-start; gap:10px; width:100%; box-sizing:border-box; border:1px solid rgba(26,18,8,.08); border-radius:12px; background:#fff; padding:10px 12px; text-align:left; color:inherit; font-family:'Tiro Bangla',serif; cursor:pointer; overflow:hidden; }
+  .watch-rank { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--cream2); color:var(--ink3); font-size:11px; flex-shrink:0; margin-top:1px; }
+  .watch-info { flex:1; min-width:0; overflow:hidden; }
+  .watch-head { display:flex; align-items:baseline; gap:6px; min-width:0; }
+  .watch-name { font-size:13px; font-weight:800; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .watch-meta { flex-shrink:0; font-size:10px; color:var(--ink3); white-space:nowrap; }
+  .watch-value { display:block; margin-top:4px; font-size:12px; font-weight:700; color:#b45309; line-height:1.45; white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
   .watch-empty { padding:30px 12px; text-align:center; color:var(--ink3); font-size:12px; }
   .kh-tier-card { background:#fff; border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); margin-bottom:10px; cursor:pointer; transition:background .12s; border-left:4px solid transparent; }
   .kh-tier-card:active { background:rgba(0,0,0,.04); }
@@ -478,7 +479,7 @@
 <script src="../supabase-config.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
 <script src="../js/api/api-mdr.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/api/api.js?v=20260717-wd-count"></script>
+<script src="../js/api/api.js?v=20260723-absent-streak2"></script>
 <script src="../js/core/mm-sample-data.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/core/mm-session.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/madrasa/mdr-supabase-sync.js?v=20260717-wd-count"></script>
@@ -489,8 +490,8 @@
 <script src="../js/dept/dept-supabase-sync.js"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/shared/mm-teacher-modal.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/shared/mam-overlay.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/madrasa/mdr-home-panels.js?v=20260714-absent-streak"></script>
+<script src="../js/shared/mam-overlay.js?v=20260723-absent-streak2"></script>
+<script src="../js/madrasa/mdr-home-panels.js?v=20260723-absent-streak2"></script>
 <script>
   var adminAuthFallback = (function () {
     try { return /^admin\./i.test(location.hostname) ? '../admin/index.html' : '../index.html'; }
@@ -1112,7 +1113,7 @@
       alerts.push(ccAlert('watch', 'বিশেষ পর্যবেক্ষণ', 'নিয়মিত ফলোআপ দরকার', toBn(data.special), 'is-warn', "openWatchPanel('special')"));
     }
     if (data.bands.low.length) {
-      alerts.push(ccAlert('khuluk', 'খুলুক কম স্কোর', '৬০-এর নিচে থাকা ছাত্র', toBn(data.bands.low.length), 'is-warn', "openWatchPanel('khuluk')"));
+      alerts.push(ccAlert('khuluk', 'কম খুলুক', '৬০-এর নিচে থাকা ছাত্র', toBn(data.bands.low.length), 'is-warn', "openWatchPanel('khuluk')"));
     }
     if (data.bands.none.length) {
       alerts.push(ccAlert('class', 'খুলুক রেকর্ড বাকি', 'এখনও মূল্যায়ন হয়নি', toBn(data.bands.none.length), 'is-warn', 'openKhulukPanel()'));
@@ -1315,7 +1316,7 @@
       id: student.id,
       name: student.name,
       className: student.className,
-      value: 'স্কোর ' + toBn(student.score),
+      value: 'খুলুক ' + toBn(student.score),
     }));
     return { absent, special, khuluk };
   }
@@ -1335,10 +1336,12 @@
       `<button type="button" class="watch-row" onclick="MMStudentModal.open('${String(row.id).replace(/'/g, "\\'")}')">
         <span class="watch-rank">${toBn(index + 1)}</span>
         <span class="watch-info">
-          <span class="watch-name">${API.esc(row.name)}</span>
-          <span class="watch-meta">${API.esc(row.className)}</span>
+          <span class="watch-head">
+            <span class="watch-name">${API.esc(row.name)}</span>
+            <span class="watch-meta">${API.esc(row.className)}</span>
+          </span>
+          <span class="watch-value">${API.esc(row.value)}</span>
         </span>
-        <span class="watch-value">${API.esc(row.value)}</span>
       </button>`
     ).join('') : '<div class="watch-empty">এই বিভাগে এই শ্রেণির কোনো বিষয় নেই।</div>';
   }

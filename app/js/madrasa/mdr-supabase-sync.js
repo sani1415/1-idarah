@@ -53,6 +53,7 @@
       // হলে পুরনো true রক্ষা করা) আসলে কাজ করে; সরাসরি false বসালে সেই guard কখনো ধরতে পারে না।
       special_watch: row.special_watch == null ? undefined : !!row.special_watch,
       alhamdulillah: row.alhamdulillah == null ? undefined : !!row.alhamdulillah,
+      alhamdulillah_reason: row.alhamdulillah_reason == null ? undefined : String(row.alhamdulillah_reason || '').trim(),
       left_date: row.left_date || '',
       left_reason: row.left_reason || '',
       supabase_id: row.id || '',
@@ -540,6 +541,14 @@
     API.Students.replaceAll(keep.concat(incoming));
     var classId = incoming.length ? incoming[0].class_id : '';
     if (classId) syncTeacherExtras(res, classId);
+    if (MMSharedAPI.teacherClassAbsentSummary && API.applyTeacherClassAbsentSummary) {
+      try {
+        var absSum = await MMSharedAPI.teacherClassAbsentSummary(actorId, pin);
+        if (absSum && absSum.ok) API.applyTeacherClassAbsentSummary(absSum.rows || []);
+      } catch (e) {
+        console.warn('[MDRSupabaseSync] teacher absent summary failed', e);
+      }
+    }
     return true;
   }
 

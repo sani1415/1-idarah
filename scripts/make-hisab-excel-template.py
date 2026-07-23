@@ -3,7 +3,7 @@
 
 Source of truth for in-app «টেমপ্লেট ডাউনলোড».
 Writes:
-  app/madrasa/templates/daftar-hisab-template.xlsx  (served by the app)
+  app/madrasa/templates/daftar-hisab-template-v2.xlsx  (served by the app)
   output/daftar-hisab-template.xlsx                 (local copy)
 """
 from openpyxl import Workbook
@@ -12,10 +12,11 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.workbook.defined_name import DefinedName
 from pathlib import Path
+from datetime import date, timedelta
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTS = [
-    ROOT / "app" / "madrasa" / "templates" / "daftar-hisab-template.xlsx",
+    ROOT / "app" / "madrasa" / "templates" / "daftar-hisab-template-v2.xlsx",
     ROOT / "output" / "daftar-hisab-template.xlsx",
 ]
 
@@ -37,6 +38,50 @@ wrap = Alignment(wrap_text=True, vertical="top")
 # ব্যয়: E=পরিমাণ, G=একক মূল্য, H=মোট
 TOTAL_FORMULA = '=IF(AND(E{r}<>"",G{r}<>""),E{r}*G{r},"")'
 FORMULA_ROWS = 500
+DATA_ROWS = 5000
+HIJRI_DATE_FORMAT = "[$-1170401]yyyy-mm-dd"
+WORKBOOK_ID = "daftar-hisab-v3-20260723"
+
+# Excel-এর native Umm al-Qura calendar-এর সঙ্গে মিল রেখে নমুনা হিজরী তারিখকে
+# আসল date serial-এ রূপান্তর করা হয়। প্রদর্শন ও app import—দুটিই এই calendar ব্যবহার করে।
+HIJRI_MONTH_STARTS = {
+    (1447, 8): date(2026, 1, 20),
+    (1447, 9): date(2026, 2, 18),
+    (1447, 10): date(2026, 3, 20),
+    (1448, 1): date(2026, 6, 16),
+    (1448, 2): date(2026, 7, 15),
+}
+
+
+def excel_date(value):
+    """Template sample input → real Gregorian-backed Excel date."""
+    if isinstance(value, date):
+        return value
+    parts = [int(x) for x in str(value).split("-")]
+    if parts[0] >= 1700:
+        return date(parts[0], parts[1], parts[2])
+    start = HIJRI_MONTH_STARTS[(parts[0], parts[1])]
+    return start + timedelta(days=parts[2] - 1)
+
+
+def format_date_column(ws, column, end_row=DATA_ROWS):
+    for row_idx in range(2, end_row + 1):
+        ws.cell(row_idx, column).number_format = HIJRI_DATE_FORMAT
+
+
+def add_hijri_helpers(ws):
+    """Hidden helper columns make Hijri month/category SUMIFS auditable."""
+    ws["L1"] = "হিজরী বছর (অটো)"
+    ws["M1"] = "হিজরী মাস নং (অটো)"
+    for cell in (ws["L1"], ws["M1"]):
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = thin
+    for row_idx in range(2, DATA_ROWS + 1):
+        ws.cell(row_idx, 12, f'=IF(B{row_idx}="","",IFERROR(VALUE(TEXT(B{row_idx},"[$-1170401]yyyy")),""))')
+        ws.cell(row_idx, 13, f'=IF(B{row_idx}="","",IFERROR(VALUE(TEXT(B{row_idx},"[$-1170401]mm")),""))')
+    ws.column_dimensions["L"].hidden = True
+    ws.column_dimensions["M"].hidden = True
 
 
 def style_header(ws, cols, widths):
@@ -88,14 +133,14 @@ def main():
     ws.merge_cells("A1:B1")
     lines = [
         ("এই ফাইল কী", "দৈনন্দিন সব লেনদেন এখানে রাখুন। দিনশেষে অ্যাপে আপলোড করলে অ্যাপ লেটেস্ট দেখাবে।"),
-        ("শীট", "ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড। বকেয়া/ড্যাশবোর্ড শুধু লাইভ দেখা — অ্যাপ সেগুলো পড়ে না।"),
+        ("শীট", "ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড। ব্যয়/আয়/করজ/পরিশোধ অ্যাপে যায়; বকেয়া ও ড্যাশবোর্ড হিসাব দেখায়।"),
         ("ব্যয়", "মাতবাখ/মাদরাসা/তামিরাত/সাধারণ। বাকি কেনাকাটায় পরিশোধ=বাকি + সরবরাহকারী নাম।"),
         ("মোট টাকা", "পরিমাণ × একক মূল্য হলে মোট অটো। বিল হলে শুধু মোট লিখুন।"),
         ("বকেয়া", "এই শীটের «সরবরাহকারী» কলামে নাম লিখুন — ব্যয় ও পরিশোধ শীটের ড্রপডাউনে অটো আসবে। অবশিষ্ট = বাকি কেনা − পরিশোধ।"),
-        ("পরিশোধ", "বকেয়া মেটানোর এন্ট্রি; সরবরাহকারী ড্রপডাউন থেকে বেছে নিন।"),
+        ("পরিশোধ", "বকেয়া মেটানোর এন্ট্রি; সংশ্লিষ্ট হিসাব বিভাগ ও সরবরাহকারী বেছে নিন।"),
         ("আয় / করজ", "নিয়মিত আয় আলাদা; করজে দেওয়া/আদায় করজ শীটে।"),
-        ("তারিখ", "হিজরী বা ইংরেজি — দুইভাবেই চলবে।"),
-        ("অ্যাপে", "হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। একই সারি বারবার আপলোড করবেন না।"),
+        ("তারিখ", "ঘরটি আসল Excel Date; দেখা যাবে হিজরী সন-মাস-দিন। Date Filter/Sort কাজ করবে। নতুন তারিখ Excel date picker বা স্বীকৃত date entry দিয়ে দিন।"),
+        ("অ্যাপে", "হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। একই ফাইল আবার দিলে একই সারি আপডেট হবে; ডুপ্লিকেট হবে না।"),
     ]
     r = 3
     for a, b in lines:
@@ -105,21 +150,23 @@ def main():
         r += 1
     ws.column_dimensions["A"].width = 14
     ws.column_dimensions["B"].width = 92
+    ws["Z1"] = WORKBOOK_ID
+    ws.column_dimensions["Z"].hidden = True
 
     # ── ব্যয় ──
     ws = wb.create_sheet("ব্যয়")
     exp_cols = [
-        "হিসাব বই *", "তারিখ *", "খাত", "বিবরণ", "পরিমাণ", "মাপ",
+        "হিসাব বিভাগ *", "তারিখ *", "খাত", "বিবরণ", "পরিমাণ", "মাপ",
         "একক মূল্য", "মোট টাকা (অটো)", "সরবরাহকারী", "রশিদ নং", "পরিশোধ",
     ]
     style_header(ws, exp_cols, [14, 14, 14, 26, 10, 10, 12, 16, 18, 12, 10])
 
     # qty×price rows → formula; bill-only → manual total
     qty_rows = [
-        (2, ["মাতবাখ", "1447-10-02", "কাঁচামাল", "চাল", 50, "কেজি", 70], "রহিম স্টোর", "১০১", "নগদ"),
-        (3, ["মাতবাখ", "1447-10-03", "কাঁচামাল", "ডাল", 20, "কেজি", 120], "রহিম স্টোর", "", "নগদ"),
-        (4, ["মাদরাসা", "1447-10-04", "স্টেশনারি", "খাতা ও কলম", 10, "প্যাকেট", 80], "বইঘর", "", "নগদ"),
-        (5, ["তামিরাত", "1447-09-20", "মেরামত", "ছাদের প্লাস্টার", 1, "পিস", 15000], "রাজমিস্ত্রি করিম", "", "বাকি"),
+        (2, ["মাতবাখ", excel_date("1447-10-02"), "কাঁচামাল", "চাল", 50, "কেজি", 70], "রহিম স্টোর", "১০১", "নগদ"),
+        (3, ["মাতবাখ", excel_date("1447-10-03"), "কাঁচামাল", "ডাল", 20, "কেজি", 120], "রহিম স্টোর", "", "নগদ"),
+        (4, ["মাদরাসা", excel_date("1447-10-04"), "স্টেশনারি", "খাতা ও কলম", 10, "প্যাকেট", 80], "বইঘর", "", "নগদ"),
+        (5, ["তামিরাত", excel_date("1447-09-20"), "মেরামত", "ছাদের প্লাস্টার", 1, "পিস", 15000], "রাজমিস্ত্রি করিম", "", "বাকি"),
     ]
     for row_idx, left, supplier, receipt, pay in qty_rows:
         for c, val in enumerate(left, 1):
@@ -131,8 +178,8 @@ def main():
         set_total_auto(ws, row_idx)
 
     bill_rows = [
-        (6, ["সাধারণ", "1447-10-06", "পরিবহন", "বাজার আনা-নেওয়া", "", "", ""], 500, "", "", "নগদ"),
-        (7, ["মাদরাসা", "2026-07-10", "বিদ্যুৎ", "বিদ্যুৎ বিল", "", "", ""], 4500, "পল্লী বিদ্যুৎ", "বিল-৮৮", "নগদ"),
+        (6, ["সাধারণ", excel_date("1447-10-06"), "পরিবহন", "বাজার আনা-নেওয়া", "", "", ""], 500, "", "", "নগদ"),
+        (7, ["মাদরাসা", excel_date("2026-07-10"), "বিদ্যুৎ", "বিদ্যুৎ বিল", "", "", ""], 4500, "পল্লী বিদ্যুৎ", "বিল-৮৮", "নগদ"),
     ]
     for row_idx, left, amount, supplier, receipt, pay in bill_rows:
         for c, val in enumerate(left, 1):
@@ -147,12 +194,16 @@ def main():
     for row_idx in range(8, FORMULA_ROWS + 1):
         set_total_auto(ws, row_idx)
 
-    ws["M1"] = (
+    add_hijri_helpers(ws)
+    format_date_column(ws, 2)
+    ws.auto_filter.ref = "A1:M1"
+
+    ws["O1"] = (
         "মোট টাকা = পরিমাণ × একক মূল্য (অটো)। "
         "বিল হলে পরিমাণ/মূল্য খালি রেখে মোট ঘরে সরাসরি টাকা লিখুন।"
     )
-    ws["M1"].font = note_font
-    ws.column_dimensions["M"].width = 55
+    ws["O1"].font = note_font
+    ws.column_dimensions["O"].width = 55
 
     dv_book = DataValidation(type="list", formula1='"মাতবাখ,মাদরাসা,তামিরাত,সাধারণ"', allow_blank=False)
     ws.add_data_validation(dv_book)
@@ -172,45 +223,51 @@ def main():
     ws = wb.create_sheet("আয়")
     style_header(ws, ["তারিখ *", "টাকা *", "উৎস / বিবরণ"], [16, 14, 40])
     for i, row in enumerate([
-        ["1447-10-01", 50000, "বিকাশ অনুদান"],
-        ["1447-10-05", 12000, "ওয়াযিফা আদায় — শাওয়াল"],
-        ["2026-07-10", 3000, "নগদ দান"],
+        [excel_date("1447-10-01"), 50000, "বিকাশ অনুদান"],
+        [excel_date("1447-10-05"), 12000, "ওয়াযিফা আদায় — শাওয়াল"],
+        [excel_date("2026-07-10"), 3000, "নগদ দান"],
     ], start=2):
         for c, val in enumerate(row, 1):
             cell = ws.cell(i, c, val)
             cell.border = thin
             cell.fill = sample_fill
+    format_date_column(ws, 1)
 
     # ── করজ ──
     ws = wb.create_sheet("করজ")
     style_header(ws, ["ধরন *", "তারিখ *", "টাকা *", "খাত *", "বিবরণ"], [12, 14, 12, 22, 28])
     for i, row in enumerate([
-        ["দেওয়া", "1447-08-15", 20000, "করিম ভাই", "করজে হাসানা"],
-        ["দেওয়া", "1447-09-01", 10000, "মাদরাসা ফান্ড", "জরুরি করজ"],
-        ["আদায়", "1447-10-07", 5000, "করিম ভাই", ""],
-        ["আদায়", "1447-10-11", 2000, "মাদরাসা ফান্ড", ""],
+        ["দেওয়া", excel_date("1447-08-15"), 20000, "করিম ভাই", "করজে হাসানা"],
+        ["দেওয়া", excel_date("1447-09-01"), 10000, "মাদরাসা ফান্ড", "জরুরি করজ"],
+        ["আদায়", excel_date("1447-10-07"), 5000, "করিম ভাই", ""],
+        ["আদায়", excel_date("1447-10-11"), 2000, "মাদরাসা ফান্ড", ""],
     ], start=2):
         for c, val in enumerate(row, 1):
             cell = ws.cell(i, c, val)
             cell.border = thin
             cell.fill = sample_fill
+    format_date_column(ws, 2)
     dv_kind = DataValidation(type="list", formula1='"দেওয়া,আদায়"', allow_blank=False)
     ws.add_data_validation(dv_kind)
     dv_kind.add("A2:A5000")
 
     # ── পরিশোধ (বকেয়া মেটানোর এন্ট্রি) ──
     ws = wb.create_sheet("পরিশোধ")
-    style_header(ws, ["তারিখ *", "সরবরাহকারী *", "টাকা *", "মন্তব্য"], [16, 24, 14, 36])
+    style_header(ws, ["হিসাব বিভাগ *", "তারিখ *", "সরবরাহকারী *", "টাকা *", "রশিদ নং", "মন্তব্য"], [16, 16, 24, 14, 14, 32])
     for i, row in enumerate([
-        ["1447-10-15", "রাজমিস্ত্রি করিম", 5000, "আংশিক পরিশোধ"],
+        ["তামিরাত", excel_date("1447-10-15"), "রাজমিস্ত্রি করিম", 5000, "", "আংশিক পরিশোধ"],
     ], start=2):
         for c, val in enumerate(row, 1):
             cell = ws.cell(i, c, val)
             cell.border = thin
             cell.fill = sample_fill
-    ws["F1"] = "সরবরাহকারী ড্রপডাউন = বকেয়া শীটের নাম তালিকা।"
-    ws["F1"].font = note_font
-    ws.column_dimensions["F"].width = 48
+    format_date_column(ws, 2)
+    ws["H1"] = "বিভাগ ও সরবরাহকারী—দুটিই সংশ্লিষ্ট বকেয়া কেনার সঙ্গে মিলতে হবে।"
+    ws["H1"].font = note_font
+    ws.column_dimensions["H"].width = 52
+    dv_pay_book = DataValidation(type="list", formula1='"মাতবাখ,মাদরাসা,তামিরাত,সাধারণ"', allow_blank=False)
+    ws.add_data_validation(dv_pay_book)
+    dv_pay_book.add("A2:A5000")
 
     # ── বকেয়া (লাইভ তালিকা — সহজ ফর্মুলা, UNIQUE/FILTER নেই) ──
     ws = wb.create_sheet("বকেয়া")
@@ -229,7 +286,7 @@ def main():
 
     summary = [
         (5, "মোট বাকি কেনা", '=SUMIF(ব্যয়!K:K,"বাকি",ব্যয়!H:H)'),
-        (6, "মোট পরিশোধ", "=SUM(পরিশোধ!C:C)"),
+        (6, "মোট পরিশোধ", "=SUM(পরিশোধ!D:D)"),
         (7, "এখন মোট বাকি", "=B5-B6"),
     ]
     for row, label, formula in summary:
@@ -262,7 +319,7 @@ def main():
             f'=IF(A{r}="","",SUMIFS(ব্যয়!$H$2:$H$500,ব্যয়!$I$2:$I$500,A{r},ব্যয়!$K$2:$K$500,"বাকি"))'
         )
         ws.cell(r, 3).value = (
-            f'=IF(A{r}="","",SUMIF(পরিশোধ!$B$2:$B$500,A{r},পরিশোধ!$C$2:$C$500))'
+            f'=IF(A{r}="","",SUMIF(পরিশোধ!$C$2:$C$500,A{r},পরিশোধ!$D$2:$D$500))'
         )
         ws.cell(r, 4).value = f'=IF(A{r}="","",B{r}-C{r})'
         ws.cell(r, 5).value = (
@@ -302,7 +359,7 @@ def main():
 
     dv_sup_pay = DataValidation(type="list", formula1="=SupplierList", allow_blank=True)
     wb["পরিশোধ"].add_data_validation(dv_sup_pay)
-    dv_sup_pay.add("B2:B5000")
+    dv_sup_pay.add("C2:C5000")
 
     # ── ড্যাশবোর্ড ──
     ws = wb.create_sheet("ড্যাশবোর্ড")
@@ -311,7 +368,7 @@ def main():
     ws.merge_cells("A1:C1")
 
     labels = [
-        (3, "মোট ব্যয় (সব বই)", "=SUM(ব্যয়!H:H)"),
+        (3, "মোট ব্যয় (সব বিভাগ)", "=SUM(ব্যয়!H:H)"),
         (4, "মোট আয়", "=SUM(আয়!B:B)"),
         (5, "করজ দেওয়া", '=SUMIF(করজ!A:A,"দেওয়া",করজ!C:C)'),
         (6, "করজ আদায়", '=SUMIF(করজ!A:A,"আদায়",করজ!C:C)'),
@@ -332,10 +389,10 @@ def main():
         b.border = thin
         a.fill = dash_fill
         b.number_format = '#,##0'
-    ws["A11"] = "বই অনুযায়ী ব্যয়"
+    ws["A11"] = "বিভাগ অনুযায়ী ব্যয়"
     ws["A11"].font = Font(bold=True, size=12)
     books = ["মাতবাখ", "মাদরাসা", "তামিরাত", "সাধারণ"]
-    ws["A12"] = "হিসাব বই"
+    ws["A12"] = "হিসাব বিভাগ"
     ws["B12"] = "মোট"
     for c in (ws["A12"], ws["B12"]):
         c.fill = header_fill
@@ -353,9 +410,131 @@ def main():
     )
     ws["A18"].font = note_font
     ws.merge_cells("A18:C19")
+
+    # ── নির্বাচিত হিজরী মাসে খাতভিত্তিক ব্যয় ──
+    ws["A21"] = "হিজরী বছর"
+    ws["B21"] = 1447
+    ws["C21"] = "হিজরী মাস"
+    ws["D21"] = "শাওয়াল"
+    ws["J21"] = '=MATCH(D21,K2:K13,0)'
+    for c in (ws["A21"], ws["C21"]):
+        c.fill = header_fill
+        c.font = header_font
+        c.border = thin
+    for c in (ws["B21"], ws["D21"]):
+        c.fill = sample_fill
+        c.border = thin
+        c.font = Font(bold=True, color="1A1208")
+
+    dashboard_years = list(range(1447, 1451))
+    dv_year = DataValidation(type="list", formula1='"' + ",".join(str(y) for y in dashboard_years) + '"', allow_blank=False)
+    ws.add_data_validation(dv_year)
+    dv_year.add("B21")
+    hijri_months = [
+        "মুহাররম", "সফর", "রবিউল আউয়াল", "রবিউস সানি", "জুমাদাল উলা", "জুমাদাল উখরা",
+        "রজব", "শাবান", "রমজান", "শাওয়াল", "জিলকদ", "জিলহজ",
+    ]
+    dv_month = DataValidation(type="list", formula1='"' + ",".join(hijri_months) + '"', allow_blank=False)
+    ws.add_data_validation(dv_month)
+    dv_month.add("D21")
+    for i, month_name in enumerate(hijri_months, start=2):
+        ws.cell(i, 11, month_name)
+        ws.cell(i, 12, i - 1)
+    ws.column_dimensions["J"].hidden = True
+    ws.column_dimensions["K"].hidden = True
+    ws.column_dimensions["L"].hidden = True
+
+    ws["A23"] = "নির্বাচিত মাসে খাতভিত্তিক ব্যয়"
+    ws["A23"].font = Font(bold=True, size=12)
+    ws.merge_cells("A23:B23")
+    ws["A24"] = "খাত"
+    ws["B24"] = "মোট টাকা"
+    for c in (ws["A24"], ws["B24"]):
+        c.fill = header_fill
+        c.font = header_font
+        c.border = thin
+    categories = [
+        "বড় বাজার", "কাঁচা বাজার", "দস্তরখান ভবন", "রান্নাঘর সরবরাহ",
+        "বিদ্যুৎ", "গ্যাস/জ্বালানি", "শিক্ষা উপকরণ", "বেতন", "রক্ষণাবেক্ষণ",
+        "পরিবহন", "চিকিৎসা", "অন্যান্য", "কাঁচামাল", "স্টেশনারি", "মেরামত",
+    ]
+    for i, category in enumerate(categories, start=25):
+        ws.cell(i, 1, category)
+        ws.cell(i, 1).border = thin
+        ws.cell(i, 1).fill = sample_fill
+        amount = ws.cell(
+            i, 2,
+            f'=SUMIFS(\'ব্যয়\'!$H$2:$H${DATA_ROWS},\'ব্যয়\'!$L$2:$L${DATA_ROWS},$B$21,'
+            f'\'ব্যয়\'!$M$2:$M${DATA_ROWS},$J$21,\'ব্যয়\'!$C$2:$C${DATA_ROWS},A{i})',
+        )
+        amount.border = thin
+        amount.fill = auto_fill
+        amount.number_format = "#,##0"
+    total_row = 25 + len(categories)
+    ws.cell(total_row, 1, "মোট")
+    ws.cell(total_row, 2, f"=SUM(B25:B{total_row - 1})")
+    for c in (ws.cell(total_row, 1), ws.cell(total_row, 2)):
+        c.fill = dash_fill
+        c.border = thin
+        c.font = Font(bold=True, color="1A1208")
+    ws.cell(total_row, 2).number_format = "#,##0"
+    ws.cell(total_row + 2, 1, "নতুন/নিজস্ব খাত হলে উপরের খাতের নাম বদলে লিখুন; হিসাব অটো আপডেট হবে।")
+    ws.cell(total_row + 2, 1).font = note_font
+    ws.merge_cells(start_row=total_row + 2, start_column=1, end_row=total_row + 3, end_column=3)
+    ws.cell(total_row + 2, 1).alignment = wrap
+
+    # ── নির্বাচিত হিজরী বছরের ১২ মাস × হিসাব বিভাগ (উপরের পাশের compact block) ──
+    ws["D1"] = '="হিজরী "&B21&" বর্ষের মাসভিত্তিক বিভাগীয় ব্যয়"'
+    ws["D1"].font = Font(bold=True, size=12)
+    ws.merge_cells("D1:I1")
+    month_headers = ["মাস", "মাতবাখ", "মাদরাসা", "তামিরাত", "সাধারণ", "মাসের মোট"]
+    for col, title in enumerate(month_headers, start=4):
+        cell = ws.cell(2, col, title)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = thin
+    for month_no, month_name in enumerate(hijri_months, start=1):
+        rr = month_no + 2
+        ws.cell(rr, 4, month_name)
+        ws.cell(rr, 4).border = thin
+        ws.cell(rr, 4).fill = sample_fill
+        for col, book in enumerate(books, start=5):
+            cell = ws.cell(
+                rr, col,
+                f'=SUMIFS(\'ব্যয়\'!$H$2:$H${DATA_ROWS},\'ব্যয়\'!$L$2:$L${DATA_ROWS},$B$21,'
+                f'\'ব্যয়\'!$M$2:$M${DATA_ROWS},{month_no},'
+                f'\'ব্যয়\'!$A$2:$A${DATA_ROWS},"{book}")',
+            )
+            cell.border = thin
+            cell.fill = auto_fill
+            cell.number_format = "#,##0"
+        ws.cell(rr, 9, f"=SUM(E{rr}:H{rr})")
+        ws.cell(rr, 9).border = thin
+        ws.cell(rr, 9).fill = dash_fill
+        ws.cell(rr, 9).number_format = "#,##0"
+
+    grand_total_row = 15
+    ws.cell(grand_total_row, 4, "বর্ষের মোট")
+    for col in range(5, 10):
+        letter = get_column_letter(col)
+        ws.cell(grand_total_row, col, f"=SUM({letter}3:{letter}14)")
+        ws.cell(grand_total_row, col).number_format = "#,##0"
+    for col in range(4, 10):
+        cell = ws.cell(grand_total_row, col)
+        cell.fill = dash_fill
+        cell.border = thin
+        cell.font = Font(bold=True, color="1A1208")
+
     ws.column_dimensions["A"].width = 28
     ws.column_dimensions["B"].width = 16
-    ws.column_dimensions["C"].width = 40
+    ws.column_dimensions["C"].width = 14
+    ws.column_dimensions["D"].width = 20
+    for col in ("E", "F", "G", "H", "I"):
+        ws.column_dimensions[col].width = 14
+
+    wb.calculation.fullCalcOnLoad = True
+    wb.calculation.forceFullCalc = True
+    wb.calculation.calcMode = "auto"
 
     for out in OUTS:
         out.parent.mkdir(parents=True, exist_ok=True)

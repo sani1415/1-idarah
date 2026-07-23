@@ -19,7 +19,16 @@
     '.ov-history-date{font-size:11px;color:var(--ink3);margin-bottom:3px;}' +
     '.ov-history-main{font-size:13px;font-weight:700;color:var(--ink2);}' +
     '.ov-history-note{font-size:12px;color:var(--ink3);margin-top:4px;line-height:1.45;}' +
-    '.ov-history-empty{font-size:13px;color:var(--ink3);text-align:center;padding:22px 8px;}';
+    '.ov-history-empty{font-size:13px;color:var(--ink3);text-align:center;padding:22px 8px;}' +
+    '.ov-sum-card{flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1.5px solid transparent;}' +
+    '.ov-sum-card--btn{cursor:pointer;font:inherit;color:inherit;padding:10px;}' +
+    '.ov-sum-card--btn:active{transform:scale(.98);}' +
+    '.ov-sum-card.is-active{border-color:var(--ink);box-shadow:0 2px 8px rgba(26,18,8,.1);}' +
+    '.ov-sum-card.is-active-absent{border-color:var(--red);background:#fff8f6;}' +
+    '.ov-s-absent-days{font-size:11px;font-weight:700;color:var(--red);min-width:78px;text-align:right;line-height:1.3;}' +
+    '.ov-s-absent-days .ov-abs-prefix{font-weight:600;color:var(--ink3);font-size:9px;}' +
+    '.ov-s-absent-days .ov-abs-streak{display:block;margin-top:2px;font-size:10px;font-weight:600;color:var(--ink3);}' +
+    '.ov-filter-hint{font-size:11px;color:var(--ink3);margin:-4px 0 10px;text-align:center;}';
   document.head.appendChild(s);
 })();
 
@@ -111,14 +120,58 @@ if (typeof window !== 'undefined') {
 }
 
 let _ovClassId = null;
+let _ovStudentFilter = 'all'; // 'all' | 'absent'
 
 const _toBn = n => String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
 
 const _STATUS_LABEL = { present: 'উপস্থিত', absent: 'অনুপস্থিত', leave: 'ছুটি' };
 const _STATUS_COLOR = { present: 'var(--green)', absent: 'var(--red)', leave: 'var(--gold)' };
 
+function _ovLookupAttStatus(attMap, s) {
+  if (!attMap || !s) return null;
+  const keys = [s.id, s.supabase_id, s.permanent_id].filter(Boolean).map(String);
+  for (let i = 0; i < keys.length; i++) {
+    if (attMap[keys[i]] != null) return attMap[keys[i]];
+  }
+  return null;
+}
+
+async function _ovEnsureAbsentSummary() {
+  if (!API.loadDaftarAbsentSummaryRaw) return false;
+  const raw = API.loadDaftarAbsentSummaryRaw();
+  if (raw && raw.source === 'server' && Array.isArray(raw.rows) && raw.rows.length) return true;
+  if (!window.MMSharedAPI || !MMSharedAPI.adminAbsentSummary || !window.MMSession) return false;
+  const pin = MMSession.getAdminPin && MMSession.getAdminPin();
+  if (!pin) return false;
+  try {
+    const actorId = MMSession.getAdminUserId && MMSession.getAdminUserId();
+    const res = await MMSharedAPI.adminAbsentSummary(actorId || null, pin);
+    if (res && res.ok && API.applyDaftarAbsentSummaryFromServer) {
+      API.applyDaftarAbsentSummaryFromServer(res.rows || []);
+      return true;
+    }
+  } catch (e) {
+    console.warn('[mam-overlay] absent summary load failed', e);
+  }
+  return !!(API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw());
+}
+
+function setOvStudentFilter(filter) {
+  if (filter !== 'absent') filter = 'all';
+  if (_ovStudentFilter === filter && filter === 'absent') filter = 'all';
+  else if (_ovStudentFilter === filter) return;
+  _ovStudentFilter = filter;
+  _renderOvTab('students');
+  if (filter === 'absent') {
+    _ovEnsureAbsentSummary().then((ok) => {
+      if (ok && _ovStudentFilter === 'absent') _renderOvTab('students');
+    });
+  }
+}
+
 function openClassOverlay(classId) {
   _ovClassId = classId;
+  _ovStudentFilter = 'all';
   const cls     = API.Classes.getById(classId);
   const teacher = API.Teachers.getByClassId(classId);
 
@@ -182,28 +235,73 @@ function _renderOvStudents(body) {
   }
   const attRecs = API.Attendance.getByClassDate(_ovClassId, iso);
   const attMap  = {};
-  attRecs.forEach(a => { attMap[a.student_id] = API.Attendance.statusOf(a); });
+  const reasonMap = {};
+  attRecs.forEach(a => {
+    const sid = String(a.student_id || '');
+    if (!sid) return;
+    attMap[sid] = API.Attendance.statusOf(a);
+    if (attMap[sid] === 'absent') {
+      reasonMap[sid] = String(a.absent_reason || '').trim();
+    }
+  });
 
   const totalCount   = students.length;
-  const presentCount = Object.values(attMap).filter(s => s === 'present').length;
-  const absentCount  = Object.values(attMap).filter(s => s === 'absent').length;
+  const presentCount = students.filter(s => _ovLookupAttStatus(attMap, s) === 'present').length;
+  const absentStudents = students.filter(s => _ovLookupAttStatus(attMap, s) === 'absent');
+  const absentCount  = absentStudents.length;
+  const filterAbsent = _ovStudentFilter === 'absent';
+  const list = filterAbsent ? absentStudents : students;
+
+  const allActive = !filterAbsent ? ' is-active' : '';
+  const absActive = filterAbsent ? ' is-active is-active-absent' : '';
 
   const summary = `<div style="display:flex;gap:10px;margin-bottom:12px;">
-    <div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    <button type="button" class="ov-sum-card ov-sum-card--btn${allActive}" onclick="setOvStudentFilter('all')">
       <div style="font-size:10px;color:var(--ink3);">মোট</div>
       <div style="font-family:'Tiro Bangla',serif;font-size:18px;font-weight:700;color:var(--ink);">${_toBn(totalCount)}</div>
-    </div>
-    <div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    </button>
+    <div class="ov-sum-card">
       <div style="font-size:10px;color:var(--ink3);">উপস্থিত</div>
       <div style="font-family:'Tiro Bangla',serif;font-size:18px;font-weight:700;color:var(--green);">${_toBn(presentCount)}</div>
     </div>
-    <div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    <button type="button" class="ov-sum-card ov-sum-card--btn${absActive}" onclick="setOvStudentFilter('absent')">
       <div style="font-size:10px;color:var(--ink3);">অনুপস্থিত</div>
       <div style="font-family:'Tiro Bangla',serif;font-size:18px;font-weight:700;color:var(--red);">${_toBn(absentCount)}</div>
-    </div>
+    </button>
   </div>`;
 
-  const rows = students.map(s => {
+  const hint = filterAbsent
+    ? `<div class="ov-filter-hint">আজ অনুপস্থিত ${_toBn(absentCount)} জন · মোট = বর্ষ শুরু থেকে · টানা = আজসহ ধারাবাহিক</div>`
+    : '';
+
+  if (filterAbsent && !list.length) {
+    body.innerHTML = summary + hint + '<p class="ov-empty">আজ কেউ অনুপস্থিত নেই</p>';
+    return;
+  }
+
+  const rows = list.map(s => {
+    if (filterAbsent) {
+      const fromSession = API.getSessionAbsentDays
+        ? API.getSessionAbsentDays(s)
+        : (API.Attendance.getSessionAbsentDays ? API.Attendance.getSessionAbsentDays(s) : 0);
+      const days = Math.max(fromSession, 1);
+      const streakRaw = API.getSessionAbsentStreak
+        ? API.getSessionAbsentStreak(s)
+        : (API.Attendance.getSessionAbsentStreak ? API.Attendance.getSessionAbsentStreak(s) : 0);
+      const streak = Math.max(Number(streakRaw) || 0, 1);
+      const reason = reasonMap[String(s.id)] || reasonMap[String(s.supabase_id || '')] || reasonMap[String(s.permanent_id || '')] || '';
+      const reasonLine = reason
+        ? `<div style="font-size:10px;color:var(--ink3);margin-top:2px;line-height:1.35;overflow-wrap:anywhere;">${API.esc(reason)}</div>`
+        : '';
+      return `<div class="ov-student-row">
+        <div class="ov-s-id">${API.escBn(s.permanent_id || s.roll || '—')}</div>
+        <div style="flex:1;min-width:0;">
+          ${_ovNameHtml(s.id, API.esc(s.name))}
+          ${reasonLine}
+        </div>
+        <div class="ov-s-absent-days"><span class="ov-abs-prefix">মোট </span>${_toBn(days)} দিন<span class="ov-abs-streak">টানা ${_toBn(streak)} দিন</span></div>
+      </div>`;
+    }
     const kh = API.Khuluk.getLatest(s.id);
     const score = kh ? Number(kh.score) : null;
     const khColor = score === null || Number.isNaN(score) ? 'var(--ink3)' : (score >= 81 ? 'var(--green)' : score >= 60 ? 'var(--gold)' : 'var(--red)');
@@ -215,7 +313,7 @@ function _renderOvStudents(body) {
     </div>`;
   }).join('');
 
-  body.innerHTML = summary + `<div class="ov-list">${rows}</div>`;
+  body.innerHTML = summary + hint + `<div class="ov-list">${rows}</div>`;
 }
 
 function _renderOvKitab(body) {

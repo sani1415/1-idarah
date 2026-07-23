@@ -95,7 +95,7 @@
   const deptName = (d) => d === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
   const deptLabel = dept === 'all' ? 'সামগ্রিক' : deptName(dept);
   const sub = document.getElementById('abs-sub');
-  if (sub) sub.textContent = deptLabel + ' — যাদের কমপক্ষে এক দিন অনুপস্থিতের রেকর্ড আছে। বেশি দিন থেকে কম — সাজানো।';
+  if (sub) sub.textContent = deptLabel + ' — শিক্ষাবর্ষের শুরু থেকে যাদের কমপক্ষে এক দিন অনুপস্থিত আছে। বেশি দিন থেকে কম সাজানো।';
 
   function scopeDepts() {
     if (dept === 'all') return allowed.filter((d) => d === 'kitab' || d === 'maktab');
@@ -104,9 +104,17 @@
 
   function render() {
     const depts = scopeDepts();
-    const rows = depts
-      .flatMap((d) => API.Attendance.getStudentsWithAbsentSortedByDept(d).map((x) => ({ ...x, dept: d })))
-      .sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+    let rows = null;
+    if (API.loadDaftarAbsentSummaryRows) {
+      rows = API.loadDaftarAbsentSummaryRows(depts);
+    }
+    if (!rows || !rows.length) {
+      rows = depts
+        .flatMap((d) => API.Attendance.getStudentsWithAbsentSortedByDept(d).map((x) => ({ ...x, dept: d })))
+        .sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+    } else {
+      rows = rows.slice().sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+    }
     const el = document.getElementById('abs-list');
     const scroll = document.getElementById('abs-scroll');
     if (!el) return;
@@ -124,7 +132,7 @@
           <div class="abs-rank">${toBn(i + 1)}</div>
           <div class="abs-info">
             <div class="abs-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${x.student.id}')">${API.esc(x.student.name)}</button></div>
-            <div class="abs-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · রোল ${API.escBn(x.student.roll || '—')}</div>
+            <div class="abs-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · পরিচিতি ${API.escBn(x.student.roll || '—')}</div>
           </div>
           <div class="abs-days">${toBn(x.absentDays)} দিন</div>
         </div>`;

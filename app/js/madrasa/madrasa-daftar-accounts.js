@@ -4,7 +4,7 @@
 /* ── global state (settable from inline onclick) ── */
 var _tab      = 'summary';
 var _monFs    = [];   /* multi-select months — empty = all */
-var _accFs    = [];   /* multi-select account books — empty = all */
+var _accFs    = [];   /* multi-select account departments — empty = all */
 var _catFs    = [];   /* multi-select categories — empty = all */
 var _dayF     = 'all';
 var _sortF    = 'date_desc';
@@ -73,7 +73,7 @@ var _qardGiveInlineOpen = false; /* করজ বিস্তারিত মড
     }
   }, true);
 
-  /* হিসাব বই ফিল্টার/সারাংশে শুধু ব্যয়-বই — qard_return শুধু আয়ের ধরন */
+  /* হিসাব বিভাগ ফিল্টার/সারাংশে শুধু ব্যয়-বিভাগ — qard_return শুধু আয়ের ধরন */
   function expenseBookKeys() {
     return Object.keys(A.ACCOUNT_LABELS).filter(function (k) { return k !== 'qard_return'; });
   }
@@ -909,7 +909,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var yrs = years.map(function (y) { return [y, A.bn ? A.bn(y) : y]; });
     var yearSection = years.length ? _ddGroup('বছর (হিজরী)', yrs, _yearFs, 'toggleAccYear', 'toggleAllAccYears') : '';
     var monthSection = _ddGroup('মাস', A.MONTHS, _monFs, 'toggleAccMonth', 'toggleAllAccMonths');
-    var accSection = isIncome ? '' : _ddGroup('হিসাব বই', expenseBookEntries(), _accFs, 'toggleAccAccount', 'toggleAllAccAccounts');
+    var accSection = isIncome ? '' : _ddGroup('হিসাব বিভাগ', expenseBookEntries(), _accFs, 'toggleAccAccount', 'toggleAllAccAccounts');
     var cats = isIncome ? [] : (A.Categories ? A.Categories.getAll() : []);
     var catSection = isIncome ? '' : _ddGroup('খাত / ক্যাটাগরি', cats, _catFs, 'toggleAccCat', 'toggleAllAccCats');
     var rangeFromOn = _fromKey !== 'all', rangeToOn = _toKey !== 'all';
@@ -1436,7 +1436,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<button type="button" class="acc-metric acc-metric-click warn" onclick="openAccAccountDetails(\'qard\')"><div class="acc-metric-lbl">করজ</div><div class="acc-metric-val">৳' + fa(s.qardRemaining) + '</div></button>' +
       '<div class="acc-metric ' + cashCls + '"><div class="acc-metric-lbl">নগদ</div><div class="acc-metric-val">' + (s.cashFlow < 0 ? '−' : '') + '৳' + fa(Math.abs(s.cashFlow)) + '</div></div>' +
       '</div></div>';
-    var thead = '<tr><th>হিসাব বই</th><th>ব্যয়</th><th>শতকরা</th><th>বর্তমান বকেয়া</th></tr>';
+    var thead = '<tr><th>হিসাব বিভাগ</th><th>ব্যয়</th><th>শতকরা</th><th>বর্তমান বকেয়া</th></tr>';
     var tfoot = '<tr><td><strong>সর্বমোট</strong></td>' +
       '<td style="color:var(--red);font-weight:700">৳' + fa(s.te) + '</td>' +
       '<td>' + pct(100) + '</td><td style="color:var(--red);font-weight:700">৳' + fa(s.td) + '</td></tr>';
@@ -1691,7 +1691,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var emptyColspan = isQard ? (readOnly ? 6 : 7) : (readOnly ? 8 : 9);
       var wrapCls = 'acc-table-wrap' + (isQard ? ' acc-table-wrap--qard' + (readOnly ? ' acc-table-wrap--qard-ro' : '') : '');
       var tableHtml = '<div class="' + wrapCls + '"><table class="acc-detail-table"><thead><tr><th>তারিখ</th>' + monthTh + '<th>খাত</th><th>বিবরণ</th><th>পরিমাণ</th>' + supTh + '<th>রশিদ নং</th><th>টাকা</th>' + (readOnly ? '' : '<th></th>') + '</tr></thead><tbody>' +
-        (body || '<tr><td colspan="' + emptyColspan + '" style="text-align:center;color:var(--ink3)">এই হিসাব বইতে তথ্য নেই</td></tr>') +
+        (body || '<tr><td colspan="' + emptyColspan + '" style="text-align:center;color:var(--ink3)">এই হিসাব বিভাগে তথ্য নেই</td></tr>') +
         '</tbody></table></div>';
       if (isQard) {
         /* করজে হাসানা: tab system — এন্ট্রি সমূহ | ↩ আদায় */
@@ -1931,7 +1931,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var body = '<div style="margin-bottom:12px">' + first + '</div>' +
       '<div style="margin-bottom:12px">' + second + '</div>' +
       '<div class="acc-filter-bar" style="margin:4px 0 0"><button type="button" class="acc-btn acc-btn-inc" onclick="closeAccSheet();renderAccAccountDetails(_detailAccount)" style="border-radius:10px;flex:2">প্রয়োগ করুন</button><button type="button" class="acc-date-clear" onclick="clearAccDetailFilters()" style="flex:1">রিসেট</button></div>';
-    _sheet('হিসাব বই ফিল্টার', body);
+    _sheet('হিসাব বিভাগ ফিল্টার', body);
   };
 
   /* ── Grouped filter dropdown (নতুন ড্রপডাউন ফিল্টার) ── */
@@ -2186,7 +2186,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     document.removeEventListener('click', _closeColFltHandler);
   }
   function _colFltIcon(colKey, active) {
-    var lbl = colKey === 'date' ? 'তারিখ' : colKey === 'desc' ? 'বিবরণ' : colKey === 'amount' ? 'টাকা' : colKey === 'account' ? 'হিসাব বই' : colKey === 'category' ? 'খাত' : colKey === 'supplier' ? 'সরবরাহকারী' : colKey === 'quantity' ? 'পরিমাণ' : colKey === 'receipt' ? 'রশিদ নং' : colKey;
+    var lbl = colKey === 'date' ? 'তারিখ' : colKey === 'desc' ? 'বিবরণ' : colKey === 'amount' ? 'টাকা' : colKey === 'account' ? 'হিসাব বিভাগ' : colKey === 'category' ? 'খাত' : colKey === 'supplier' ? 'সরবরাহকারী' : colKey === 'quantity' ? 'পরিমাণ' : colKey === 'receipt' ? 'রশিদ নং' : colKey;
     return '<button type="button" class="col-flt-icon' + (active ? ' is-on' : '') + '" data-col-flt="' + colKey + '" title="' + esc(lbl) + ' অনুযায়ী বাছাই" aria-label="' + esc(lbl) + ' অনুযায়ী বাছাই" onclick="event.stopPropagation();openColFilter(this,\'' + _sq(colKey) + '\',\'' + _sq(lbl) + '\')">▾</button>';
   }
   function _applyColFilters(rows, colKey, fn) {
@@ -2383,7 +2383,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '</div>';
     var thead = '<thead><tr>' +
       _colHeader('তারিখ', 'date', 'date_asc', 'date_desc') +
-      _colHeader('হিসাব বই', 'account', 'account_asc', 'account_desc') +
+      _colHeader('হিসাব বিভাগ', 'account', 'account_asc', 'account_desc') +
       _colHeader('খাত', 'category', 'category_asc', 'category_desc') +
       _colHeader('বিবরণ', 'desc', 'desc_asc', 'desc_desc') +
       _colHeader('পরিমাণ', 'quantity', 'quantity_asc', 'quantity_desc') +
@@ -2438,9 +2438,9 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     el.className = 'acc-dd-backdrop';
     el.onclick = window.closeDuesFilterDropdown;
     el.innerHTML = '<div class="acc-dd-panel" onclick="event.stopPropagation()">' +
-      '<div class="acc-sheet-head" style="padding:10px 12px 6px"><div class="acc-sheet-title">হিসাব বই' + (totalActive && !allOn ? ' (' + bn(totalActive) + ')' : '') + '</div><button type="button" class="acc-sheet-close" onclick="closeDuesFilterDropdown()">✕</button></div>' +
+      '<div class="acc-sheet-head" style="padding:10px 12px 6px"><div class="acc-sheet-title">হিসাব বিভাগ' + (totalActive && !allOn ? ' (' + bn(totalActive) + ')' : '') + '</div><button type="button" class="acc-sheet-close" onclick="closeDuesFilterDropdown()">✕</button></div>' +
       '<div class="acc-dd-section"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
-      '<div class="acc-ms-section-head">হিসাব বই <span class="acc-dds-count" style="font-size:9px;font-weight:400;color:var(--ink3)">(' + bn(totalActive || accounts.length) + (totalActive && !allOn ? '/' + bn(accounts.length) : '') + ')</span></div>' +
+      '<div class="acc-ms-section-head">হিসাব বিভাগ <span class="acc-dds-count" style="font-size:9px;font-weight:400;color:var(--ink3)">(' + bn(totalActive || accounts.length) + (totalActive && !allOn ? '/' + bn(accounts.length) : '') + ')</span></div>' +
       '<button type="button" class="acc-ms-selall" onclick="toggleAllDueAccounts()">' + (allOn ? 'বাতিল সব' : 'সব নির্বাচন') + '</button></div>' +
       '<div class="acc-dd-section-list">' + itemsHtml + '</div></div>' +
       '<div class="acc-filter-bar" style="margin:4px 12px 12px"><button type="button" class="acc-btn acc-btn-inc" onclick="closeDuesFilterDropdown();renderAccMetricModal()" style="border-radius:10px;flex:2">প্রয়োগ করুন</button><button type="button" class="acc-date-clear" onclick="_dueAccFs=[];closeDuesFilterDropdown();renderAccMetricModal()" style="flex:1">রিসেট</button></div>' +
@@ -2481,7 +2481,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var selAll = section.querySelector('.acc-ms-selall');
     if (selAll) selAll.textContent = activeCount === 0 ? 'বাতিল সব' : 'সব নির্বাচন';
     var title = dd.querySelector('.acc-sheet-title');
-    if (title) title.textContent = 'হিসাব বই' + (activeCount && activeCount < cbs.length ? ' (' + bn(activeCount) + ')' : '');
+    if (title) title.textContent = 'হিসাব বিভাগ' + (activeCount && activeCount < cbs.length ? ' (' + bn(activeCount) + ')' : '');
     var items = section.querySelectorAll('.acc-ms-item');
     for (var it = 0; it < items.length; it++) {
       var cb = items[it].querySelector('.acc-ms-cb');
@@ -2496,10 +2496,10 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var filterBar = '<div class="acc-toolbar">' +
       '<button type="button" class="acc-filter-icon-btn' + (activeCount ? ' is-on' : '') + '" onclick="openDuesFilterDropdown(this)" style="width:auto;min-width:100px">' +
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>' +
-      'হিসাব বই' + badge + '</button></div>';
+      'হিসাব বিভাগ' + badge + '</button></div>';
     var dues = A.Dues.getAll().filter(function (d) { return A.num(d.due) > 0; });
     if (_dueAccFs.length) dues = dues.filter(function (d) { return _dueAccFs.indexOf(d.account) >= 0; });
-    if (!dues.length) return filterBar + '<div class="acc-empty">এই হিসাব বইতে কোনো বকেয়া নেই</div>';
+    if (!dues.length) return filterBar + '<div class="acc-empty">এই হিসাব বিভাগে কোনো বকেয়া নেই</div>';
     var rows = dues.map(function (d) {
       var isDue = A.num(d.due) > 0;
       var supplier = A.clean(d.supplier, 'সরবরাহকারী');
@@ -2595,7 +2595,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (type === 'income') {
       return 'ধরন: আয়\nতারিখ: ' + A.dateLabel(entry) + '\nপরিমাণ: ৳' + fa(entry.amount) + '\nবিবরণ: ' + (A.clean(entry.note, '') || A.clean(entry.source, '') || 'আয়');
     }
-    return 'ধরন: ব্যয়\nহিসাব বই: ' + (A.ACCOUNT_LABELS[entry.account] || entry.account || '—') +
+    return 'ধরন: ব্যয়\nহিসাব বিভাগ: ' + (A.ACCOUNT_LABELS[entry.account] || entry.account || '—') +
       '\nতারিখ: ' + A.dateLabel(entry) +
       '\nখাত: ' + (A.clean(entry.category, '') || 'অন্যান্য') +
       '\nবিবরণ: ' + (A.clean(entry.description, '') || 'ব্যয়') +
@@ -2722,7 +2722,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     ['health', 'নিয়মিত হিসাব ও নগদ'],
     ['monthly', 'মাসিক তুলনা'],
     ['item', 'পণ্য / দর'],
-    ['account', 'হিসাব বই'],
+    ['account', 'হিসাব বিভাগ'],
     ['supplier', 'সরবরাহকারী'],
     ['due', 'বকেয়া'],
   ];
@@ -2834,7 +2834,19 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (gm > 12 && gd <= 12) { var tmp = gm; gm = gd; gd = tmp; }
     if (gm < 1 || gm > 12 || gd < 1 || gd > 31) return { err: 'format' };
     var iso = String(gy) + '-' + String(gm).padStart(2, '0') + '-' + String(gd).padStart(2, '0');
-    var g = A.gregorianISOToHijri ? A.gregorianISOToHijri(iso) : null;
+    var g = null;
+    try {
+      var dt = new Date(Date.UTC(gy, gm - 1, gd));
+      var parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
+        year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC'
+      }).formatToParts(dt);
+      var hp = {};
+      parts.forEach(function (part) { if (part.type !== 'literal') hp[part.type] = parseInt(part.value, 10); });
+      if (hp.year && hp.month && hp.day) {
+        g = { hijriYear: hp.year, month: A.monthFromNo(hp.month), day: hp.day };
+      }
+    } catch (e) {}
+    if (!g && A.gregorianISOToHijri) g = A.gregorianISOToHijri(iso);
     if (!g) return { err: 'range' };
     return { year: g.hijriYear, month: g.month, day: g.day };
   }
@@ -2879,7 +2891,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   function impSheetKind(name) {
     var n = impNormHeader(name).replace(/\s+/g, '');
-    if (/নির্দেশ|dashboard|ড্যাশবোর্ড|dash|বকেয়া|^পরিশোধ$|পরিশোধ/.test(n)) return 'skip';
+    if (/নির্দেশ|dashboard|ড্যাশবোর্ড|dash|বকেয়া/.test(n)) return 'skip';
+    if (/^পরিশোধ$|payment|duepayment/.test(n)) return 'payment';
     if (/^করজ|qard|loan/.test(n)) return 'qard';
     if (/^আয়|^আয়|^income|^inc/.test(n)) return 'income';
     if (/^ব্যয়|^ব্যয়|^expense|^exp|মাস্টার/.test(n)) return 'expense';
@@ -2889,9 +2902,9 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   /** openpyxl স্ক্রিপ্টের একই ফাইল — scripts/make-hisab-excel-template.py */
   function impTplHref() {
     try {
-      if (/\/admin\/accounts\.html/i.test(location.pathname || '')) return '../templates/daftar-hisab-template.xlsx';
+      if (/\/admin\/accounts\.html/i.test(location.pathname || '')) return '../templates/daftar-hisab-template-v2.xlsx';
     } catch (e) {}
-    return 'templates/daftar-hisab-template.xlsx';
+    return 'templates/daftar-hisab-template-v2.xlsx';
   }
 
   window.downloadAccHisabTemplate = function () {
@@ -2940,6 +2953,21 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return String(Math.round((Number(n) || 0) * 100) / 100);
   }
 
+  function impHash(s) {
+    var h = 2166136261;
+    s = String(s || '');
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  function impSourceId(workbookId, row, fallbackFp) {
+    var stable = workbookId ? [workbookId, row.kind, row.sheet, row.line].join('|') : fallbackFp;
+    return 'xl-' + impHash(stable);
+  }
+
   function impFpExpense(data) {
     if (!data) return '';
     return [
@@ -2968,6 +2996,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   function impRowFingerprint(row) {
     if (!row || !row.data || row.status !== 'ok') return '';
+    if (row.kind === 'payment') return ['p', row.data.account, impNormTxt(row.data.supplier), A.dateKey(row.data.hijriYear, row.data.month, row.data.day), impAmtKey(row.data.amount), impNormTxt(row.data.receiptNo)].join('|');
     if (row.kind === 'income' || row.kind === 'qardReturn') return impFpIncome(row.data);
     return impFpExpense(row.data);
   }
@@ -2976,22 +3005,10 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   function impApplyDupGuard(parsed) {
     if (!parsed) return parsed;
     var seen = Object.create(null);
-    try {
-      (A.Expense.getAll() || []).forEach(function (e) {
-        var fp = impFpExpense(e);
-        if (fp) seen[fp] = 1;
-      });
-      (A.Income.getAll() || []).forEach(function (e) {
-        var fp = impFpIncome(e);
-        if (fp) seen[fp] = 1;
-      });
-    } catch (err) {
-      console.warn('[Accounts] dup guard index failed', err);
-    }
     function markList(list) {
       (list || []).forEach(function (row) {
         if (row.status !== 'ok') return;
-        var fp = impRowFingerprint(row);
+        var fp = row.data.id || impRowFingerprint(row);
         if (!fp) return;
         if (seen[fp]) {
           row.status = 'dup';
@@ -3005,13 +3022,24 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     markList(parsed.income);
     markList(parsed.qardGive);
     markList(parsed.qardReturn);
+    markList(parsed.payments);
     return parsed;
+  }
+
+  function impFinishRow(row, workbookId) {
+    if (!row || !row.data) return row;
+    var fp = impRowFingerprint(row);
+    row.data.id = impSourceId(workbookId, row, fp);
+    row.data.sourceSheet = row.sheet;
+    row.data.sourceRow = row.line;
+    row.data.sourceKey = row.data.id;
+    return row;
   }
 
   function impParseExpenseSheet(matrix, sheetName) {
     if (!matrix || !matrix.length) return [];
     var headers = (matrix[0] || []).map(impCellStr);
-    var iBook = impHeaderIndex(headers, ['হিসাব বই', 'বই', 'account', 'book']);
+    var iBook = impHeaderIndex(headers, ['হিসাব বিভাগ', 'বিভাগ', 'হিসাব বই', 'বই', 'account', 'book']);
     var iDate = impHeaderIndex(headers, ['তারিখ', 'date']);
     var iCat = impHeaderIndex(headers, ['খাত', 'category']);
     var iDesc = impHeaderIndex(headers, ['বিবরণ', 'description', 'item']);
@@ -3027,7 +3055,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       return [{ line: 1, sheet: sheetName, status: 'err', msg: 'ব্যয় শীটে «মোট টাকা» বা পরিমাণ+একক মূল্য কলাম লাগবে', amt: 0 }];
     }
     var rows = [];
-    for (var r = 1; r < matrix.length && rows.length < 2000; r++) {
+    for (var r = 1; r < matrix.length; r++) {
       var cols = matrix[r] || [];
       if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
       var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
@@ -3035,7 +3063,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var book = iBook >= 0 ? impResolveBook(get(iBook)) : null;
       if (iBook >= 0 && !book) {
         row.status = 'err';
-        row.msg = 'হিসাব বই বোঝা যায়নি («' + get(iBook) + '»)';
+        row.msg = 'হিসাব বিভাগ বোঝা যায়নি («' + get(iBook) + '»)';
         row.amt = 0;
         rows.push(row);
         continue;
@@ -3072,7 +3100,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var iNote = impHeaderIndex(headers, ['উৎস / বিবরণ', 'উৎস', 'বিবরণ', 'note', 'source']);
     if (iDate < 0 || iAmt < 0) return [{ line: 1, sheet: sheetName, status: 'err', msg: 'আয় শীটে «তারিখ» ও «টাকা» কলাম লাগবে', amt: 0 }];
     var rows = [];
-    for (var r = 1; r < matrix.length && rows.length < 2000; r++) {
+    for (var r = 1; r < matrix.length; r++) {
       var cols = matrix[r] || [];
       if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
       var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
@@ -3098,7 +3126,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       return { give: err, ret: [] };
     }
     var give = [], ret = [];
-    for (var r = 1; r < matrix.length && (give.length + ret.length) < 2000; r++) {
+    for (var r = 1; r < matrix.length; r++) {
       var cols = matrix[r] || [];
       if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
       var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
@@ -3141,9 +3169,41 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return { give: give, ret: ret };
   }
 
+  function impParsePaymentSheet(matrix, sheetName) {
+    if (!matrix || !matrix.length) return [];
+    var headers = (matrix[0] || []).map(impCellStr);
+    var iBook = impHeaderIndex(headers, ['হিসাব বিভাগ', 'বিভাগ', 'account', 'book']);
+    var iDate = impHeaderIndex(headers, ['তারিখ', 'date']);
+    var iSup = impHeaderIndex(headers, ['সরবরাহকারী', 'supplier']);
+    var iAmt = impHeaderIndex(headers, ['টাকা', 'পরিমাণ', 'amount', 'মোট']);
+    var iRec = impHeaderIndex(headers, ['রশিদ নং', 'রশিদ', 'receipt']);
+    var iNote = impHeaderIndex(headers, ['মন্তব্য', 'বিবরণ', 'note']);
+    if (iBook < 0 || iDate < 0 || iSup < 0 || iAmt < 0) {
+      return [{ line: 1, sheet: sheetName, status: 'err', kind: 'payment', msg: 'পরিশোধ শীটে হিসাব বিভাগ/তারিখ/সরবরাহকারী/টাকা কলাম লাগবে', amt: 0 }];
+    }
+    var rows = [];
+    for (var r = 1; r < matrix.length; r++) {
+      var cols = matrix[r] || [];
+      if (!cols.some(function (c) { return impCellStr(c) !== ''; })) continue;
+      var get = function (i) { return i >= 0 ? impCellStr(cols[i]) : ''; };
+      var row = { line: r + 1, sheet: sheetName, status: 'ok', msg: '', kind: 'payment' };
+      var account = impResolveBook(get(iBook));
+      var d = impParseDate(get(iDate));
+      var amount = parseFloat(sanitizeNumStr(get(iAmt))) || 0;
+      row.data = { account: account, supplier: get(iSup), hijriYear: d.year, month: d.month, day: d.day, amount: amount, receiptNo: get(iRec), note: get(iNote) };
+      impMarkRow(row, d, amount);
+      if (row.status === 'ok' && !account) { row.status = 'err'; row.msg = 'হিসাব বিভাগ বোঝা যায়নি'; }
+      if (row.status === 'ok' && !row.data.supplier) { row.status = 'err'; row.msg = 'সরবরাহকারীর নাম লাগবে'; }
+      rows.push(row);
+    }
+    return rows;
+  }
+
   function impParseWorkbook(wb) {
-    var out = { expense: [], income: [], qardGive: [], qardReturn: [] };
+    var out = { expense: [], income: [], qardGive: [], qardReturn: [], payments: [] };
     var names = wb.SheetNames || [];
+    var instruction = wb.Sheets['নির্দেশনা'];
+    var workbookId = instruction && instruction['Z1'] ? impCellStr(instruction['Z1'].v) : '';
     var found = false;
     names.forEach(function (name) {
       var kind = impSheetKind(name);
@@ -3153,6 +3213,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
       if (kind === 'expense') out.expense = out.expense.concat(impParseExpenseSheet(matrix, name));
       else if (kind === 'income') out.income = out.income.concat(impParseIncomeSheet(matrix, name));
+      else if (kind === 'payment') out.payments = out.payments.concat(impParsePaymentSheet(matrix, name));
       else if (kind === 'qard') {
         var q = impParseQardSheet(matrix, name);
         out.qardGive = out.qardGive.concat(q.give);
@@ -3160,20 +3221,23 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       }
     });
     if (!found) {
-      out.expense = [{ line: 1, sheet: '', status: 'err', msg: 'ব্যয়/আয়/করজ নামের কোনো শীট পাওয়া যায়নি', amt: 0 }];
+      out.expense = [{ line: 1, sheet: '', status: 'err', msg: 'ব্যয়/আয়/করজ/পরিশোধ নামের কোনো শীট পাওয়া যায়নি', amt: 0 }];
     }
+    [].concat(out.expense, out.income, out.qardGive, out.qardReturn, out.payments).forEach(function (row) { impFinishRow(row, workbookId); });
+    out.workbookId = workbookId || 'legacy-content-id';
     return out;
   }
 
   function impAllRows() {
     if (!_impParsed) return [];
-    return [].concat(_impParsed.expense || [], _impParsed.income || [], _impParsed.qardGive || [], _impParsed.qardReturn || []);
+    return [].concat(_impParsed.expense || [], _impParsed.income || [], _impParsed.qardGive || [], _impParsed.qardReturn || [], _impParsed.payments || []);
   }
 
   function impTabRows() {
     if (!_impParsed) return [];
     if (_impTab === 'income') return _impParsed.income || [];
     if (_impTab === 'qard') return [].concat(_impParsed.qardGive || [], _impParsed.qardReturn || []);
+    if (_impTab === 'payment') return _impParsed.payments || [];
     return _impParsed.expense || [];
   }
 
@@ -3205,15 +3269,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var root = document.getElementById('acc-import-root');
     if (!root) return;
     var help =
-      '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>। ' +
-      'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বই</b> কলাম থেকে বই অটো-সাজানো হয়। ' +
-      'মোট টাকা = পরিমাণ × একক মূল্য (অটো)। বকেয়া/পরিশোধ শীট Excel-এ লাইভ দেখার জন্য। ' +
-      'আগে থেকে থাকা একই এন্ট্রি (তারিখ+টাকা+বিবরণ…) অটো বাদ যাবে।' +
+      '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>, <b>পরিশোধ</b>। ' +
+      'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বিভাগ</b> কলাম থেকে বিভাগ অটো-সাজানো হয়। ' +
+      'মোট টাকা = পরিমাণ × একক মূল্য (অটো)। একই টেমপ্লেট আবার আপলোড করলে একই সারি আপডেট হবে—দ্বিতীয়বার যোগ হবে না। সব শীট একসঙ্গে সফল হলেই ডেটাবেজে সংরক্ষিত হবে।' +
       '<br><button type="button" class="acc-imp-tpl" onclick="downloadAccHisabTemplate()">⬇ খালি টেমপ্লেট ডাউনলোড</button></div>';
     var drop =
       '<div class="acc-imp-drop" id="acc-imp-drop" role="button" tabindex="0">' +
       '<p class="acc-imp-drop-title">Excel ফাইল এখানে রাখুন বা বেছে নিন</p>' +
-      '<p class="acc-imp-drop-sub">শুধু .xlsx · ব্যয় + আয় + করজ একসাথে</p>' +
+      '<p class="acc-imp-drop-sub">শুধু .xlsx · ব্যয় + আয় + করজ + পরিশোধ একসাথে</p>' +
       '<input type="file" id="acc-imp-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>' +
       '</div>';
     var fileRow = _impFileName
@@ -3237,6 +3300,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<button type="button" class="acc-imp-tab' + (_impTab === 'expense' ? ' is-on' : '') + '" onclick="setAccImpTab(\'expense\')">ব্যয় (' + bn((_impParsed.expense || []).length) + ')</button>' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'income' ? ' is-on' : '') + '" onclick="setAccImpTab(\'income\')">আয় (' + bn((_impParsed.income || []).length) + ')</button>' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'qard' ? ' is-on' : '') + '" onclick="setAccImpTab(\'qard\')">করজ (' + bn(((_impParsed.qardGive || []).length + (_impParsed.qardReturn || []).length)) + ')</button>' +
+      '<button type="button" class="acc-imp-tab' + (_impTab === 'payment' ? ' is-on' : '') + '" onclick="setAccImpTab(\'payment\')">পরিশোধ (' + bn((_impParsed.payments || []).length) + ')</button>' +
       '</div>';
     var rows = impTabRows();
     var okTab = rows.filter(function (r) { return r.status === 'ok'; });
@@ -3244,8 +3308,9 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var statusLabel = { ok: '✓ ঠিক আছে', err: '', saved: 'সংরক্ষিত ✓', dup: 'ডুপ্লিকেট — বাদ' };
     var ths;
     if (_impTab === 'income') ths = '<th>#</th><th>তারিখ</th><th>টাকা</th><th>উৎস / বিবরণ</th><th>অবস্থা</th>';
+    else if (_impTab === 'payment') ths = '<th>#</th><th>বিভাগ</th><th>তারিখ</th><th>সরবরাহকারী</th><th>টাকা</th><th>রশিদ</th><th>অবস্থা</th>';
     else if (_impTab === 'qard') ths = '<th>#</th><th>ধরন</th><th>তারিখ</th><th>টাকা</th><th>খাত</th><th>অবস্থা</th>';
-    else ths = '<th>#</th><th>বই</th><th>তারিখ</th><th>খাত</th><th>বিবরণ</th><th>মোট</th><th>সরবরাহকারী</th><th>পরিশোধ</th><th>অবস্থা</th>';
+    else ths = '<th>#</th><th>বিভাগ</th><th>তারিখ</th><th>খাত</th><th>বিবরণ</th><th>মোট</th><th>সরবরাহকারী</th><th>পরিশোধ</th><th>অবস্থা</th>';
     var trs = rows.map(function (r) {
       var d = r.data || {};
       var okDate = r.status === 'ok' || r.status === 'saved' || r.status === 'dup';
@@ -3254,6 +3319,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var cells;
       if (_impTab === 'income') {
         cells = '<td>' + dateTxt + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.note || '') + '</td>';
+      } else if (_impTab === 'payment') {
+        cells = '<td>' + esc(A.ACCOUNT_LABELS[d.account] || d.account || '') + '</td><td>' + dateTxt + '</td><td>' + esc(d.supplier || '') + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.receiptNo || '') + '</td>';
       } else if (_impTab === 'qard') {
         var qKind = r.kind === 'qardReturn' ? 'আদায়' : 'দেওয়া';
         var qCat = r.kind === 'qardReturn'
@@ -3292,7 +3359,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.setAccImpTab = function (t) {
-    _impTab = t === 'income' ? 'income' : (t === 'qard' ? 'qard' : 'expense');
+    _impTab = t === 'income' ? 'income' : (t === 'qard' ? 'qard' : (t === 'payment' ? 'payment' : 'expense'));
     var pv = document.getElementById('acc-imp-preview');
     if (pv) pv.innerHTML = buildImpPreview();
   };
@@ -3315,9 +3382,11 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         var wb = XLSX.read(data, { type: 'array', cellDates: true });
         _impFileName = name;
         _impParsed = impApplyDupGuard(impParseWorkbook(wb));
+        impAllRows().forEach(function (row) { if (row.data) row.data.sourceFile = name; });
         if ((_impParsed.expense || []).length) _impTab = 'expense';
         else if ((_impParsed.income || []).length) _impTab = 'income';
-        else _impTab = 'qard';
+        else if (((_impParsed.qardGive || []).length + (_impParsed.qardReturn || []).length)) _impTab = 'qard';
+        else _impTab = 'payment';
         renderAccImport();
         var pv = document.getElementById('acc-imp-preview');
         if (pv) pv.scrollIntoView({ block: 'nearest' });
@@ -3345,7 +3414,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var okIncome = (_impParsed && _impParsed.income || []).filter(function (r) { return r.status === 'ok'; });
     var okQardG = (_impParsed && _impParsed.qardGive || []).filter(function (r) { return r.status === 'ok'; });
     var okQardR = (_impParsed && _impParsed.qardReturn || []).filter(function (r) { return r.status === 'ok'; });
-    var totalOk = okExpense.length + okIncome.length + okQardG.length + okQardR.length;
+    var okPayments = (_impParsed && _impParsed.payments || []).filter(function (r) { return r.status === 'ok'; });
+    var totalOk = okExpense.length + okIncome.length + okQardG.length + okQardR.length + okPayments.length;
     if (!totalOk) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
     if (!A.remoteReady || !A.remoteReady()) { showToast('সার্ভার সংযোগ নেই — নেট/লগইন দেখে আবার চেষ্টা করুন'); return; }
     _impBusy = true;
@@ -3359,49 +3429,35 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     try {
       var expList = okExpense.concat(okQardG).map(function (r) { return r.data; });
       var incList = okIncome.concat(okQardR).map(function (r) { return r.data; });
-      if (expList.length) {
-        await A.Expense.bulkAdd(expList, function (d) { done = d; prog(); });
-        markListSaved(okExpense);
-        markListSaved(okQardG);
-        done = expList.length;
-        prog();
-      }
-      if (incList.length) {
-        var base = done;
-        await A.Income.bulkAdd(incList, function (d) { done = base + d; prog(); });
-        markListSaved(okIncome);
-        markListSaved(okQardR);
-        done = expList.length + incList.length;
-        prog();
-      }
-      for (var i = 0; i < okExpense.length; i++) {
-        var ed = (okExpense[i].data || {});
-        if (ed.paymentMethod === 'due' && ed.supplier) {
-          try { await A.Dues.addOrUpdate(ed.supplier, ed.account, ed.amount); } catch (eDue) {
-            console.warn('[Accounts] import due update failed', eDue);
-          }
-        }
-      }
+      var paymentList = okPayments.map(function (r) { return r.data; });
+      var categories = [];
+      expList.forEach(function (e) { var c = impNormTxt(e.category); if (c && categories.indexOf(c) < 0) categories.push(c); });
+      var expected = {
+        expenseCount: expList.length, incomeCount: incList.length, paymentCount: paymentList.length,
+        expenseTotal: expList.reduce(function (s, e) { return s + Number(e.amount || 0); }, 0),
+        incomeTotal: incList.reduce(function (s, e) { return s + Number(e.amount || 0); }, 0),
+        paymentTotal: paymentList.reduce(function (s, e) { return s + Number(e.amount || 0); }, 0)
+      };
+      var result = await A.importBatch({ workbookId: _impParsed.workbookId, expenses: expList, incomes: incList, payments: paymentList, categories: categories, expected: expected });
+      var actual = result.reconciliation || {};
+      ['expenseCount','incomeCount','paymentCount'].forEach(function (k) {
+        if (Number(actual[k]) !== Number(expected[k])) throw new Error('reconciliation_' + k);
+      });
+      ['expenseTotal','incomeTotal','paymentTotal'].forEach(function (k) {
+        if (Math.abs(Number(actual[k] || 0) - Number(expected[k] || 0)) > 0.009) throw new Error('reconciliation_' + k);
+      });
+      done = totalOk; prog();
+      markListSaved(okExpense); markListSaved(okIncome); markListSaved(okQardG); markListSaved(okQardR); markListSaved(okPayments);
       _impBusy = false;
       _impParsed = null;
       _impFileName = '';
       closeModal('account-import');
       refreshAccountsViews();
-      showToast(count(totalOk, 'টি') + ' এন্ট্রি যুক্ত হয়েছে ✓');
+      showToast(count(totalOk, 'টি') + ' সারি যাচাইসহ ডেটাবেজে সিঙ্ক হয়েছে ✓');
     } catch (err) {
       console.warn('[Accounts] excel import failed', err);
       _impBusy = false;
-      var up = err && err.uploadedCount ? err.uploadedCount : 0;
-      /* বর্তমান ব্যাচের আংশিক আপলোড মার্ক — আগে ব্যয়, পরে আয় */
-      if (up > 0) {
-        var left = up;
-        [].concat(okExpense, okQardG, okIncome, okQardR).forEach(function (r) {
-          if (r.status === 'ok' && left > 0) { r.status = 'saved'; r.msg = ''; left--; }
-        });
-      }
-      showToast(up > 0
-        ? (bn(up) + 'টি এই ধাপে সংরক্ষিত — বাকিগুলোর জন্য আবার "সংরক্ষণ" চাপুন')
-        : 'ডাটাবেজে সংরক্ষণ হয়নি — আবার চেষ্টা করুন');
+      showToast('কোনো সারি সংরক্ষিত হয়নি — সমস্যাটি ঠিক করে আবার চেষ্টা করুন');
       refreshAccountsViews();
       renderAccImport();
     }

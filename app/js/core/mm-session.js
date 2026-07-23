@@ -362,6 +362,30 @@
           }
         } catch (e) {}
       }
+      /* দফতর/অ্যাডমিন: সেশন summary না থাকলে বা লোকাল হলে সার্ভার থেকে পূর্ণ হিসাব */
+      if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && global.API &&
+          API.applyDaftarAbsentSummaryFromServer) {
+        try {
+          var sumRaw = API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw();
+          if (!sumRaw || sumRaw.source !== 'server') {
+            var absActor = null;
+            var absPin = null;
+            if (this.isAdmin && this.isAdmin()) {
+              absActor = this.getAdminUserId && this.getAdminUserId();
+              absPin = this.getAdminPin && this.getAdminPin();
+            } else {
+              absActor = this.getStaffUserId && this.getStaffUserId();
+              absPin = this.getStaffPin && this.getStaffPin();
+            }
+            if (absPin) {
+              var absRes = await MMSharedAPI.adminAbsentSummary(absActor || null, absPin);
+              if (absRes && absRes.ok) API.applyDaftarAbsentSummaryFromServer(absRes.rows || []);
+            }
+          }
+        } catch (eAbsReady) {
+          console.warn('[MMSession] absent summary ensure failed', eAbsReady);
+        }
+      }
       if (global.MDRDaftarAttendanceGate && MDRDaftarAttendanceGate.enforceAfterBootstrap) {
         try { MDRDaftarAttendanceGate.enforceAfterBootstrap(); } catch (eGate) {}
       }

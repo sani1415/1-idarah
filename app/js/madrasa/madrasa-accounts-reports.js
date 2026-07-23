@@ -142,7 +142,7 @@ var _rptSearch = '';
       cash: ['নিয়মিত হিসাব ও নগদ', 'আয়-ব্যয় ব্যালেন্স, বকেয়া ও নগদ প্রবাহ এক নজরে'],
       qard: ['করজে হাসানা', 'করজ দেওয়া, আদায় এবং বর্তমান বাকি'],
       monthly: ['মাসভিত্তিক তুলনা', 'নিয়মিত আয়-ব্যয় ও নগদ প্রবাহের মাসিক চিত্র'],
-      account: ['হিসাব বই বিশ্লেষণ', 'মাতবাখ, মাদ্রাসা, তামিরাত ও জেনারেলের ব্যয়ভাগ'],
+      account: ['হিসাব বিভাগ বিশ্লেষণ', 'মাতবাখ, মাদ্রাসা, তামিরাত ও সাধারণ বিভাগের ব্যয়ভাগ'],
       item: ['পণ্য/দর বিশ্লেষণ', 'একই পণ্যের দামের ওঠানামা ও অস্বাভাবিকতা'],
       supplier: ['সরবরাহকারী রিপোর্ট', 'কার কাছে কত কেনা, কত বকেয়া ও কী বেশি নেওয়া হয়েছে'],
       due: ['বকেয়া সতর্কতা', 'বেশি বকেয়া, আংশিক পরিশোধ ও ঝুঁকিপূর্ণ সরবরাহকারী'],
@@ -165,7 +165,7 @@ var _rptSearch = '';
       ['qard', money(s.qardRemaining), 'করজে হাসানা', 'দেওয়া, আদায় ও বাকি'],
       ['health', money(bal), 'নিয়মিত হিসাব ও নগদ', 'ব্যালেন্স, বকেয়া ও নগদ প্রবাহ'],
       ['monthly', count(months.length, 'মাস'), 'মাসিক তুলনা', 'আয়-ব্যয়ের প্রবণতা'],
-      ['account', money(topEntry(groupedAccount(), 'amount').value), 'হিসাব বই', 'কোন বইতে ব্যয় বেশি'],
+      ['account', money(topEntry(groupedAccount(), 'amount').value), 'হিসাব বিভাগ', 'কোন বিভাগে ব্যয় বেশি'],
       ['item', priceSignal ? money(priceSignal.spread) : '—', 'পণ্য/দর', 'দর পরিবর্তন ও অস্বাভাবিকতা'],
       ['supplier', money(topSup.value), 'সরবরাহকারী', 'বেশি কেনা ও বকেয়া'],
       ['due', money(due), 'বকেয়া সতর্কতা', 'কাকে আগে পরিশোধ জরুরি'],
@@ -227,7 +227,7 @@ var _rptSearch = '';
   function buildAccountReport() {
     var data = groupedAccount();
     var total = Object.keys(data).reduce(function (s, k) { return s + num(data[k].amount); }, 0);
-    if (!total) return '<div class="rpt-empty">হিসাব বইয়ের ব্যয় নেই</div>';
+    if (!total) return '<div class="rpt-empty">হিসাব বিভাগের ব্যয় নেই</div>';
     var max = Math.max.apply(null, Object.keys(data).map(function (k) { return data[k].amount; }).concat([1]));
     return Object.keys(A.ACCOUNT_LABELS).filter(function (k) { return k !== 'qard' && k !== 'qard_return'; }).map(function (k) {
       var v = data[k] || { amount: 0, count: 0 };

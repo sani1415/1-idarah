@@ -5,12 +5,18 @@
 (function () {
   'use strict';
 
-  var NAVIGATION_COMMIT_DELAY = 90;
+  var NAVIGATION_COMMIT_DELAY = 72;
 
   function init() {
     var nav = document.querySelector('.main-nav');
     if (!nav || nav.querySelector('.main-nav-pill')) return;
     var navigating = false;
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        document.documentElement.classList.remove('mm-admin-page-entering');
+      });
+    });
 
     var pill = document.createElement('span');
     pill.className = 'main-nav-pill';
@@ -48,6 +54,7 @@
         btn.setAttribute('aria-current', 'page');
         place(pill, btn);
         document.documentElement.classList.add('mm-admin-nav-committing');
+        try { sessionStorage.setItem('mm_admin_nav_enter', '1'); } catch (e2) {}
         requestAnimationFrame(function () {
           prepareNavCover();
           setTimeout(function () {

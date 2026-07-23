@@ -43,6 +43,7 @@
       hifz: !!row.is_hifz || row.class_code === 'kitab_hifz',
       special_watch: !!row.special_watch,
       alhamdulillah: !!row.alhamdulillah,
+      alhamdulillah_reason: row.alhamdulillah_reason ? String(row.alhamdulillah_reason).trim() : '',
       left_date: row.left_date || '',
       left_reason: row.left_reason || '',
       supabase_id: row.id || '',
@@ -219,7 +220,23 @@
       }
     }
     if (API.persistDaftarAttendanceSessionCache) API.persistDaftarAttendanceSessionCache();
-    if (API.rebuildDaftarAbsentSummary) API.rebuildDaftarAbsentSummary();
+    /* শিক্ষাবর্ষের পূর্ণ অনুপস্থিত aggregate — লোকাল ~৩০ দিনের হাজিরা দিয়ে হিসাব নয় */
+    var summaryOk = false;
+    if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && API.applyDaftarAbsentSummaryFromServer) {
+      try {
+        var absSum = await MMSharedAPI.adminAbsentSummary(a.id, a.pin);
+        if (absSum && absSum.ok) {
+          API.applyDaftarAbsentSummaryFromServer(absSum.rows || []);
+          summaryOk = true;
+        }
+      } catch (eAbs) {
+        console.warn('MDRDaftarSupabase: absent summary failed', eAbs);
+      }
+    }
+    if (!summaryOk && API.rebuildDaftarAbsentSummary) {
+      var existing = API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw();
+      if (!existing || existing.source !== 'server') API.rebuildDaftarAbsentSummary();
+    }
     if (API.markDaftarBootstrapComplete) {
       API.markDaftarBootstrapComplete({ attDatesCount: attDateCount, skipRowIndex: attDateCount > 0 });
     }

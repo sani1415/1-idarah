@@ -151,9 +151,26 @@ html.mm-admin-nav-committing .topbar,
 html.mm-admin-nav-committing #view-inbox,
 html.mm-admin-nav-committing #view-thread,
 html.mm-admin-nav-committing #view-new {
-  opacity: 0.94;
-  transform: translateY(2px);
-  transition: opacity 90ms ease-out, transform 90ms ease-out;
+  opacity: 0.975;
+  transform: translate3d(0, 1px, 0);
+  transition: opacity 72ms ease-out, transform 72ms ease-out;
+}
+
+html.mm-admin-page-entering .content,
+html.mm-admin-page-entering .topbar,
+html.mm-admin-page-entering #view-inbox,
+html.mm-admin-page-entering #view-thread,
+html.mm-admin-page-entering #view-new {
+  opacity: 0.9;
+  transform: translate3d(0, 5px, 0);
+}
+
+.content,
+.topbar,
+#view-inbox,
+#view-thread,
+#view-new {
+  transition: opacity 190ms cubic-bezier(.2,.8,.2,1), transform 190ms cubic-bezier(.2,.8,.2,1);
 }
 
 /* Cross-document (MPA) view transitions disabled: net-negative for this
@@ -211,12 +228,26 @@ html.mm-admin-nav-committing #view-new {
   .main-nav-ico,
   .hub-bottom-nav .hub-nav-ico,
   .main-nav.pill-active .main-nav-pill,
+  .content,
+  .topbar,
+  #view-inbox,
+  #view-thread,
+  #view-new,
   html.mm-admin-nav-committing .content,
   html.mm-admin-nav-committing .topbar,
   html.mm-admin-nav-committing #view-inbox,
   html.mm-admin-nav-committing #view-thread,
   html.mm-admin-nav-committing #view-new {
     transition: none;
+  }
+
+  html.mm-admin-page-entering .content,
+  html.mm-admin-page-entering .topbar,
+  html.mm-admin-page-entering #view-inbox,
+  html.mm-admin-page-entering #view-thread,
+  html.mm-admin-page-entering #view-new {
+    opacity: 1;
+    transform: none;
   }
 
   ::view-transition-old(root),

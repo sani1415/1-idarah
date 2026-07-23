@@ -354,7 +354,7 @@
           return `<div class="std-row" id="sr-${s.id}">
             <div class="std-top">
               <button type="button" class="std-name std-name--btn" onclick="event.stopPropagation();MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button>
-              <span class="std-roll-old">রোল ${API.escBn(s.roll||'—')}</span>
+              <span class="std-roll-old">পরিচিতি ${API.escBn(s.roll||'—')}</span>
             </div>
             <div class="std-bottom">
               <select class="next-cls-sel" id="sel-${s.id}" onchange="onSelChange('${s.id}',this)">
@@ -363,7 +363,7 @@
                 <option value="alumni_pass" ${d.action==='alumni_pass'?'selected':''}>🎓 বিদায় — পাস করেছেন</option>
                 <option value="dropout" ${d.action==='dropout'?'selected':''}>❌ বিদায় — মাঝপথে</option>
               </select>
-              <input class="roll-input" id="roll-${s.id}" value="${roll}" ${isLeave||d.action==='repeat'?'disabled':''} oninput="decisions['${s.id}'].new_roll=this.value" placeholder="রোল">
+              <input class="roll-input" id="roll-${s.id}" value="${roll}" ${isLeave||d.action==='repeat'?'disabled':''} oninput="decisions['${s.id}'].new_roll=this.value" placeholder="পরিচিতি">
             </div>
           </div>`;
         }).join('')

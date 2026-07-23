@@ -30,9 +30,12 @@
   var adminShell = /(?:^|\/)admin\/(?:madrasa|khedmat|dept|recent)\.html$/i.test(path) ||
     /\/madrasa\/admin\/accounts\.html$/i.test(path);
   var navPending = false;
+  var adminNavEnter = false;
   try {
     navPending = g.sessionStorage.getItem('mm_nav_loading') === '1';
+    adminNavEnter = g.sessionStorage.getItem('mm_admin_nav_enter') === '1';
   } catch (e) {}
+  if (adminNavEnter) g.document.documentElement.classList.add('mm-admin-page-entering');
   var chatFromNav = /(?:^|\/)chat\.html$/i.test(path) && navPending;
   // শেল পেজে সবসময় cover আর্ম করা হয় (warm/cold নির্বিশেষে) — কারণ এই ফাইলের নিজস্ব
   // isSessionDataWarm() heuristic api.js লোড হওয়ার আগেই চলে, তাই mm-session.js-এর আসল
@@ -43,4 +46,5 @@
     armBootCover();
   }
   try { g.sessionStorage.removeItem('mm_nav_loading'); } catch (e3) {}
+  try { g.sessionStorage.removeItem('mm_admin_nav_enter'); } catch (e4) {}
 })(typeof window !== 'undefined' ? window : this);

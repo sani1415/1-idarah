@@ -134,7 +134,7 @@
     <div class="settings-section">
       <div class="settings-title">📦 পুরনো ডাটা ইমপোর্ট</div>
       <div style="font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:10px;">
-        Supabase staging table-এ থাকা পুরনো ছাত্রদের দেখে স্থায়ী দাখেলা, শ্রেণি ও রোল ঠিক করে মূল ছাত্র তালিকায় অনুমোদন করুন।
+        Supabase staging table-এ থাকা পুরনো ছাত্রদের দেখে স্থায়ী দাখেলা, শ্রেণি ও পরিচিতি ঠিক করে মূল ছাত্র তালিকায় অনুমোদন করুন।
       </div>
       <button class="submit-btn" onclick="location.href='mdr-import-review.html'">Supabase ইমপোর্ট রিভিউ খুলুন</button>
       <button class="secondary-btn" style="margin-top:8px;width:100%;" onclick="location.href='madrasa-old-import.html'">Prototype localStorage ইমপোর্ট</button>
@@ -316,7 +316,7 @@
       <input class="form-input" id="cls-name" placeholder="যেমন: ১ম বর্ষ">
     </div>
     <div class="form-group">
-      <label class="form-label">রোল prefix</label>
+      <label class="form-label">পরিচিতি prefix</label>
       <input class="form-input" id="cls-roll-prefix" placeholder="যেমন: 100 / ম১ / ই">
     </div>
     <div class="form-group">
@@ -948,7 +948,7 @@
         <div style="flex:1;min-width:0;">
           <div class="t-name">${API.esc(c.name)}</div>
           <div class="t-meta">
-            <span class="class-badge">রোল: ${API.escBn(c.roll_prefix || '—')}</span>
+            <span class="class-badge">পরিচিতি: ${API.escBn(c.roll_prefix || '—')}</span>
             <span class="class-badge">ক্রম: ${API.esc(c.sort_order || '—')}</span>
             <span class="class-badge">পরবর্তী: ${API.esc(classNextLabel(c.next_class_id))}</span>
             ${c.active === false ? '<span class="class-badge">নিষ্ক্রিয়</span>' : ''}

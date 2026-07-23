@@ -682,7 +682,7 @@ body.page-daftar #modal-account-entry .modal {
         <select class="fs-select" id="class-filter-sel" onchange="setAttClassFilter(this.value)">
           <option value="all">সব বর্ষ</option>
         </select>
-        <input class="fs-search" id="att-search-box" placeholder="খোঁজ" title="নাম, স্থায়ী দাখেলা বা রোল" oninput="setAttSearch(this.value)">
+        <input class="fs-search" id="att-search-box" placeholder="খোঁজ" title="নাম, স্থায়ী দাখেলা বা পরিচিতি" oninput="setAttSearch(this.value)">
         <button type="button" class="fs-icon-btn" id="btn-copy-prev" title="আগের দিনের মতো করুন" aria-label="আগের দিনের মতো করুন" onclick="copyFromPreviousDay()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         </button>
@@ -786,7 +786,7 @@ body.page-daftar #modal-account-entry .modal {
           </div>
         </div>
         <div class="form-group"><label class="form-label">পূর্ণ নাম <span style="color:var(--red)">*</span></label><input class="form-input" id="add-name" placeholder="ছাত্রের পূর্ণ নাম"></div>
-        <div class="form-group"><label class="form-label">রোল নম্বর <span style="color:var(--red)">*</span></label><input class="form-input" id="add-roll" placeholder="যেমন: ১০১"></div>
+        <div class="form-group"><label class="form-label">পরিচিতি নম্বর <span style="color:var(--red)">*</span></label><input class="form-input" id="add-roll" placeholder="যেমন: ১০১"></div>
         <div class="form-group"><label class="form-label">স্থায়ী দাখেলা <span style="color:var(--red)">*</span></label><input class="form-input" id="add-pid" placeholder="যেমন: ৪৭০১২" autocomplete="off"></div>
         <div class="form-group"><label class="form-label">অভিভাবকের নাম</label><input class="form-input" id="add-guardian" placeholder="অভিভাবকের নাম"></div>
         <div class="form-row">
@@ -810,7 +810,7 @@ body.page-daftar #modal-account-entry .modal {
       <div style="margin-top:8px;">
         <div style="background:var(--cream2);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;font-size:12px;color:var(--ink2);line-height:1.7;">
           <strong>CSV ফরম্যাট:</strong> প্রথম সারি হেডার।<br>
-          <strong>নয় কলাম:</strong> <code style="background:#fff;padding:1px 5px;border-radius:4px;">নাম, বর্ষ, রোল, অভিভাবক, পেশা, ফোন, জেলা, উপজেলা, স্থায়ী_দাখেলা</code><br>
+          <strong>নয় কলাম:</strong> <code style="background:#fff;padding:1px 5px;border-radius:4px;">নাম, বর্ষ, পরিচিতি, অভিভাবক, পেশা, ফোন, জেলা, উপজেলা, স্থায়ী_দাখেলা</code><br>
           <em style="font-size:11px;">সেভ: Excel এ “CSV UTF-8 (Comma delimited)”, বা Google Sheets → CSV.</em>
         </div>
         <button class="dl-btn" onclick="downloadTemplate()">⬇ নমুনা CSV ডাউনলোড</button>
@@ -912,7 +912,7 @@ body.page-daftar #modal-account-entry .modal {
       </div>
       <div id="acc-expense-top-fields" class="acc-expense-top-fields">
         <div class="form-group" id="acc-exp-account-row">
-          <label class="form-label">হিসাব বই</label>
+          <label class="form-label">হিসাব বিভাগ</label>
           <select class="form-input form-select" id="acc-exp-account" onchange="onAccExpAccountChange(this.value)"><option value="matbakh">মাতবাখ</option><option value="madrasa">মাদরাসা</option><option value="tamirat">তামিরাত</option><option value="general">সাধারণ</option></select>
         </div>
         <div class="form-group" id="acc-exp-supplier-row">
@@ -984,18 +984,18 @@ body.page-daftar #modal-account-entry .modal {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js?v=20260516-attendance-persist"></script>
-<script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
+<script src="../js/api/api-shared.js?v=20260723-daftar-absent"></script>
 <script src="../js/core/mm-sample-data.js"></script>
-<script src="../js/api/api.js?v=20260517-attendance-consistency"></script>
-<script src="../js/madrasa/mdr-daftar-supabase.js?v=20260624-save-perf"></script>
+<script src="../js/api/api.js?v=20260723-absent-streak2"></script>
+<script src="../js/madrasa/mdr-daftar-supabase.js?v=20260723-daftar-absent"></script>
 <script src="../js/core/mm-hijri.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="../js/madrasa/madrasa-accounts-api.js?v=20260714-xlsx-dedupe"></script>
+<script src="../js/madrasa/madrasa-accounts-api.js?v=20260723-atomic-xlsx"></script>
 <script src="../js/shared/chat-api.js"></script>
-<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260714-card-labels"></script>
-<script src="../js/madrasa/madrasa-accounts-reports.js?v=20260714-rpt-qard-supplier"></script>
+<script src="../js/madrasa/madrasa-daftar-accounts.js?v=20260723-atomic-xlsx"></script>
+<script src="../js/madrasa/madrasa-accounts-reports.js?v=20260723-account-dept"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
-<script src="../js/core/mm-session.js?v=20260516-attendance-persist"></script>
+<script src="../js/core/mm-session.js?v=20260723-daftar-absent"></script>
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
 <script src="../js/shared/daftar-bottom-nav.js"></script>
 <script src="../js/core/monitor-mode.js"></script>
@@ -1907,7 +1907,7 @@ body.page-daftar #modal-account-entry .modal {
     const roll = document.getElementById('add-roll').value.trim();
     const classId = document.getElementById('add-class').value;
     if (!name) { showToast('নাম আবশ্যক'); return; }
-    if (!roll) { showToast('রোল নম্বর আবশ্যক'); return; }
+    if (!roll) { showToast('পরিচিতি নম্বর আবশ্যক'); return; }
     if (!classId) { showToast('বর্ষ নির্বাচন করুন'); return; }
     const pid = document.getElementById('add-pid').value.trim();
     if (!pid) { showToast('স্থায়ী দাখেলা আবশ্যক'); return; }
@@ -1931,7 +1931,7 @@ body.page-daftar #modal-account-entry .modal {
   let csvRows = [];
   function downloadTemplate() {
     const clsNames = API.Classes.getAll().map(c=>c.name).join(', ');
-    const header = 'নাম,বর্ষ,রোল,অভিভাবক,পেশা,ফোন,জেলা,উপজেলা,স্থায়ী_দাখেলা';
+    const header = 'নাম,বর্ষ,পরিচিতি,অভিভাবক,পেশা,ফোন,জেলা,উপজেলা,স্থায়ী_দাখেলা';
     const sample = 'মুহাম্মাদ আব্দুল্লাহ,১ম বর্ষ,১০১,আব্দুর রহীম,চাষাবাদ,০১৭০০-০০০০০০,ঢাকা,দোহার,৪৭০১২';
     const blob = new Blob(['\uFEFF# বর্ষের নাম: ' + clsNames + '\n' + header + '\n' + sample], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -1967,7 +1967,7 @@ body.page-daftar #modal-account-entry .modal {
     applyCsvPermanentIds();
     const validN = csvRows.filter((r) => !r.err).length, errN = csvRows.length - validN;
     document.getElementById('csv-count-lbl').textContent = toBn(validN) + ' টি সঠিক, ' + toBn(errN) + ' টিতে সমস্যা';
-    const thead = '<thead><tr><th>#</th><th>নাম</th><th>বর্ষ</th><th>রোল</th><th>জেলা</th><th>উপজেলা</th><th>স্থায়ী দাখেলা</th><th>অভিভাবক</th><th>ফোন</th><th>অবস্থা</th></tr></thead>';
+    const thead = '<thead><tr><th>#</th><th>নাম</th><th>বর্ষ</th><th>পরিচিতি</th><th>জেলা</th><th>উপজেলা</th><th>স্থায়ী দাখেলা</th><th>অভিভাবক</th><th>ফোন</th><th>অবস্থা</th></tr></thead>';
     const tbody = '<tbody>' + csvRows.map((r) => {
       const st = r.err ? ('<span class="err-tag">' + API.esc(r.err) + '</span>') : '✓';
       const idCell = r.err ? '—' : API.esc(r.resolved_pid || '—');
@@ -1988,7 +1988,7 @@ body.page-daftar #modal-account-entry .modal {
         const cols = line.split(',').map(s=>s.trim());
         const [name, clsName, roll, guardian, job, phone, district, upazila, manualPid] = cols;
         const cls = clsMap[clsName];
-        let baseErr = (!name ? 'নাম নেই ' : '') + ((!cls && clsName) ? 'বর্ষ খুঁজে পাওয়া যায়নি ' : '') + (!roll ? 'রোল নেই ' : '') + (!manualPid ? 'স্থায়ী দাখেলা আবশ্যক' : '');
+        let baseErr = (!name ? 'নাম নেই ' : '') + ((!cls && clsName) ? 'বর্ষ খুঁজে পাওয়া যায়নি ' : '') + (!roll ? 'পরিচিতি নেই ' : '') + (!manualPid ? 'স্থায়ী দাখেলা আবশ্যক' : '');
         if (cols.length < 8) baseErr += (baseErr.trim() ? ' ' : '') + 'কমপক্ষে ৮ কলাম লাগবে।';
         return { idx:i+1, name:name||'', clsName:clsName||'', cls, roll:roll||'', guardian:guardian||'', job:job||'', phone:phone||'', district:district||'', upazila:upazila||'', manual_pid:(manualPid||'').trim(), _baseErr:baseErr, err:baseErr, resolved_pid:'' };
       });

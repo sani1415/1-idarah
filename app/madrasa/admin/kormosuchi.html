@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<script src="../../js/core/mm-boot.js"></script>
 <meta http-equiv="refresh" content="0;url=/madrasa/admin/accounts.html?view=prog">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>কর্মসূচি হিসাব — জিম্মাদার</title>
@@ -110,5 +111,6 @@
   if (!MMSession.requireAdminPerm('daftar', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
   location.replace('/madrasa/admin/accounts.html?view=prog');
 </script>
+<script src="../../js/shared/admin-nav.js"></script>
 </body>
 </html>

@@ -801,7 +801,7 @@
   function renderAbsentRow(x, i, days, showDeptTag) {
     const cls = API.Classes.getById(x.student.class_id);
     const deptLabel = x.dept === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
-    const metaLine = esc(cls ? cls.name : '—') + (showDeptTag ? ' · ' + esc(deptLabel) : '') + ' · রোল ' + helpers.toBn(esc(x.student.roll || '—'));
+    const metaLine = esc(cls ? cls.name : '—') + (showDeptTag ? ' · ' + esc(deptLabel) : '') + ' · পরিচিতি ' + helpers.toBn(esc(x.student.roll || '—'));
     const daysHtml =
       `<div class="abs-days-home">${days.prefix ? '<span class="abs-days-prefix">' + esc(days.prefix) + ' </span>' : ''}${helpers.toBn(days.main)} দিন` +
       (days.sub ? `<div class="abs-days-sub${days.subPresent ? ' is-present' : ''}">${esc(days.sub)}</div>` : '') +
@@ -814,41 +814,6 @@
       </div>
       ${daysHtml}
     </div>`;
-  }
-
-  /** আজকের অনুপস্থিতদের টানা (ধারাবাহিক) অনুপস্থিত দিন — আজসহ। হিসাব লোকাল হাজিরা
-      ক্যাশ থেকে (সাম্প্রতিক ~৩০ দিন); উপস্থিত পেলে থামে, ছুটির দিন গোনা হয় না কিন্তু
-      ধারাবাহিকতা ভাঙেও না। একবারে সব ছাত্রের জন্য হিসাব হয় (getAll একবারই পড়া হয়)। */
-  function buildAbsentStreaks(rows) {
-    const out = Object.create(null);
-    if (!global.API || !API.Attendance || !API.Attendance.getAll) return out;
-    const idKey = Object.create(null); /* rec student_id → canonical student.id */
-    rows.forEach((x) => {
-      if (!x.student) return;
-      if (x.student.id) idKey[String(x.student.id)] = String(x.student.id);
-      if (x.student.supabase_id) idKey[String(x.student.supabase_id)] = String(x.student.id);
-    });
-    const byStudent = Object.create(null);
-    (API.Attendance.getAll() || []).forEach((r) => {
-      const canon = idKey[String(r.student_id || '')];
-      if (!canon) return;
-      const d = String(r.date || '').slice(0, 10);
-      if (!d) return;
-      if (!byStudent[canon]) byStudent[canon] = {};
-      if (!byStudent[canon][d]) byStudent[canon][d] = r;
-    });
-    Object.keys(byStudent).forEach((canon) => {
-      const dates = Object.keys(byStudent[canon]).sort().reverse();
-      let streak = 0;
-      for (let i = 0; i < dates.length; i++) {
-        const st = API.Attendance.statusOf(byStudent[canon][dates[i]]);
-        if (st === 'absent') streak++;
-        else if (st === 'holiday') continue;
-        else break;
-      }
-      out[canon] = streak || 1;
-    });
-    return out;
   }
 
   var _absTab = 'today'; /* 'today' | 'total' */
@@ -880,20 +845,38 @@
     const showDeptTag = depts.length > 1;
     /* সর্বমোট অনুপস্থিত দিনের ম্যাপ — আজ ট্যাবে "আজসহ মোট X দিন" দেখাতে */
     const totalDaysById = Object.create(null);
+    const streakById = Object.create(null);
     totalRows.forEach((x) => {
       if (!x.student) return;
-      if (x.student.id) totalDaysById[String(x.student.id)] = x.absentDays || 0;
-      if (x.student.supabase_id) totalDaysById[String(x.student.supabase_id)] = x.absentDays || 0;
+      if (x.student.id) {
+        totalDaysById[String(x.student.id)] = x.absentDays || 0;
+        if (typeof x.absentStreak === 'number') streakById[String(x.student.id)] = x.absentStreak;
+      }
+      if (x.student.supabase_id) {
+        totalDaysById[String(x.student.supabase_id)] = x.absentDays || 0;
+        if (typeof x.absentStreak === 'number') streakById[String(x.student.supabase_id)] = x.absentStreak;
+      }
     });
     const parts = [];
     if (_absTab === 'today') {
-      parts.push('<div class="abs-section-sub">' + helpers.toBn(todayRows.length) + ' জন আজ অনুপস্থিত · মোট = বর্ষের শুরু থেকে আজসহ, টানা = আজসহ ধারাবাহিক · বেশি থেকে কম</div>');
+      parts.push('<div class="abs-section-sub">' + helpers.toBn(todayRows.length) + ' জন আজ অনুপস্থিত · মোট = বর্ষ শুরু থেকে · টানা = আজসহ ধারাবাহিক · বেশি থেকে কম</div>');
       if (todayRows.length) {
-        const streaks = buildAbsentStreaks(todayRows);
-        const totalOf = (x) => totalDaysById[String(x.student.id)] || totalDaysById[String(x.student.supabase_id || '')] || 1;
+        const totalOf = (x) => totalDaysById[String(x.student.id)] || totalDaysById[String(x.student.supabase_id || '')] ||
+          (API.getSessionAbsentDays ? API.getSessionAbsentDays(x.student) : 1) || 1;
+        const streakOf = (x) => {
+          const id = String(x.student.id || '');
+          const sid = String(x.student.supabase_id || '');
+          let n = Object.prototype.hasOwnProperty.call(streakById, id) ? streakById[id] : null;
+          if (n == null && sid) {
+            n = Object.prototype.hasOwnProperty.call(streakById, sid) ? streakById[sid] : null;
+          }
+          if (n == null && API.getSessionAbsentStreak) n = API.getSessionAbsentStreak(x.student);
+          /* আজকের অনুপস্থিত তালিকা — কমপক্ষে ১ */
+          return Math.max(Number(n) || 0, 1);
+        };
         const sorted = todayRows.slice().sort((a, b) => totalOf(b) - totalOf(a));
         parts.push(sorted.map((x, i) => {
-          const streak = streaks[String(x.student.id)] || 1;
+          const streak = streakOf(x) || 1;
           return renderAbsentRow(x, i, { main: totalOf(x), prefix: 'মোট', sub: 'টানা ' + helpers.toBn(streak) + ' দিন' }, showDeptTag);
         }).join(''));
       } else {
@@ -951,14 +934,35 @@
       const list = document.getElementById('abs-home-list');
       if (list) list.scrollTop = 0;
     }
+    async function ensureSummaryThenShow() {
+      try {
+        if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && API.applyDaftarAbsentSummaryFromServer &&
+            global.MMSession) {
+          const raw = API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw();
+          if (!raw || raw.source !== 'server') {
+            const pin = (MMSession.getAdminPin && MMSession.getAdminPin()) ||
+              (MMSession.getStaffPin && MMSession.getStaffPin());
+            const actorId = (MMSession.getAdminUserId && MMSession.getAdminUserId()) ||
+              (MMSession.getStaffUserId && MMSession.getStaffUserId()) || null;
+            if (pin) {
+              const res = await MMSharedAPI.adminAbsentSummary(actorId, pin);
+              if (res && res.ok) API.applyDaftarAbsentSummaryFromServer(res.rows || []);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[MDRHomePanels] absent summary refresh failed', e);
+      }
+      show();
+    }
     if (useRemote() && global.MMSession && MMSession.ensureDaftarDataReady) {
-      MMSession.ensureDaftarDataReady({ silent: true }).then(show).catch(function () {
+      MMSession.ensureDaftarDataReady({ silent: true }).then(ensureSummaryThenShow).catch(function () {
         helpers.showToast('অনুপস্থিত তালিকা লোড হয়নি');
-        show();
+        ensureSummaryThenShow();
       });
       return;
     }
-    show();
+    ensureSummaryThenShow();
   }
 
   function closeAbsent() {

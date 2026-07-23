@@ -97,7 +97,7 @@
           <div class="leave-rank">${toBn(i + 1)}</div>
           <div class="leave-info">
             <div class="leave-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${x.student.id}')">${API.esc(x.student.name)}</button></div>
-            <div class="leave-meta">${API.esc(cls ? cls.name : '—')} · রোল ${API.escBn(x.student.roll || '—')}</div>
+            <div class="leave-meta">${API.esc(cls ? cls.name : '—')} · পরিচিতি ${API.escBn(x.student.roll || '—')}</div>
           </div>
           <div class="leave-days">${toBn(x.leaveDays)} দিন</div>
         </div>`;

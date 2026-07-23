@@ -35,9 +35,12 @@
   #modal-watch-list .modal-large .watch-list-panel,
   #modal-ah-list .modal-large .watch-list-panel,
   #modal-class-absent-list .modal-large .watch-list-panel { flex: 1 1 auto; min-height: 0; margin-top: 0; padding-right: 2px; }
-  .watch-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--cream3); }
+  .watch-list-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: #fff; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--cream3); }
   .watch-list-item:last-child { margin-bottom: 0; }
   .watch-list-item .watch-open-std { flex: 1; text-align: left; border: none; background: transparent; padding: 0; cursor: pointer; font: inherit; font-weight: 600; color: var(--ink); min-width: 0; }
+  .watch-list-item .watch-item-main { flex: 1; min-width: 0; }
+  .watch-list-item .watch-item-reason { margin-top: 4px; font-size: 11px; color: var(--ink3); line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; }
+  .watch-list-item .watch-item-reason.is-missing { color: #b45309; }
   .absent-list-info { flex: 1; min-width: 0; }
   .absent-list-meta { font-size: 10px; color: var(--ink3); margin-top: 3px; line-height: 1.35; }
   .absent-list-days { font-size: 12px; font-weight: 800; color: var(--red); flex-shrink: 0; white-space: nowrap; }
@@ -349,7 +352,7 @@
     <div class="stat-grid" id="stat-grid"></div>
   </div>
   <div class="std-search-strip" id="std-search-strip">
-    <input class="std-search-input" id="std-search-q" type="text" inputmode="search" placeholder="নাম বা রোল লিখে খুঁজুন..." oninput="stdSearchQ=this.value;renderStudents()">
+    <input class="std-search-input" id="std-search-q" type="text" inputmode="search" placeholder="নাম বা পরিচিতি লিখে খুঁজুন..." oninput="stdSearchQ=this.value;renderStudents()">
   </div>
   </div>
   <div id="std-list"></div>
@@ -526,6 +529,16 @@
   </div>
 </div>
 
+<!-- MODAL: আলহামদুলিল্লাহ — কারণ -->
+<div class="modal-bg" id="modal-ah-reason">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">আলহামদুলিল্লাহ — কারণ <button type="button" class="modal-close" onclick="closeAhReasonModal()">✕</button></div>
+    <p id="ah-reason-hint" class="form-group" style="font-size:12px;color:var(--ink3);margin-bottom:8px;">ছাত্রের ভালো দিক বা কেন চিহ্নিত করছেন — বিস্তারিত লিখুন (বাধ্যতামূলক)।</p>
+    <textarea class="form-input form-textarea" id="ah-reason-inp" placeholder="উদা: নামাজে নিয়মিত, আদব ভালো, পড়ায় মনোযোগী…" rows="4"></textarea>
+    <button type="button" class="submit-btn" onclick="confirmAhReason()">চিহ্নিত করুন</button>
+  </div>
+</div>
+
 <!-- MODAL: এই বর্ষের অনুপস্থিত তালিকা -->
 <div class="modal-bg" id="modal-class-absent-list">
   <div class="modal modal-large">
@@ -557,10 +570,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
+<script src="../js/api/api-shared.js?v=20260723-absent-session"></script>
 <script src="../js/core/mm-sample-data.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/api/api.js?v=20260521-akhlaq-consistency"></script>
-<script src="../js/madrasa/mdr-supabase-sync.js?v=20260521-teacher-class"></script>
+<script src="../js/api/api.js?v=20260723-absent-streak2"></script>
+<script src="../js/madrasa/mdr-supabase-sync.js?v=20260723-absent-session"></script>
 <script src="../js/core/mm-session.js?v=20260521-teacher-class"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/madrasa/mdr-class-duty-alerts.js?v=20260624-duty3"></script>
@@ -817,7 +830,7 @@
           '<span class="std-roll">' + toBn(i + 1) + '</span>' +
           '<div class="absent-list-info">' +
             '<button type="button" class="watch-open-std" onclick="closeModal(\'modal-duty-khuluk\'); openKhuluk(\'' + _jsQuote(s.id) + '\')">' + API.esc(s.name) + '</button>' +
-            '<div class="absent-list-meta">রোল ' + rollPill + ' · ' + API.esc(lastTxt) + '</div>' +
+            '<div class="absent-list-meta">পরিচিতি ' + rollPill + ' · ' + API.esc(lastTxt) + '</div>' +
           '</div></div>';
       }).join('');
     }
@@ -829,9 +842,9 @@
     if (!classId || !API.Attendance) return [];
     const students = API.Students.getByClass(classId);
     return students.map(function (s) {
-      const absentDays = API.Attendance.getByStudent(s.id).filter(function (a) {
-        return API.Attendance.statusOf(a) === 'absent';
-      }).length;
+      const absentDays = API.Attendance.getSessionAbsentDays
+        ? API.Attendance.getSessionAbsentDays(s)
+        : (API.getSessionAbsentDays ? API.getSessionAbsentDays(s) : 0);
       return { student: s, absentDays: absentDays };
     }).filter(function (x) {
       return x.absentDays > 0;
@@ -842,15 +855,27 @@
     });
   }
 
-  function openClassAbsentListModal() {
+  async function openClassAbsentListModal() {
     if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('absent')) return;
     if (!classId) return;
     const body = document.getElementById('class-absent-list-body');
     const sub = document.getElementById('class-absent-list-sub');
     if (!body) return;
+    if (window.MMSharedAPI && MMSharedAPI.teacherClassAbsentSummary && API.applyTeacherClassAbsentSummary &&
+        MMSession.getStaffUserId && MMSession.getStaffPin) {
+      try {
+        const res = await MMSharedAPI.teacherClassAbsentSummary(
+          MMSession.getStaffUserId(),
+          MMSession.getStaffPin()
+        );
+        if (res && res.ok) API.applyTeacherClassAbsentSummary(res.rows || []);
+      } catch (e) {
+        console.warn('teacherClassAbsentSummary', e);
+      }
+    }
     const rows = getClassAbsentRows();
     if (sub) sub.textContent = rows.length
-      ? 'মোট ' + toBn(rows.length) + ' জন — বেশি অনুপস্থিত দিন থেকে কম সাজানো'
+      ? 'মোট ' + toBn(rows.length) + ' জন — শিক্ষাবর্ষের শুরু থেকে · বেশি দিন থেকে কম'
       : 'কেউ নেই';
     if (!rows.length) {
       body.innerHTML = '<div class="log-panel-empty">এই বর্ষে কোনো ছাত্রের অনুপস্থিত রেকর্ড নেই।</div>';
@@ -863,7 +888,7 @@
           '<span class="std-roll">' + toBn(i + 1) + '</span>' +
           '<div class="absent-list-info">' +
             '<button type="button" class="watch-open-std" onclick="closeModal(\'modal-class-absent-list\'); MMStudentModal.open(\'' + _jsQuote(s.id) + '\')">' + API.esc(s.name) + '</button>' +
-            '<div class="absent-list-meta">রোল ' + rollPill + '</div>' +
+            '<div class="absent-list-meta">পরিচিতি ' + rollPill + '</div>' +
           '</div>' +
           '<div class="absent-list-days">' + toBn(x.absentDays) + ' দিন</div>' +
           '</div>';
@@ -963,9 +988,16 @@
       body.innerHTML = listed.map(function (s) {
         var hasR = s.roll != null && String(s.roll).trim() !== '';
         var rollPill = hasR ? API.escBn(String(s.roll)) : '—';
+        var reason = String(s.alhamdulillah_reason || '').trim();
+        var reasonHtml = reason
+          ? '<div class="watch-item-reason">' + API.esc(reason) + '</div>'
+          : '<div class="watch-item-reason is-missing">কারণ লেখা নেই — বাদ দিয়ে আবার যুক্ত করলে কারণ যোগ করা যাবে</div>';
         return '<div class="watch-list-item">' +
           '<span class="std-roll">' + rollPill + '</span>' +
+          '<div class="watch-item-main">' +
           '<button type="button" class="watch-open-std" onclick="closeModal(\'modal-ah-list\'); MMStudentModal.open(\'' + _jsQuote(s.id) + '\')">' + API.esc(s.name) + '</button>' +
+          reasonHtml +
+          '</div>' +
           '</div>';
       }).join('');
     }
@@ -1055,13 +1087,29 @@
     showToast(next ? 'বিশেষ পর্যবেক্ষণে যুক্ত হয়েছে' : 'বিশেষ পর্যবেক্ষণ থেকে সরানো হয়েছে');
   }
 
-  async function toggleAlhamdulillahFromRowBtn(btn) {
-    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('ah-toggle')) return;
-    const sid = btn && btn.getAttribute('data-std-sid');
-    const stu = sid ? API.Students.getById(sid) : null;
-    if (!stu) { showToast('ছাত্র পাওয়া যায়নি'); return; }
-    const next = !stu.alhamdulillah;
-    API.Students.update(sid, { alhamdulillah: next });
+  let ahReasonTargetId = '';
+  let ahReasonSaving = false;
+
+  function closeAhReasonModal() {
+    ahReasonTargetId = '';
+    ahReasonSaving = false;
+    const inp = document.getElementById('ah-reason-inp');
+    if (inp) inp.value = '';
+    closeModal('modal-ah-reason');
+  }
+
+  async function applyAlhamdulillah(sid, next, reason) {
+    const stu = API.Students.getById(sid);
+    if (!stu) { showToast('ছাত্র পাওয়া যায়নি'); return false; }
+    const reasonText = next ? String(reason || '').trim() : '';
+    if (next && !reasonText) {
+      showToast('কারণ লিখতে হবে');
+      return false;
+    }
+    API.Students.update(sid, {
+      alhamdulillah: next,
+      alhamdulillah_reason: next ? reasonText : '',
+    });
     renderStudents();
     renderStats();
     const supaSid = String(stu.supabase_id || stu.id || '');
@@ -1071,16 +1119,52 @@
           MMSession.getStaffUserId(),
           MMSession.getStaffPin && MMSession.getStaffPin(),
           supaSid,
-          next
+          next,
+          next ? reasonText : null
         );
         if (!res || !res.ok) throw new Error((res && res.error) || 'alhamdulillah_failed');
       } catch (e) {
         console.warn('setAlhamdulillah', e);
         showToast('লোকালি সংরক্ষিত, ডাটাবেজে হয়নি');
-        return;
+        return false;
       }
     }
     showToast(next ? 'আলহামদুলিল্লাহ হিসেবে চিহ্নিত' : 'আলহামদুলিল্লাহ চিহ্ন সরানো হয়েছে');
+    return true;
+  }
+
+  async function toggleAlhamdulillahFromRowBtn(btn) {
+    if (window.MDRClassDutyGate && MDRClassDutyGate.blockMisc('ah-toggle')) return;
+    const sid = btn && btn.getAttribute('data-std-sid');
+    const stu = sid ? API.Students.getById(sid) : null;
+    if (!stu) { showToast('ছাত্র পাওয়া যায়নি'); return; }
+    if (stu.alhamdulillah) {
+      await applyAlhamdulillah(sid, false, null);
+      return;
+    }
+    ahReasonTargetId = sid;
+    const inp = document.getElementById('ah-reason-inp');
+    if (inp) inp.value = '';
+    const hint = document.getElementById('ah-reason-hint');
+    if (hint) hint.textContent = (stu.name || 'ছাত্র') + ' — ভালো দিক বা কেন চিহ্নিত করছেন, বিস্তারিত লিখুন (বাধ্যতামূলক)।';
+    openModal('modal-ah-reason');
+    if (inp) setTimeout(function () { inp.focus(); }, 50);
+  }
+
+  async function confirmAhReason() {
+    if (ahReasonSaving) return;
+    const sid = ahReasonTargetId;
+    const inp = document.getElementById('ah-reason-inp');
+    const reason = inp ? String(inp.value || '').trim() : '';
+    if (!sid) { closeAhReasonModal(); return; }
+    if (!reason) { showToast('কারণ লিখতে হবে'); if (inp) inp.focus(); return; }
+    ahReasonSaving = true;
+    try {
+      const ok = await applyAlhamdulillah(sid, true, reason);
+      if (ok) closeAhReasonModal();
+    } finally {
+      ahReasonSaving = false;
+    }
   }
 
   /* ── KHULUK: সর্বশেষ সারাংশ + modal tab history ── */
@@ -1342,7 +1426,7 @@
     const students = API.Students.getByClass(classId);
     sel.innerHTML = '<option value="">সবাই — বর্ষের সাধারণ লগ</option>' +
       students.map(function (s) {
-        return '<option value="' + _attrId(s.id) + '">' + API.esc(s.name) + (s.roll != null && String(s.roll) !== '' ? ' · রোল ' + API.escBn(String(s.roll)) : '') + '</option>';
+        return '<option value="' + _attrId(s.id) + '">' + API.esc(s.name) + (s.roll != null && String(s.roll) !== '' ? ' · পরিচিতি ' + API.escBn(String(s.roll)) : '') + '</option>';
       }).join('');
   }
   let logEditId = '';
@@ -1494,7 +1578,7 @@
 
     el.innerHTML = groups.map(function (g) {
       const s = g.student;
-      const rollPart = s.roll != null && String(s.roll) !== '' ? ' · রোল ' + toBn(String(s.roll)) : '';
+      const rollPart = s.roll != null && String(s.roll) !== '' ? ' · পরিচিতি ' + toBn(String(s.roll)) : '';
       const n = toBn(String(g.logs.length));
       const head =
         '<div class="log-student-hd">' +

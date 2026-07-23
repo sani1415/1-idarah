@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<script src="../../js/core/mm-boot.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>বর্তমান ছাত্র — জিম্মাদার</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,11 +51,11 @@
         <option value="">সব বর্ষ/শ্রেণি</option>
       </select>
       <select class="form-input form-select" id="sort-filter" onchange="renderStudents()">
-        <option value="class_roll">বর্ষ ও রোল অনুযায়ী</option>
+        <option value="class_roll">বর্ষ ও পরিচিতি অনুযায়ী</option>
         <option value="name">নাম অনুযায়ী</option>
         <option value="id">স্থায়ী দাখেলা অনুযায়ী</option>
       </select>
-      <input class="form-input" id="search-box" placeholder="নাম / দাখেলা / রোল" oninput="renderStudents()">
+      <input class="form-input" id="search-box" placeholder="নাম / দাখেলা / পরিচিতি" oninput="renderStudents()">
     </div>
   </div>
 
@@ -187,5 +188,6 @@
   }
   MMLoading.run(initPage);
 </script>
+<script src="../../js/shared/admin-nav.js"></script>
 </body>
 </html>

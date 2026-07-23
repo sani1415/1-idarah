@@ -281,7 +281,7 @@ function studentByIncome(row) {
 function studentLabel(s) {
   if (!s) return '';
   const cls = API.Classes.getName(s.class_id);
-  return [s.name, s.permanent_id ? 'দাখেলা ' + s.permanent_id : '', cls || '', s.roll ? 'রোল ' + s.roll : ''].filter(Boolean).join(' · ');
+  return [s.name, s.permanent_id ? 'দাখেলা ' + s.permanent_id : '', cls || '', s.roll ? 'পরিচিতি ' + s.roll : ''].filter(Boolean).join(' · ');
 }
 
 function incomeStudentPermanentId(row, student) {

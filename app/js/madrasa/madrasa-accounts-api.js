@@ -345,6 +345,17 @@ const MdrAccAPI = (() => {
     return entries;
   }
 
+  /** One server transaction: no local state changes before every imported row,
+      supplier due, payment and category has been committed. */
+  async function importBatch(payload) {
+    if (!remoteReady()) throw new Error('server_connection_required');
+    const ra = remoteActor();
+    const res = await MMSharedAPI.importAccountsBatch(ra.id, ra.pin, payload || {});
+    if (!res || !res.ok) throw new Error((res && res.error) || 'accounts_import_failed');
+    await bootstrapRemote({ force: true });
+    return res;
+  }
+
   /* Database is the source of truth; this no-op keeps older render calls compatible. */
   function ensureSeed() {
     return false;
@@ -560,7 +571,7 @@ const MdrAccAPI = (() => {
     }
   }
 
-  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
+  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, importBatch, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
 })();
 
 if (typeof window !== 'undefined') {

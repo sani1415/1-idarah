@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
@@ -19,9 +19,10 @@
     margin-bottom: 8px;
     box-shadow: var(--shadow);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     border: 1px solid rgba(26, 18, 8, 0.06);
+    overflow: hidden;
   }
   .sw-rank {
     font-family: 'Tiro Bangla', serif;
@@ -30,10 +31,21 @@
     color: var(--gold);
     min-width: 36px;
     text-align: center;
+    margin-top: 1px;
   }
-  .sw-info { flex: 1; min-width: 0; }
-  .sw-name { font-size: 14px; font-weight: 600; color: var(--ink); }
-  .sw-meta { font-size: 11px; color: var(--ink3); margin-top: 3px; }
+  .sw-info { flex: 1; min-width: 0; overflow: hidden; }
+  .sw-head-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex-wrap: wrap; }
+  .sw-name { font-size: 14px; font-weight: 600; color: var(--ink); min-width: 0; }
+  .sw-meta { font-size: 11px; color: var(--ink3); white-space: nowrap; }
+  .sw-reason {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink2);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .sw-reason.is-missing { color: #b45309; }
   .sw-badge {
     font-size: 9px;
     font-weight: 700;
@@ -43,6 +55,7 @@
     padding: 4px 8px;
     flex-shrink: 0;
     white-space: nowrap;
+    margin-top: 2px;
   }
   .sw-empty { text-align: center; color: var(--ink3); padding: 40px 16px; font-size: 14px; line-height: 1.6; }
 </style>
@@ -67,11 +80,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js"></script>
-<script src="../js/api/api-shared.js"></script>
+<script src="../js/api/api-shared.js?v=20260723-ah-reason"></script>
 <script src="../js/api/api-mdr.js"></script>
 <script src="../js/core/mm-sample-data.js"></script>
-<script src="../js/api/api.js"></script>
-<script src="../js/madrasa/mdr-supabase-sync.js"></script>
+<script src="../js/api/api.js?v=20260723-ah-reason"></script>
+<script src="../js/madrasa/mdr-supabase-sync.js?v=20260723-ah-reason"></script>
 <script src="../js/core/mm-session.js"></script>
 <script src="../js/shared/mm-student-modal.js"></script>
 <script>
@@ -101,11 +114,18 @@
       .map((s, i) => {
         const cls = API.Classes.getById(s.class_id);
         const metaDept = dept === 'all' ? ` · ${deptName(s.dept)}` : '';
+        const reason = String(s.alhamdulillah_reason || '').trim();
+        const reasonHtml = reason
+          ? `<div class="sw-reason">${API.esc(reason)}</div>`
+          : `<div class="sw-reason is-missing">কারণ লেখা নেই</div>`;
         return `<div class="sw-row">
           <div class="sw-rank">${toBn(i + 1)}</div>
           <div class="sw-info">
-            <div class="sw-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button></div>
-            <div class="sw-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · রোল ${API.escBn(s.roll || '—')}</div>
+            <div class="sw-head-line">
+              <div class="sw-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button></div>
+              <div class="sw-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · পরিচিতি ${API.escBn(s.roll || '—')}</div>
+            </div>
+            ${reasonHtml}
           </div>
           <div class="sw-badge">আলহামদুলিল্লাহ</div>
         </div>`;
