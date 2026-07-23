@@ -510,7 +510,7 @@
         <div class="msg-row ${fromMe?'me':'other'}">
           ${!fromMe ? `<div class="msg-sender">${ChatAPI.esc(m.from_name)}</div>` : ''}
           <div class="msg-bubble">${ChatAPI.esc(m.text).replace(/\n/g, '<br>')}${renderRequestHtml(m)}</div>
-          <div class="msg-time">${fmtTime(m.ts)}${fromMe && m.read_staff ? ' ✓✓' : fromMe ? ' ✓' : ''}</div>
+          <div class="msg-time">${fmtTime(m.ts)}${fromMe && (m.from_role === 'admin' ? m.read_staff : m.read_admin) ? ' ✓✓' : fromMe ? ' ✓' : ''}</div>
         </div>`;
     }).join('');
   }

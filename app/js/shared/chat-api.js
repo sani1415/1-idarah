@@ -75,7 +75,7 @@ const ChatAPI = (() => {
       id: uid(), thread_id, from_role, from_name, text,
       ts: new Date().toISOString(),
       read_admin: from_role === 'admin',
-      read_staff: from_role === 'admin',
+      read_staff: from_role !== 'admin',
       ...(extra || {}),
     };
     save(messages.concat(m));
