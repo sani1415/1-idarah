@@ -382,6 +382,13 @@ const MMSharedAPI = (() => {
         p_user_agent: userAgent || null,
       });
     },
+    chatUnreadCount(actorId, pin, isAdmin) {
+      return rpc('mdr_rel_chat_unread_count', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_is_admin: !!isAdmin,
+      });
+    },
     pushUnsubscribe(actorId, pin, endpoint, isAdmin) {
       return rpc('mdr_rel_push_unsubscribe', {
         p_actor_id: actorId || null,

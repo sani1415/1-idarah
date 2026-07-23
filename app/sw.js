@@ -36,6 +36,10 @@ self.addEventListener('push', function (event) {
         }
       }
     } catch (e) {}
+    try {
+      var windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      windows.forEach(function (client) { client.postMessage({ type: 'mm-chat-push' }); });
+    } catch (e2) {}
   })());
 });
 

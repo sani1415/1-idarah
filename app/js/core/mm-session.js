@@ -527,6 +527,8 @@
   // Fresh-entry stale-clear-এর পর persisted admin login ফিরিয়ে আনি (admin host)।
   restorePersistedAdminSession();
   var chatUnreadCount = 0;
+  var chatBadgeSyncPromise = null;
+  var chatBadgeApplyTimer = 0;
   function readChatUnreadCount() { return chatUnreadCount; }
   function bnNum(n) {
     return String(n || 0).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; });
@@ -560,30 +562,81 @@
         badge.setAttribute('aria-label', 'অপঠিত বার্তা');
         node.appendChild(badge);
       }
-      badge.textContent = count > 99 ? '৯৯+' : bnNum(count);
+      var badgeText = count > 99 ? '৯৯+' : bnNum(count);
+      if (badge.textContent !== badgeText) badge.textContent = badgeText;
     });
   }
   async function syncChatBadgeRemote() {
+    if (chatBadgeSyncPromise) return chatBadgeSyncPromise;
     if (!global.MMSharedAPI || !MMSession.getChatPin()) {
       chatUnreadCount = 0;
       applyChatBadges();
       return false;
     }
-    try {
-      var res = await MMSharedAPI.chatBootstrap(MMSession.getChatActorId() || null, MMSession.getChatPin(), MMSession.isAdmin());
-      if (!res || !res.ok) throw new Error((res && res.error) || 'chat_bootstrap_failed');
-      chatUnreadCount = MMSession.isAdmin() ? Number(res.unread_admin || 0) : Number(res.unread_staff || 0);
-      applyChatBadges();
-      return true;
-    } catch (e) {
-      chatUnreadCount = 0;
-      applyChatBadges();
-      return false;
-    }
+    chatBadgeSyncPromise = (async function () {
+      try {
+        var res;
+        if (MMSharedAPI.chatUnreadCount) {
+          res = await MMSharedAPI.chatUnreadCount(
+            MMSession.getChatActorId() || null,
+            MMSession.getChatPin(),
+            MMSession.isAdmin()
+          );
+          if (!res || !res.ok) throw new Error((res && res.error) || 'chat_unread_count_failed');
+          chatUnreadCount = Number(res.count || 0);
+        } else {
+          res = await MMSharedAPI.chatBootstrap(MMSession.getChatActorId() || null, MMSession.getChatPin(), MMSession.isAdmin());
+          if (!res || !res.ok) throw new Error((res && res.error) || 'chat_bootstrap_failed');
+          chatUnreadCount = MMSession.isAdmin() ? Number(res.unread_admin || 0) : Number(res.unread_staff || 0);
+        }
+        applyChatBadges();
+        return true;
+      } catch (e) {
+        applyChatBadges();
+        return false;
+      } finally {
+        chatBadgeSyncPromise = null;
+      }
+    })();
+    return chatBadgeSyncPromise;
   }
   global.MMRefreshChatBadges = applyChatBadges;
   global.MMSyncChatBadges = syncChatBadgeRemote;
   global.addEventListener && global.addEventListener('mm-chat-updated', applyChatBadges);
+
+  function scheduleChatBadgeApply() {
+    clearTimeout(chatBadgeApplyTimer);
+    chatBadgeApplyTimer = setTimeout(applyChatBadges, 0);
+  }
+
+  function startChatBadgeSync() {
+    if (!MMSession.getRole()) return;
+    setTimeout(syncChatBadgeRemote, 0);
+    global.addEventListener('focus', syncChatBadgeRemote);
+    global.addEventListener('pageshow', syncChatBadgeRemote);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) syncChatBadgeRemote();
+      });
+      if (global.MutationObserver && document.body) {
+        new MutationObserver(scheduleChatBadgeApply).observe(document.body, { childList: true, subtree: true });
+      }
+    }
+    if (global.navigator && navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'mm-chat-push') syncChatBadgeRemote();
+      });
+    }
+    setInterval(function () {
+      if (typeof document === 'undefined' || !document.hidden) syncChatBadgeRemote();
+    }, 60000);
+  }
+
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startChatBadgeSync, { once: true });
+  } else {
+    startChatBadgeSync();
+  }
 
   var reviewPendingCount = 0;
   function applyReviewBadges() {
