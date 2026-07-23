@@ -28,7 +28,7 @@
     if (global.MDRKhadiminSupabase && MDRKhadiminSupabase.academicYearBounds) {
       return MDRKhadiminSupabase.academicYearBounds();
     }
-    const end = new Date().toISOString().slice(0, 10);
+    const end = (global.API && API.today) ? API.today() : localToday();
     const start = (global.API && API.Settings && API.Settings.get)
       ? ((API.Settings.get().session_start_date || '').trim() || null)
       : null;
@@ -39,7 +39,11 @@
   const BN_DOW = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক', 'শনি'];
 
   const uid = () => 'kh_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const today = () => new Date().toISOString().slice(0, 10);
+  function localToday() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  const today = () => (global.API && API.today ? API.today() : localToday());
   const esc = (s) => global.API && API.esc ? API.esc(s) : String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /** onclick="...('…')" এর জন্য — ডাবল কোট ভাঙ্গা এড়াতে (JSON.stringify এখানে ব্যবহার নয়) */

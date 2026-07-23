@@ -408,6 +408,16 @@
       API.applyAttendanceDateIndexFromServer(attDates);
     }
     syncAttendanceRows(res);
+    if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && API.applyDaftarAbsentSummaryFromServer) {
+      try {
+        var absentSummary = await MMSharedAPI.adminAbsentSummary(actorId || null, pin);
+        if (absentSummary && absentSummary.ok) {
+          API.applyDaftarAbsentSummaryFromServer(absentSummary.rows || []);
+        }
+      } catch (e) {
+        console.warn('[MDRSupabaseSync] full absent summary sync failed', e);
+      }
+    }
     syncBookRows(res);
     syncAdminTeacherRows(res);
     if (API.markAdminMadrasaBootstrapComplete) API.markAdminMadrasaBootstrapComplete();

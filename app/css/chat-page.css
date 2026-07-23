@@ -117,7 +117,7 @@ body.chat-page #chat-page-staff-nav.bottom-nav {
   bottom:var(--keyboard-cover, 0px);
 }
 
-body.chat-admin .fab { display: none !important; }
+body.chat-admin .fab { bottom:calc(var(--app-content-pad-bottom) + 12px); }
 body.chat-admin #view-inbox { padding-bottom: var(--app-content-pad-bottom); }
 
 /* ══ Desktop (≥ 960px) ══ */

@@ -41,7 +41,13 @@ const API = (() => {
   ]);
 
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-  const today = () => new Date().toISOString().split('T')[0];
+  const today = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
   const now = () => new Date().toISOString();
   const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   /** UI-তে লাতিন অংক → বাংলা অংক (০–৯); তারিখ/ফোন ইত্যাদি স্ট্রিংও পাস করা যায় */
@@ -361,6 +367,41 @@ const API = (() => {
       }));
     } catch (e) {
       console.warn('[API] absent summary cache write failed', e);
+    }
+    return rows;
+  }
+
+  function applyDaftarAbsentSummaryFromServer(items) {
+    const students = Students.getAll();
+    const byId = Object.create(null);
+    students.forEach((s) => {
+      if (s.id) byId[String(s.id)] = s;
+      if (s.supabase_id) byId[String(s.supabase_id)] = s;
+    });
+    const rows = (Array.isArray(items) ? items : []).map((item) => {
+      const student = byId[String(item && item.student_id || '')];
+      const absentDays = Number(item && item.absent_days) || 0;
+      if (!student || student.active === false || absentDays <= 0) return null;
+      return {
+        student: {
+          id: student.id,
+          supabase_id: student.supabase_id || '',
+          name: student.name || '',
+          roll: student.roll || '',
+          class_id: student.class_id || '',
+        },
+        absentDays,
+        dept: item.dept === 'maktab' ? 'maktab' : 'kitab',
+      };
+    }).filter(Boolean).sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+    try {
+      sessionStorage.setItem(ABSENT_SUMMARY_KEY, JSON.stringify({
+        actor: sessionActorKey(),
+        rows,
+        ts: Date.now(),
+      }));
+    } catch (e) {
+      console.warn('[API] server absent summary cache write failed', e);
     }
     return rows;
   }
@@ -1417,7 +1458,7 @@ const API = (() => {
     hydrateSessionCache, clearSessionCache, isSessionCacheWarm, isDaftarSessionCacheWarm, hasSessionCacheEntry,
     markDaftarBootstrapComplete, persistDaftarAttendanceSessionCache, applyAttendanceDateIndexFromServer,
     isAdminMadrasaExtrasWarm, markAdminMadrasaBootstrapComplete,
-    rebuildDaftarAbsentSummary, loadDaftarAbsentSummaryRows, loadDaftarAbsentSummaryRaw,
+    rebuildDaftarAbsentSummary, applyDaftarAbsentSummaryFromServer, loadDaftarAbsentSummaryRows, loadDaftarAbsentSummaryRaw,
     uid, today, now, esc, escBn, toBn,
   };
 

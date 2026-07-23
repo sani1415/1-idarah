@@ -31,6 +31,17 @@
   .kh-ov-title { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:700; }
   .kh-ov-sub { font-size:11px; color:rgba(255,255,255,.65); margin-top:2px; }
   .kh-ov-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px; padding-bottom:32px; }
+  .watch-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; padding:10px 12px; background:#fff; border-bottom:1px solid rgba(26,18,8,.08); }
+  .watch-tab { border:1px solid rgba(26,18,8,.1); background:var(--cream); color:var(--ink2); border-radius:10px; padding:8px 5px; font-family:'Tiro Bangla',serif; font-size:11px; font-weight:700; cursor:pointer; }
+  .watch-tab.is-active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+  .watch-list { display:flex; flex-direction:column; gap:8px; }
+  .watch-row { display:flex; align-items:center; gap:10px; width:100%; box-sizing:border-box; border:1px solid rgba(26,18,8,.08); border-radius:12px; background:#fff; padding:10px 12px; text-align:left; color:inherit; font-family:'Tiro Bangla',serif; cursor:pointer; }
+  .watch-rank { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--cream2); color:var(--ink3); font-size:11px; flex-shrink:0; }
+  .watch-info { flex:1; min-width:0; }
+  .watch-name { font-size:13px; font-weight:800; color:var(--ink); }
+  .watch-meta { margin-top:2px; font-size:10px; color:var(--ink3); }
+  .watch-value { font-size:12px; font-weight:800; color:#b45309; flex-shrink:0; }
+  .watch-empty { padding:30px 12px; text-align:center; color:var(--ink3); font-size:12px; }
   .kh-tier-card { background:#fff; border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); margin-bottom:10px; cursor:pointer; transition:background .12s; border-left:4px solid transparent; }
   .kh-tier-card:active { background:rgba(0,0,0,.04); }
   .kh-tier-card--high { border-left-color:var(--green); }
@@ -409,6 +420,19 @@
   <div class="kh-ov-body" id="kh-ov-body"></div>
 </div>
 
+<!-- ATTENTION PANEL OVERLAY -->
+<div class="kh-overlay" id="watch-overlay">
+  <div class="kh-ov-header">
+    <button class="kh-ov-back" onclick="closeWatchPanel()" aria-label="ফিরে যাও">←</button>
+    <div>
+      <div class="kh-ov-title">নজর দরকার</div>
+      <div class="kh-ov-sub" id="watch-ov-sub">—</div>
+    </div>
+  </div>
+  <div class="watch-tabs" id="watch-tabs"></div>
+  <div class="kh-ov-body"><div class="watch-list" id="watch-list"></div></div>
+</div>
+
 <!-- CLASS DETAIL OVERLAY -->
 <div class="cls-overlay" id="cls-overlay">
   <div class="cls-ov-header">
@@ -635,7 +659,7 @@
   }
 
   function getTodayCommandStats() {
-    const iso = new Date().toISOString().split('T')[0];
+    const iso = API.today();
     const depts = getScopeDepts();
     const classes = getClassesForScope(currentDept);
     const att = depts.reduce((sum, dept) => {
@@ -1062,7 +1086,7 @@
       const cards = [
         ccCard('আজ উপস্থিতি', toBn(data.attendancePct) + '%', toBn(data.att.present) + '/' + toBn(data.total) + ' উপস্থিত', attendanceState, ''),
         ccCard('অনুপস্থিত তালিকা', toBn(data.anyAbsent), data.anyAbsent ? 'তালিকা দেখুন' : 'কোনো রেকর্ড নেই', data.anyAbsent ? 'is-danger' : 'is-good', 'goAbsentList()'),
-        ccCard('নজর দরকার', toBn(data.watchLoad), 'অনুপস্থিত + পর্যবেক্ষণ + কম খুলুক', data.watchLoad ? 'is-warn' : 'is-good', 'goSpecialWatch()'),
+        ccCard('নজর দরকার', toBn(data.watchLoad), 'অনুপস্থিত + পর্যবেক্ষণ + কম খুলুক', data.watchLoad ? 'is-warn' : 'is-good', "openWatchPanel('absent')"),
         ccCard('খুলুক গড়', data.khAvg !== null ? toBn(data.khAvg) : '—', toBn(data.bands.none.length) + ' জনের রেকর্ড নেই', khState, 'openKhulukPanel()'),
         ccCard('মোট ছাত্র', toBn(data.total), scope, '', "openDeptRoute('/madrasa/admin/students.html')"),
       ];
@@ -1070,7 +1094,7 @@
         cards.push(ccCard('বিদায় ছাত্র', toBn(countWithdrawalsByDept(currentDept)), 'বিদায় তালিকা', 'is-warn', "openDeptRoute('/madrasa/admin/withdrawn.html')"));
       }
       cards.push(
-        ccCard('বিশেষ পর্যবেক্ষণ', toBn(data.special), data.special ? 'ফলোআপ দরকার' : 'কেউ নেই', data.special ? 'is-warn' : 'is-good', 'goSpecialWatch()'),
+        ccCard('বিশেষ পর্যবেক্ষণ', toBn(data.special), data.special ? 'ফলোআপ দরকার' : 'কেউ নেই', data.special ? 'is-warn' : 'is-good', "openWatchPanel('special')"),
         ccCard('আলহামদুলিল্লাহ', toBn(data.alham), data.alham ? 'চিহ্নিত ছাত্র' : 'কেউ নেই', data.alham ? 'is-good' : '', 'goAlhamdulillah()')
       );
       healthEl.innerHTML = cards.join('');
@@ -1085,10 +1109,10 @@
       alerts.push(ccAlert('absent', 'আজ অনুপস্থিত ছাত্র', 'উপস্থিতি তালিকা যাচাই করুন', toBn(data.att.absent), 'is-danger', 'goAbsentList()'));
     }
     if (data.special) {
-      alerts.push(ccAlert('watch', 'বিশেষ পর্যবেক্ষণ', 'নিয়মিত ফলোআপ দরকার', toBn(data.special), 'is-warn', 'goSpecialWatch()'));
+      alerts.push(ccAlert('watch', 'বিশেষ পর্যবেক্ষণ', 'নিয়মিত ফলোআপ দরকার', toBn(data.special), 'is-warn', "openWatchPanel('special')"));
     }
     if (data.bands.low.length) {
-      alerts.push(ccAlert('khuluk', 'খুলুক কম স্কোর', '৬০-এর নিচে থাকা ছাত্র', toBn(data.bands.low.length), 'is-warn', 'openKhulukPanel()'));
+      alerts.push(ccAlert('khuluk', 'খুলুক কম স্কোর', '৬০-এর নিচে থাকা ছাত্র', toBn(data.bands.low.length), 'is-warn', "openWatchPanel('khuluk')"));
     }
     if (data.bands.none.length) {
       alerts.push(ccAlert('class', 'খুলুক রেকর্ড বাকি', 'এখনও মূল্যায়ন হয়নি', toBn(data.bands.none.length), 'is-warn', 'openKhulukPanel()'));
@@ -1123,7 +1147,7 @@
   }
 
   function renderStats() {
-    const iso = new Date().toISOString().split('T')[0];
+    const iso = API.today();
     const depts = getScopeDepts();
     const att = depts.reduce((sum, dept) => {
       const part = API.Attendance.getDateSummaryForDept(iso, dept);
@@ -1257,6 +1281,88 @@
     list.classList.toggle('open');
   }
 
+  let watchPanelTab = 'absent';
+
+  function getWatchPanelRows() {
+    const data = getTodayCommandStats();
+    const absent = [];
+    const seenAbsent = new Set();
+    data.classes.forEach(cls => {
+      API.Attendance.getByClassDate(cls.id, data.iso).forEach(rec => {
+        if (API.Attendance.statusOf(rec) !== 'absent') return;
+        const sid = String(rec.student_id || '');
+        const student = API.Students.getByClass(cls.id).find(s =>
+          String(s.id) === sid || String(s.supabase_id || '') === sid
+        );
+        if (!student || seenAbsent.has(String(student.id))) return;
+        seenAbsent.add(String(student.id));
+        absent.push({
+          id: student.id,
+          name: student.name,
+          className: cls.name,
+          value: rec.absent_reason || 'কারণ লেখা নেই',
+        });
+      });
+    });
+
+    const special = data.depts.flatMap(dept =>
+      API.Students.getSpecialWatchByDeptSorted(dept).map(student => {
+        const cls = API.Classes.getById(student.class_id);
+        return { id: student.id, name: student.name, className: cls ? cls.name : '—', value: 'পর্যবেক্ষণ' };
+      })
+    );
+    const khuluk = data.bands.low.map(student => ({
+      id: student.id,
+      name: student.name,
+      className: student.className,
+      value: 'স্কোর ' + toBn(student.score),
+    }));
+    return { absent, special, khuluk };
+  }
+
+  function renderWatchPanel() {
+    const rows = getWatchPanelRows();
+    const tabs = [
+      { key:'absent', label:'আজ অনুপস্থিত', count:rows.absent.length },
+      { key:'special', label:'পর্যবেক্ষণ', count:rows.special.length },
+      { key:'khuluk', label:'কম খুলুক', count:rows.khuluk.length },
+    ];
+    document.getElementById('watch-tabs').innerHTML = tabs.map(tab =>
+      `<button type="button" class="watch-tab${watchPanelTab === tab.key ? ' is-active' : ''}" onclick="setWatchPanelTab('${tab.key}')">${tab.label} (${toBn(tab.count)})</button>`
+    ).join('');
+    const activeRows = rows[watchPanelTab] || [];
+    document.getElementById('watch-list').innerHTML = activeRows.length ? activeRows.map((row, index) =>
+      `<button type="button" class="watch-row" onclick="MMStudentModal.open('${String(row.id).replace(/'/g, "\\'")}')">
+        <span class="watch-rank">${toBn(index + 1)}</span>
+        <span class="watch-info">
+          <span class="watch-name">${API.esc(row.name)}</span>
+          <span class="watch-meta">${API.esc(row.className)}</span>
+        </span>
+        <span class="watch-value">${API.esc(row.value)}</span>
+      </button>`
+    ).join('') : '<div class="watch-empty">এই বিভাগে এই শ্রেণির কোনো বিষয় নেই।</div>';
+  }
+
+  function setWatchPanelTab(tab) {
+    if (!['absent', 'special', 'khuluk'].includes(tab)) return;
+    watchPanelTab = tab;
+    renderWatchPanel();
+  }
+
+  function openWatchPanel(tab) {
+    watchPanelTab = ['absent', 'special', 'khuluk'].includes(tab) ? tab : 'absent';
+    const scope = currentDept === 'all' ? 'সামগ্রিক' : (currentDept === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ');
+    document.getElementById('watch-ov-sub').textContent = scope + ' — তিন ধরনের প্রয়োজনীয় ফলোআপ';
+    renderWatchPanel();
+    document.getElementById('watch-overlay').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeWatchPanel() {
+    document.getElementById('watch-overlay').classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
   function goAbsentList() {
     if (window.MDRHomePanels && MDRHomePanels.openAbsent) {
       MDRHomePanels.openAbsent({ depts: getScopeDepts() });
@@ -1265,7 +1371,7 @@
     openDeptRoute('../madrasa/madrasa-absent-students.html');
   }
   function goSpecialWatch() {
-    openDeptRoute('../madrasa/madrasa-special-watch.html');
+    openWatchPanel('special');
   }
   function goAlhamdulillah() {
     openDeptRoute('../madrasa/madrasa-alhamdulillah.html');
@@ -1337,7 +1443,7 @@
   }
 
   function renderClassList() {
-    const iso = new Date().toISOString().split('T')[0];
+    const iso = API.today();
     const sessionStart = getSessionStartIso();
     const classes = getClassesForScope(currentDept);
 

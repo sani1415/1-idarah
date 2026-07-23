@@ -87,6 +87,12 @@ const MMSharedAPI = (() => {
     adminUsers(pin) {
       return rpc('mdr_rel_admin_users', { p_pin: pin });
     },
+    adminAbsentSummary(actorId, pin) {
+      return rpc('mdr_rel_admin_absent_summary', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+      });
+    },
     saveMadrasaUser(pin, user) {
       return rpc('mdr_rel_save_user', {
         p_pin: pin,
