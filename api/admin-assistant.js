@@ -5,7 +5,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const MAX_HISTORY = 8;
-const MAX_TOOL_ROUNDS = 6;
+// Natural-language questions can require schema discovery, label resolution,
+// aggregation and one independent scope check. Keep this bounded, but leave
+// enough room for that final verification instead of failing after useful work.
+const MAX_TOOL_ROUNDS = 14;
 
 // Plain Vercel projects do not always auto-load .env.local during `vercel dev`.
 // Load it only when present; production continues to use Vercel environment vars.
@@ -59,48 +62,70 @@ async function rpc(name, body) {
   return response.data;
 }
 
-async function gemini(contents, catalog) {
+async function gemini(contents, schema) {
   const key = process.env.GEMINI_API_KEY || '';
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const dhakaToday = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit'
   }).format(new Date());
   if (!key) throw new Error('Gemini API key is missing');
-  const response = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST',
-    headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
-    timeout: 45000,
-  }, {
+  const payload = {
       systemInstruction: { parts: [{ text:
-        'আপনি মাদ্রাসাতুল মদীনার জিম্মাদার AI সহকারী। কেবল প্রদত্ত database tool-এর live ফলাফলের ভিত্তিতে বাংলায় সংক্ষিপ্ত ও নির্ভুল উত্তর দিন। ' +
-        `কোনো তথ্য অনুমান করবেন না। প্রশ্নের জন্য প্রয়োজনীয় এক বা একাধিক query_database call করুন। আজকের বাংলাদেশ তারিখ ${dhakaToday}। ` +
-        'প্রশ্নের সঙ্গে প্রাসঙ্গিক mdr_ai_ reporting table থাকলে raw table-এর আগে সেটিই ব্যবহার করুন। ' +
-        'ফল না থাকলে স্পষ্ট বলুন। একই entity-এর নাম ও ID মেলাতে প্রয়োজনে আলাদা table query করুন। Database catalog:\n' + JSON.stringify(catalog)
+        'আপনি মাদ্রাসাতুল মদীনার জিম্মাদারের বুদ্ধিমান read-only database analyst। স্বাভাবিক বাংলা, বানানভেদ, বাংলা/আরবি সংখ্যা এবং কথ্য শ্রেণিনাম বুঝুন। ' +
+        `আজকের বাংলাদেশ তারিখ ${dhakaToday}। কেবল live database tool-এর ফলের ভিত্তিতে বাংলায় নির্ভুল উত্তর দিন; কোনো সংখ্যা অনুমান করবেন না। ` +
+        'প্রথমে schema ও relationships দেখে পরিকল্পনা করুন। প্রয়োজনমতো বহু table join, filter, group, aggregate, rank এবং একাধিক tool call করুন। ' +
+        'যেমন “সপ্তম বর্ষ” database-এ “৭ম বর্ষ” হতে পারে—প্রথম exact search ব্যর্থ হলে বিস্তৃত search, code, related table ও বিকল্প বানান চেষ্টা করুন। ' +
+        'একটি query খালি বা error হলে পরিকল্পনা সংশোধন করে অন্য query করুন। যথেষ্ট অনুসন্ধান ছাড়া “তথ্য নেই”, “উত্তর পাওয়া যায়নি” বা “পারি না” বলবেন না। ' +
+        'ব্যবহারকারী যে শ্রেণি, বিভাগ, ব্যক্তি বা সময়সীমা বলেছেন সেটি final aggregate/ranking query-তে অবশ্যই exact ID/code filter হিসেবে থাকতে হবে; scope বাদ দিয়ে কখনো পুরো table-এর ফলকে উত্তর হিসেবে দেবেন না। ' +
+        'কোনো label-এর matching row না পেলে scope বাদ দেবেন না—বিকল্প বানান/সংখ্যা খুঁজুন, না পেলে clarification চান। Ranking-এর winner-এর সঙ্গে তার requested scope-ও final verification query-তে ফেরত আনুন। ' +
+        'প্রশ্নের অর্থ সত্যিই একাধিকভাবে হতে পারে এবং উত্তর বদলে যায়—শুধু তখন একটি সংক্ষিপ্ত পাল্টা প্রশ্ন করুন। সময়সীমা না থাকলে চলতি/উপলভ্য পূর্ণ রেকর্ড ব্যবহার করে উত্তরে সময়সীমা উল্লেখ করুন। ' +
+        'সংখ্যাগত ফল সম্ভব হলে অন্য query বা summary দিয়ে cross-check করুন। প্রাসঙ্গিক mdr_ai_ reporting view থাকলে ব্যবহার করতে পারেন, কিন্তু তাতে সীমাবদ্ধ নন। ' +
+        'ব্যবহারকারী না চাইলে internal UUID, table name বা query plan উত্তরে দেখাবেন না। ' +
+        'Database schema and foreign-key relationships:\n' + JSON.stringify(schema)
       }] },
       contents,
       tools: [{ functionDeclarations: [{
-        name: 'query_database',
-        description: 'Read live data from one allowed database table. Call repeatedly to combine related information.',
+        name: 'query_relational_database',
+        description: 'Read live data using one base table plus up to five validated joins. Supports filtering, grouping, aggregation, ranking and sorting. Never writes data.',
         parameters: {
           type: 'OBJECT',
           properties: {
             table: { type: 'STRING' },
-            columns: { type: 'ARRAY', items: { type: 'STRING' } },
+            alias: { type: 'STRING' },
+            joins: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+              table: { type: 'STRING' }, alias: { type: 'STRING' }, type: { type: 'STRING', enum: ['inner','left'] },
+              left: { type: 'STRING', description: 'Qualified reference such as s.current_class_id' },
+              right: { type: 'STRING', description: 'Qualified reference such as c.id' }
+            }, required: ['table','alias','left','right'] } },
+            columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+              ref: { type: 'STRING', description: 'Qualified reference such as s.name' }, alias: { type: 'STRING' }
+            }, required: ['ref','alias'] } },
             filters: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-              column: { type: 'STRING' }, operator: { type: 'STRING', enum: ['eq','neq','gt','gte','lt','lte','ilike','in','not_in','is_null','not_null'] }, value: { type: 'STRING' }, values: { type: 'ARRAY', items: { type: 'STRING' } }
-            }, required: ['column','operator'] } },
-            group_by: { type: 'ARRAY', items: { type: 'STRING' } },
+              ref: { type: 'STRING' }, operator: { type: 'STRING', enum: ['eq','neq','gt','gte','lt','lte','ilike','in','not_in','is_null','not_null'] }, value: { type: 'STRING' }, values: { type: 'ARRAY', items: { type: 'STRING' } }
+            }, required: ['ref','operator'] } },
+            group_by: { type: 'ARRAY', items: { type: 'STRING', description: 'Qualified reference' } },
             aggregates: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-              function: { type: 'STRING', enum: ['count','sum','avg','min','max'] }, column: { type: 'STRING' }, alias: { type: 'STRING' }
-            }, required: ['function','column','alias'] } },
-            order: { type: 'OBJECT', properties: { column: { type: 'STRING' }, direction: { type: 'STRING', enum: ['asc','desc'] } }, required: ['column','direction'] },
+              function: { type: 'STRING', enum: ['count','sum','avg','min','max'] }, ref: { type: 'STRING', description: 'Qualified reference or * for count' }, alias: { type: 'STRING' }
+            }, required: ['function','ref','alias'] } },
+            order_by: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+              ref: { type: 'STRING', description: 'Selected alias, aggregate alias, or qualified reference' }, direction: { type: 'STRING', enum: ['asc','desc'] }
+            }, required: ['ref','direction'] } },
             limit: { type: 'INTEGER' }
-          }, required: ['table']
+          }, required: ['table','alias']
         }
       }] }],
       generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
-    }
-  );
+    };
+  let response;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST',
+      headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
+      timeout: 45000,
+    }, payload);
+    if (response.ok || ![429, 500, 502, 503, 504].includes(response.status) || attempt === 2) break;
+    await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)));
+  }
   if (!response.ok) throw new Error(response.data?.error?.message || 'Gemini request failed');
   return response.data;
 }
@@ -114,18 +139,22 @@ module.exports = async function handler(req, res) {
     const message = String(body.message || '').trim().slice(0, 1200);
     if (!pin || !message) return send(res, 400, { ok: false, error: 'missing_required' });
 
-    const catalogResult = await rpc('mdr_rel_admin_ai_query', {
-      p_actor_id: actorId, p_pin: pin, p_request: { action: 'catalog' }
+    const schemaResult = await rpc('mdr_rel_admin_ai_schema', {
+      p_actor_id: actorId, p_pin: pin
     });
-    if (!catalogResult?.ok) return send(res, 401, { ok: false, error: 'unauthorized' });
+    if (!schemaResult?.ok) return send(res, 401, { ok: false, error: 'unauthorized' });
 
     const prior = Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : [];
     const contents = prior.filter(x => x && ['user','model'].includes(x.role) && typeof x.text === 'string')
       .map(x => ({ role: x.role, parts: [{ text: x.text.slice(0, 2000) }] }));
     contents.push({ role: 'user', parts: [{ text: message }] });
+    let successfulQueries = 0;
+    let finalCheckRequested = false;
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const result = await gemini(contents, catalogResult.tables || []);
+      const result = await gemini(contents, {
+        tables: schemaResult.tables || [], relationships: schemaResult.relationships || []
+      });
       const content = result?.candidates?.[0]?.content;
       if (!content?.parts?.length) {
         console.error('[admin-assistant] empty Gemini candidate', JSON.stringify({
@@ -133,21 +162,31 @@ module.exports = async function handler(req, res) {
           finishMessage: result?.candidates?.[0]?.finishMessage,
           promptFeedback: result?.promptFeedback,
         }));
+        if (round < MAX_TOOL_ROUNDS - 1) continue;
         throw new Error('Gemini returned no answer');
       }
-      const calls = content.parts.filter(part => part.functionCall?.name === 'query_database');
+      const calls = content.parts.filter(part => part.functionCall?.name === 'query_relational_database');
       if (!calls.length) {
         const answer = content.parts.map(part => part.text || '').join('').trim();
+        if (successfulQueries > 0 && !finalCheckRequested) {
+          contents.push(content);
+          contents.push({ role: 'user', parts: [{ text:
+            'চূড়ান্ত উত্তর দেওয়ার আগে database tool দিয়ে একবার স্বাধীনভাবে যাচাই করুন। ব্যবহারকারীর চাওয়া শ্রেণি/বিভাগ/ব্যক্তি/সময় scope final query-তে exact ID বা code filter হিসেবে আছে কি না নিশ্চিত করুন এবং winner-এর scope field-ও ফলাফলে আনুন। scope বাদ দিয়ে পুরো table-এর ranking গ্রহণ করবেন না। এরপর ব্যবহারকারীকে সম্পূর্ণ standalone চূড়ান্ত উত্তরটি আবার লিখুন—শুধু “আগের উত্তর সঠিক” বলবেন না এবং internal UUID/table/query plan দেখাবেন না।'
+          }] });
+          finalCheckRequested = true;
+          continue;
+        }
         return send(res, 200, { ok: true, answer, generatedAt: new Date().toISOString() });
       }
       contents.push(content);
       const responseParts = [];
       for (const call of calls.slice(0, 4)) {
         const args = call.functionCall.args || {};
-        const queryResult = await rpc('mdr_rel_admin_ai_query', {
-          p_actor_id: actorId, p_pin: pin, p_request: { action: 'query', ...args }
+        const queryResult = await rpc('mdr_rel_admin_ai_relational_query', {
+          p_actor_id: actorId, p_pin: pin, p_query: args
         });
-        responseParts.push({ functionResponse: { name: 'query_database', response: queryResult } });
+        if (queryResult?.ok) successfulQueries++;
+        responseParts.push({ functionResponse: { name: 'query_relational_database', response: queryResult } });
       }
       contents.push({ role: 'user', parts: responseParts });
     }
