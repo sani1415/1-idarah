@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>AI সহকারী — ইদারাহ</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/main-admin-nav.css">
+  <link rel="stylesheet" href="../css/admin-assistant.css">
+</head>
+<body class="admin-page">
+  <header class="topbar">
+    <button type="button" class="topbar-btn" onclick="history.back()" aria-label="ফিরে যান">←</button>
+    <div class="topbar-title">AI সহকারী</div>
+    <span class="topbar-btn" aria-hidden="true"></span>
+  </header>
+  <main class="ai-shell">
+    <p class="ai-intro">মাদ্রাসার হালনাগাদ তথ্য সম্পর্কে স্বাভাবিক বাংলায় প্রশ্ন করুন। সহকারী শুধু তথ্য পড়তে পারে—কোনো রেকর্ড পরিবর্তন করতে পারে না।</p>
+    <div class="ai-suggestions" aria-label="নমুনা প্রশ্ন">
+      <button class="ai-suggestion" type="button" data-ai-question="আজ কতজন ছাত্র অনুপস্থিত?">আজকের অনুপস্থিতি</button>
+      <button class="ai-suggestion" type="button" data-ai-question="সর্বশেষ কোন তারিখে হাজিরা নেওয়া হয়েছে?">সর্বশেষ হাজিরা</button>
+      <button class="ai-suggestion" type="button" data-ai-question="বর্তমানে মোট সক্রিয় ছাত্র কতজন?">মোট সক্রিয় ছাত্র</button>
+    </div>
+    <section class="ai-chat" id="ai-chat" aria-live="polite">
+      <div class="ai-msg ai-msg--assistant">আসসালামু আলাইকুম। মাদ্রাসার তথ্য সম্পর্কে কী জানতে চান?</div>
+    </section>
+    <form class="ai-composer" id="ai-form">
+      <textarea class="ai-input" id="ai-input" rows="1" maxlength="1200" placeholder="আপনার প্রশ্ন লিখুন…" required></textarea>
+      <button class="ai-send" id="ai-send" type="submit" aria-label="পাঠান">➤</button>
+    </form>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <script src="../js/api/api-shared.js"></script>
+  <script src="../js/core/mm-session.js"></script>
+  <script>
+    var fallback = /^admin\./i.test(location.hostname) ? '/admin/' : '/';
+    if (!MMSession.isAdmin() || MMSession.isRestrictedAdmin()) location.replace(fallback);
+  </script>
+  <script src="../js/shared/admin-assistant.js"></script>
+</body>
+</html>

@@ -475,6 +475,12 @@
   </a>
 </nav>
 
+<a href="/admin/assistant.html" class="admin-ai-launch" id="admin-ai-launch" aria-label="AI সহকারী খুলুন" title="AI সহকারী">AI</a>
+<style>
+  .admin-ai-launch{position:fixed;right:16px;bottom:calc(var(--app-content-pad-bottom,78px) + 14px);z-index:45;width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(145deg,#176b4d,#0e4934);color:#fff;text-decoration:none;font-weight:800;letter-spacing:.03em;box-shadow:0 9px 25px rgba(14,73,52,.28);border:1px solid rgba(255,255,255,.24)}
+  .admin-ai-launch:active{transform:scale(.96)}
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js?v=20260521-akhlaq-consistency"></script>
 <script src="../js/api/api-shared.js?v=20260717-photo-daftar"></script>
@@ -498,6 +504,10 @@
     catch (e) { return '../index.html'; }
   })();
   if (!MMSession.requireAdminPerm('dashboard', adminAuthFallback)) { throw new Error('admin permission denied'); }
+  if (MMSession.isRestrictedAdmin()) {
+    var aiLaunch = document.getElementById('admin-ai-launch');
+    if (aiLaunch) aiLaunch.remove();
+  }
 
   const toBn = n => String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
   const MADRASA_DEPT_KEY = 'mm_madrasa_jimmadar_dept';
