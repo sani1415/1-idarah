@@ -26,6 +26,13 @@ function send(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function sanitizeAnswer(answer) {
+  return String(answer || '')
+    .replace(/\s*\(?\s*ID\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\s*\)?/gi, '')
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '[গোপন আইডি]')
+    .trim();
+}
+
 function requestJson(url, options, payload) {
   return new Promise((resolve, reject) => {
     const target = new URL(url);
@@ -62,7 +69,7 @@ async function rpc(name, body) {
   return response.data;
 }
 
-async function gemini(contents, schema) {
+async function gemini(contents, schema, allowTools = true) {
   const key = process.env.GEMINI_API_KEY || '';
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const dhakaToday = new Intl.DateTimeFormat('en-CA', {
@@ -80,6 +87,7 @@ async function gemini(contents, schema) {
         'কোনো label-এর matching row না পেলে scope বাদ দেবেন না—বিকল্প বানান/সংখ্যা খুঁজুন, না পেলে clarification চান। Ranking-এর winner-এর সঙ্গে তার requested scope-ও final verification query-তে ফেরত আনুন। ' +
         'প্রশ্নের অর্থ সত্যিই একাধিকভাবে হতে পারে এবং উত্তর বদলে যায়—শুধু তখন একটি সংক্ষিপ্ত পাল্টা প্রশ্ন করুন। সময়সীমা না থাকলে চলতি/উপলভ্য পূর্ণ রেকর্ড ব্যবহার করে উত্তরে সময়সীমা উল্লেখ করুন। ' +
         'সংখ্যাগত ফল সম্ভব হলে অন্য query বা summary দিয়ে cross-check করুন। প্রাসঙ্গিক mdr_ai_ reporting view থাকলে ব্যবহার করতে পারেন, কিন্তু তাতে সীমাবদ্ধ নন। ' +
+        'প্রশ্নটি সংখ্যা, মোট, কত দিন, সর্বোচ্চ/সর্বনিম্ন বা ranking সম্পর্কিত হলে final উত্তরে সংশ্লিষ্ট নামের সঙ্গে যাচাইকৃত সংখ্যাটিও অবশ্যই স্পষ্টভাবে লিখবেন। ' +
         'ব্যবহারকারী না চাইলে internal UUID, table name বা query plan উত্তরে দেখাবেন না। ' +
         'Database schema and foreign-key relationships:\n' + JSON.stringify(schema)
       }] },
@@ -114,8 +122,13 @@ async function gemini(contents, schema) {
           }, required: ['table','alias']
         }
       }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 4096,
+        thinkingConfig: { thinkingLevel: 'high' }
+      }
     };
+  if (!allowTools) delete payload.tools;
   let response;
   for (let attempt = 0; attempt < 3; attempt++) {
     response = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
@@ -168,6 +181,16 @@ module.exports = async function handler(req, res) {
       const calls = content.parts.filter(part => part.functionCall?.name === 'query_relational_database');
       if (!calls.length) {
         const answer = content.parts.map(part => part.text || '').join('').trim();
+        if (!answer) {
+          console.warn(JSON.stringify({
+            level: 'warning',
+            message: 'admin assistant received content without answer text',
+            round,
+            successfulQueries
+          }));
+          if (round < MAX_TOOL_ROUNDS - 1) continue;
+          break;
+        }
         if (successfulQueries > 0 && !finalCheckRequested) {
           contents.push(content);
           contents.push({ role: 'user', parts: [{ text:
@@ -176,7 +199,7 @@ module.exports = async function handler(req, res) {
           finalCheckRequested = true;
           continue;
         }
-        return send(res, 200, { ok: true, answer, generatedAt: new Date().toISOString() });
+        return send(res, 200, { ok: true, answer: sanitizeAnswer(answer), generatedAt: new Date().toISOString() });
       }
       contents.push(content);
       const responseParts = [];
@@ -190,7 +213,26 @@ module.exports = async function handler(req, res) {
       }
       contents.push({ role: 'user', parts: responseParts });
     }
-    return send(res, 422, { ok: false, error: 'too_many_database_queries' });
+    // Flash-Lite can occasionally keep requesting another tool even after it
+    // already has enough verified rows. Preserve the hard database-query cap,
+    // then force a text-only synthesis pass from the gathered live results.
+    console.warn(JSON.stringify({
+      level: 'warning',
+      message: 'admin assistant reached database query round limit',
+      successfulQueries
+    }));
+    contents.push({ role: 'user', parts: [{ text:
+      'Database query সীমা শেষ। আর কোনো tool call করবেন না। ইতিমধ্যে পাওয়া live database ফল ব্যবহার করে এখনই সম্পূর্ণ standalone বাংলা উত্তর দিন। প্রশ্নটি সংখ্যা/মোট/কত দিন/ranking সম্পর্কিত হলে সংশ্লিষ্ট নামের সঙ্গে যাচাইকৃত সংখ্যাটি অবশ্যই লিখুন। নির্ভরযোগ্য ফল যথেষ্ট না হলে কী বিষয়টি অস্পষ্ট তা উল্লেখ করে একটি সংক্ষিপ্ত clarification question করুন। internal UUID, table name বা query plan দেখাবেন না।'
+    }] });
+    const finalResult = await gemini(contents, {
+      tables: schemaResult.tables || [], relationships: schemaResult.relationships || []
+    }, false);
+    const finalContent = finalResult?.candidates?.[0]?.content;
+    const finalAnswer = finalContent?.parts?.map(part => part.text || '').join('').trim() || '';
+    if (finalAnswer) {
+      return send(res, 200, { ok: true, answer: sanitizeAnswer(finalAnswer), generatedAt: new Date().toISOString() });
+    }
+    throw new Error('Gemini returned no final answer after database query limit');
   } catch (error) {
     console.error('[admin-assistant]', error?.message || error);
     return send(res, 500, { ok: false, error: 'assistant_unavailable', message: error?.message || 'Unknown error' });
