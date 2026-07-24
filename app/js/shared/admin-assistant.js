@@ -3,16 +3,22 @@
   var history = [];
   var busy = false;
   var chat = document.getElementById('ai-chat');
+  var scrollBox = document.getElementById('ai-scroll') || chat;
   var form = document.getElementById('ai-form');
   var input = document.getElementById('ai-input');
   var send = document.getElementById('ai-send');
+
+  function scrollChatToEnd() {
+    if (!scrollBox) return;
+    scrollBox.scrollTop = scrollBox.scrollHeight;
+  }
 
   function addMessage(role, text, extraClass) {
     var el = document.createElement('div');
     el.className = 'ai-msg ai-msg--' + role + (extraClass ? ' ' + extraClass : '');
     el.textContent = text;
     chat.appendChild(el);
-    el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    scrollChatToEnd();
     return el;
   }
   function addTyping() {
@@ -20,7 +26,7 @@
     el.className = 'ai-msg ai-msg--assistant';
     el.innerHTML = '<span class="ai-typing" aria-label="উত্তর প্রস্তুত হচ্ছে"><i></i><i></i><i></i></span>';
     chat.appendChild(el);
-    el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    scrollChatToEnd();
     return el;
   }
   async function ask(text) {
