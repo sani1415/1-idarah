@@ -20,3 +20,4 @@ outputs/
 # অ্যাপ টেমপ্লেট ডাউনলোড — openpyxl স্ক্রিপ্টের আউটপুট (ডিপ্লয়ে থাকতে হবে)
 !app/madrasa/templates/
 !app/madrasa/templates/daftar-hisab-template.xlsx
+!app/madrasa/templates/daftar-hisab-template-v2.xlsx
