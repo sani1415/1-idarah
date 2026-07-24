@@ -13,6 +13,21 @@
     scrollBox.scrollTop = scrollBox.scrollHeight;
   }
 
+  function resizeInput() {
+    if (!input) return;
+    input.style.height = '0px';
+    // বাংলা গ্লিফের নিচের অংশ কেটে না যায় — ছোট বাফার
+    var next = Math.min(Math.max(44, input.scrollHeight + 6), 120);
+    input.style.height = next + 'px';
+    input.style.overflowY = next >= 120 ? 'auto' : 'hidden';
+  }
+
+  function resetInput() {
+    input.value = '';
+    input.style.height = '';
+    resizeInput();
+  }
+
   function addMessage(role, text, extraClass) {
     var el = document.createElement('div');
     el.className = 'ai-msg ai-msg--' + role + (extraClass ? ' ' + extraClass : '');
@@ -54,16 +69,22 @@
       addMessage('assistant', error.message || 'সহকারী এখন পাওয়া যাচ্ছে না।', 'ai-msg--error');
     } finally {
       busy = false; send.disabled = false; input.disabled = false; input.focus();
+      resizeInput();
     }
   }
   form.addEventListener('submit', function (event) {
-    event.preventDefault(); var text = input.value; input.value = ''; ask(text);
+    event.preventDefault();
+    var text = input.value;
+    resetInput();
+    ask(text);
   });
+  input.addEventListener('input', resizeInput);
   input.addEventListener('keydown', function (event) {
     if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
   });
   document.querySelectorAll('[data-ai-question]').forEach(function (button) {
     button.addEventListener('click', function () { ask(button.getAttribute('data-ai-question')); });
   });
+  resizeInput();
 })();
 

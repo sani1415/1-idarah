@@ -1,8 +1,14 @@
 /* AI সহকারী — full-height chat layout (no bottom nav on this page) */
 body.ai-page {
+  --ai-composer-gap: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px));
   background: var(--bg, #f5f3ee);
-  min-height: 100dvh;
-  height: 100dvh;
+  /* svh: মোবাইল ব্রাউজার chrome ধরে — নিচের ইনপুট কেটে যায় না */
+  min-height: 100vh;
+  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
+  max-height: 100vh;
+  max-height: 100svh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -158,26 +164,34 @@ body.ai-page .mm-monitor-topbar-label {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  margin: 0 14px max(12px, env(safe-area-inset-bottom, 0px));
+  margin: 0 14px var(--ai-composer-gap);
   padding: 9px;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(23, 107, 77, 0.15);
   border-radius: 18px;
   box-shadow: 0 8px 28px rgba(24, 45, 37, 0.14);
   backdrop-filter: blur(14px);
+  /* নিচের কানায় না লেগে আরামদায়ক অবস্থান */
+  position: relative;
+  z-index: 5;
 }
 
 .ai-input {
   flex: 1;
   min-width: 0;
-  resize: none;
+  min-height: 44px;
   max-height: 120px;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: hidden;
   border: 0;
   outline: 0;
   background: transparent;
-  padding: 9px 8px;
+  padding: 11px 8px;
   font: inherit;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .ai-send {
