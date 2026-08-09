@@ -15,7 +15,7 @@ from openpyxl.utils import get_column_letter
 ROOT = Path(__file__).resolve().parents[1]
 OLD_FILE = ROOT / "alumni.xlsx"
 NEW_FILE = ROOT / "new_alumni.xlsx"
-OUT_DIR = ROOT / "outputs" / "alumni_merged"
+OUT_DIR = ROOT / "output"
 OUT_FILE = OUT_DIR / "alumni_clean_combined_v8.xlsx"
 
 BN_DIGITS = "০১২৩৪৫৬৭৮৯"

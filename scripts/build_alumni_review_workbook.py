@@ -1,8 +1,8 @@
 """
 build_alumni_review_workbook.py
 ================================
-Input : outputs/alumni_merged/alumni_clean_combined.xlsx
-Output: outputs/alumni_merged/alumni_review_workbook_v1.xlsx
+Input : output/alumni_clean_combined.xlsx
+Output: output/alumni_review_workbook_v1.xlsx
 
 দুটো শিট তৈরি করে:
   1. "স্বয়ংক্রিয়_মার্জ"  → কোনো hard-conflict নেই, auto-merge করা হয়েছে
@@ -22,8 +22,8 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-INPUT_FILE  = 'outputs/alumni_merged/alumni_clean_combined.xlsx'
-OUTPUT_FILE = 'outputs/alumni_merged/alumni_review_workbook_v1.xlsx'
+INPUT_FILE  = 'output/alumni_clean_combined.xlsx'
+OUTPUT_FILE = 'output/alumni_review_workbook_v1.xlsx'
 
 # ── ডুপ্লিকেট শিটের কলাম সূচক (0-ভিত্তিক) ──────────────────────────────
 CI_GROUP   = 0   # ডুপ্লিকেট গ্রুপ

@@ -15,7 +15,7 @@ photos
 .tmp_admin_bootstrap.sql
 .playwright-cli/
 scripts/__pycache__/
-outputs/
+output/
 *.xlsx
 # অ্যাপ টেমপ্লেট ডাউনলোড — openpyxl স্ক্রিপ্টের আউটপুট (ডিপ্লয়ে থাকতে হবে)
 !app/madrasa/templates/

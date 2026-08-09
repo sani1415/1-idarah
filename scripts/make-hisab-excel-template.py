@@ -35,9 +35,9 @@ thin = Border(
 )
 wrap = Alignment(wrap_text=True, vertical="top")
 
-# ব্যয়: E=পরিমাণ, G=একক মূল্য, H=মোট
-TOTAL_FORMULA = '=IF(AND(E{r}<>"",G{r}<>""),E{r}*G{r},"")'
-FORMULA_ROWS = 500
+# ব্যয়: E=পরিমাণ, G=একক মূল্য (অটো), H=মোট টাকা (ইনপুট)
+UNIT_PRICE_FORMULA = '=IF(AND(E{r}<>"",E{r}<>0,H{r}<>""),H{r}/E{r},"")'
+FORMULA_ROWS = 5000
 DATA_ROWS = 5000
 HIJRI_DATE_FORMAT = "[$-1170401]yyyy-mm-dd"
 WORKBOOK_ID = "daftar-hisab-v3-20260723"
@@ -105,9 +105,9 @@ def style_data_row(ws, row_idx, ncols):
         cell.alignment = Alignment(vertical="center")
 
 
-def set_total_auto(ws, row_idx):
-    cell = ws.cell(row_idx, 8)
-    cell.value = TOTAL_FORMULA.format(r=row_idx)
+def set_unit_price_auto(ws, row_idx):
+    cell = ws.cell(row_idx, 7)
+    cell.value = UNIT_PRICE_FORMULA.format(r=row_idx)
     cell.number_format = '#,##0.##'
     cell.fill = auto_fill
     cell.border = thin
@@ -135,7 +135,7 @@ def main():
         ("এই ফাইল কী", "দৈনন্দিন সব লেনদেন এখানে রাখুন। দিনশেষে অ্যাপে আপলোড করলে অ্যাপ লেটেস্ট দেখাবে।"),
         ("শীট", "ব্যয় · আয় · করজ · পরিশোধ · বকেয়া · ড্যাশবোর্ড। ব্যয়/আয়/করজ/পরিশোধ অ্যাপে যায়; বকেয়া ও ড্যাশবোর্ড হিসাব দেখায়।"),
         ("ব্যয়", "মাতবাখ/মাদরাসা/তামিরাত/সাধারণ। বাকি কেনাকাটায় পরিশোধ=বাকি + সরবরাহকারী নাম।"),
-        ("মোট টাকা", "পরিমাণ × একক মূল্য হলে মোট অটো। বিল হলে শুধু মোট লিখুন।"),
+        ("মোট টাকা", "মোট টাকা নিজে লিখুন। পরিমাণ থাকলে একক মূল্য = মোট ÷ পরিমাণ হিসেবে অটো বসবে।"),
         ("বকেয়া", "এই শীটের «সরবরাহকারী» কলামে নাম লিখুন — ব্যয় ও পরিশোধ শীটের ড্রপডাউনে অটো আসবে। অবশিষ্ট = বাকি কেনা − পরিশোধ।"),
         ("পরিশোধ", "বকেয়া মেটানোর এন্ট্রি; সংশ্লিষ্ট হিসাব বিভাগ ও সরবরাহকারী বেছে নিন।"),
         ("আয় / করজ", "নিয়মিত আয় আলাদা; করজে দেওয়া/আদায় করজ শীটে।"),
@@ -157,11 +157,11 @@ def main():
     ws = wb.create_sheet("ব্যয়")
     exp_cols = [
         "হিসাব বিভাগ *", "তারিখ *", "খাত", "বিবরণ", "পরিমাণ", "মাপ",
-        "একক মূল্য", "মোট টাকা (অটো)", "সরবরাহকারী", "রশিদ নং", "পরিশোধ",
+        "একক মূল্য (অটো)", "মোট টাকা *", "সরবরাহকারী", "রশিদ নং", "পরিশোধ",
     ]
     style_header(ws, exp_cols, [14, 14, 14, 26, 10, 10, 12, 16, 18, 12, 10])
 
-    # qty×price rows → formula; bill-only → manual total
+    # মোট টাকা ইনপুট → একক মূল্য অটো
     qty_rows = [
         (2, ["মাতবাখ", excel_date("1447-10-02"), "কাঁচামাল", "চাল", 50, "কেজি", 70], "রহিম স্টোর", "১০১", "নগদ"),
         (3, ["মাতবাখ", excel_date("1447-10-03"), "কাঁচামাল", "ডাল", 20, "কেজি", 120], "রহিম স্টোর", "", "নগদ"),
@@ -175,7 +175,8 @@ def main():
         ws.cell(row_idx, 10, receipt)
         ws.cell(row_idx, 11, pay)
         style_data_row(ws, row_idx, 11)
-        set_total_auto(ws, row_idx)
+        set_total_manual(ws, row_idx, left[4] * left[6])
+        set_unit_price_auto(ws, row_idx)
 
     bill_rows = [
         (6, ["সাধারণ", excel_date("1447-10-06"), "পরিবহন", "বাজার আনা-নেওয়া", "", "", ""], 500, "", "", "নগদ"),
@@ -189,18 +190,19 @@ def main():
         ws.cell(row_idx, 11, pay)
         style_data_row(ws, row_idx, 11)
         set_total_manual(ws, row_idx, amount)
+        set_unit_price_auto(ws, row_idx)
 
-    # খালি সারিতেও অটো ফর্মুলা — নতুন এন্ট্রিতে মোট নিজে আসবে
+    # খালি সারিতেও অটো ফর্মুলা — মোট ও পরিমাণ লিখলে একক মূল্য নিজে আসবে
     for row_idx in range(8, FORMULA_ROWS + 1):
-        set_total_auto(ws, row_idx)
+        set_unit_price_auto(ws, row_idx)
 
     add_hijri_helpers(ws)
     format_date_column(ws, 2)
     ws.auto_filter.ref = "A1:M1"
 
     ws["O1"] = (
-        "মোট টাকা = পরিমাণ × একক মূল্য (অটো)। "
-        "বিল হলে পরিমাণ/মূল্য খালি রেখে মোট ঘরে সরাসরি টাকা লিখুন।"
+        "মোট টাকা ঘরে সরাসরি টাকা লিখুন। পরিমাণ থাকলে একক মূল্য = মোট টাকা ÷ পরিমাণ (অটো)। "
+        "পরিমাণ না থাকলে একক মূল্য খালি থাকবে।"
     )
     ws["O1"].font = note_font
     ws.column_dimensions["O"].width = 55
