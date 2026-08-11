@@ -39,6 +39,14 @@ const DeptAPI = (() => {
     if (id === 'dept_4' && (!emoji || emoji === '🧵')) return '✂️';
     return emoji || '🏢';
   }
+
+  /* UI display labels only — does not change DB/stored names. */
+  function displayName(name) {
+    return String(name || '')
+      .replace(/বেকারি|bakery/gi, 'মাখাবিজ')
+      .replace(/স্টোর|store/gi, 'খাজানা')
+      .replace(/নার্সারি|nursery/gi, 'মাশতাল');
+  }
   function purgeKnownSampleData() {
     const sample = row => /^(dept|txn|inv)_\d+$/.test(String(row && row.id || ''));
     [KEYS.departments, KEYS.transactions, KEYS.inventory].forEach(key => {
@@ -244,6 +252,7 @@ const DeptAPI = (() => {
     Settings,
     Products,
     getSubdeptFields,
+    displayName,
     uid,
     today,
     esc,

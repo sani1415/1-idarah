@@ -9,10 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
 <style>
-  .txn-item { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; box-shadow:var(--shadow); margin-bottom:8px; display:flex; align-items:center; gap:12px; }
-  .txn-item { cursor:pointer; }
-  .txn-income-head,
-  .txn-item.income-row { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,2fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.1fr); column-gap:2px; row-gap:3px; align-items:center; min-width:0; width:100%; }
+  .txn-item { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; box-shadow:var(--shadow); margin-bottom:8px; display:flex; align-items:center; gap:12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .txn-item:active { background:var(--cream2); }
+  .txn-income-head { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,2fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.1fr); column-gap:2px; row-gap:3px; align-items:center; min-width:0; width:100%; }
+  .txn-item.income-row { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,2fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.1fr); column-gap:2px; row-gap:3px; align-items:center; min-width:0; width:100%; padding:8px 6px; }
   .txn-income-head { background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow); padding:6px; margin-bottom:8px; }
   .txn-income-head > * { min-width:0; }
   .txn-head-filter { box-sizing:border-box; display:block; width:100%; max-width:100%; min-width:0; height:30px; border:1px solid var(--cream3); border-radius:6px; background:#fff; color:var(--ink2); font-family:'Tiro Bangla',serif; font-size:11px; font-weight:700; padding:0 4px; }
@@ -20,7 +20,6 @@
   .txn-head-filter:focus { outline:0; border-color:var(--gold); background:var(--cream2); }
   .txn-head-filter[type="number"] { text-align:left; }
   .txn-head-clear { border:1px solid var(--cream3); background:var(--cream2); color:var(--ink2); border-radius:6px; height:30px; width:100%; font-family:'Tiro Bangla',serif; font-size:11px; font-weight:800; cursor:pointer; }
-  .txn-item.income-row { padding:8px 6px; }
   #txn-income-area { overflow-x:visible; padding-bottom:4px; }
   #txn-list { overflow:visible; }
   .txn-cell { min-width:0; font-size:12px; color:var(--ink2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -28,14 +27,17 @@
   .txn-cell.qty { color:var(--green); font-weight:700; }
   .txn-cell.rate { text-align:left; color:var(--ink3); }
   .txn-cell.total { text-align:left; font-family:'Tiro Bangla',serif; font-size:14px; font-weight:800; color:var(--green); }
-  .txn-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .txn-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; flex-shrink:0; line-height:1; }
   .txn-icon.income { background:var(--green-light); color:var(--green); }
   .txn-icon.expense { background:var(--red-light); color:var(--red); }
   .txn-info { flex:1; min-width:0; }
-  .txn-desc { font-size:13px; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .txn-sub { font-size:11px; color:var(--ink3); margin-top:2px; }
-  .txn-line-main { display:flex; align-items:center; gap:8px; min-width:0; }
+  .txn-desc { font-size:14px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .txn-sub { font-size:11px; color:var(--ink3); margin-top:3px; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
   .txn-line-date { font-size:11px; color:var(--ink3); white-space:nowrap; }
+  .txn-amt { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:800; flex-shrink:0; }
+  .txn-amt.income { color:var(--green); }
+  .txn-amt.expense { color:var(--red); }
+  .txn-item-chevron { color:var(--ink3); font-size:18px; font-weight:700; flex-shrink:0; line-height:1; opacity:.55; }
   .pending-pill { display:inline-block; background:#fff4d9; color:#9a6a21; border-radius:999px; padding:1px 7px; font-size:10px; font-weight:800; margin-top:3px; }
   .catalog-off-pill { display:inline-block; background:var(--cream2); color:var(--ink3); border-radius:999px; padding:1px 7px; font-size:10px; font-weight:800; margin-top:3px; }
   .low-stock-pill { display:inline-block; background:var(--red-light); color:var(--red); border-radius:999px; padding:1px 7px; font-size:10px; font-weight:800; margin-top:3px; }
@@ -44,14 +46,49 @@
   .prd-remove-actions .submit-btn { margin:0; }
   .prd-remove-actions .btn-ghost { width:100%; padding:10px; border:1px solid var(--cream3); border-radius:var(--radius-sm); background:#fff; color:var(--ink2); font-family:'Tiro Bangla',serif; font-weight:800; cursor:pointer; }
   .prd-remove-actions .btn-warn { background:var(--red-light); color:var(--red); border:0; }
-  .txn-amt { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:700; flex-shrink:0; }
-  .txn-amt.income { color:var(--green); }
-  .txn-amt.expense { color:var(--red); }
-  .inv-item { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; box-shadow:var(--shadow); margin-bottom:8px; display:flex; align-items:center; gap:12px; }
+  .inv-item { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; box-shadow:var(--shadow); margin-bottom:8px; display:flex; align-items:center; gap:12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .inv-item:active { background:var(--cream2); }
   .inv-item.low-stock { border-right:3px solid var(--red); }
-  .inv-actions { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+  .inv-item-chevron { color:var(--ink3); font-size:18px; font-weight:700; flex-shrink:0; line-height:1; }
+  .inv-actions { display:flex; flex-direction:row; flex-wrap:wrap; gap:6px; flex-shrink:0; justify-content:flex-end; }
   .inv-action-btn { background:var(--cream2); border:1px solid var(--cream3); border-radius:6px; color:var(--ink2); font-family:'Tiro Bangla',serif; font-size:11px; font-weight:800; cursor:pointer; padding:5px 9px; }
   .inv-action-btn.delete { background:var(--red-light); border-color:transparent; color:var(--red); }
+  .inv-detail-head { margin-bottom:12px; }
+  .inv-detail-name { font-family:'Tiro Bangla',serif; font-size:17px; font-weight:700; color:var(--ink); }
+  .inv-detail-meta { font-size:12px; color:var(--ink3); margin-top:4px; }
+  .inv-detail-actions { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:14px; }
+  .inv-detail-actions .inv-action-btn { width:100%; padding:10px 4px; font-size:11px; }
+  .inv-detail-actions .inv-action-btn.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+  .inv-detail-section { font-size:12px; font-weight:700; color:var(--ink2); margin:4px 0 8px; }
+  .inv-detail-panel { display:none; }
+  .inv-detail-panel.active { display:block; }
+  #modal-inv-history.modal-bg.modal-float .modal {
+    height: min(78vh, 560px);
+    max-height: min(78vh, 560px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #modal-inv-history .inv-detail-head,
+  #modal-inv-history .inv-detail-actions { flex-shrink: 0; }
+  #modal-inv-history .modal-title { flex-shrink: 0; }
+  #inv-detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .inv-hist-item { background:#fff; border-radius:var(--radius-sm); padding:10px 12px; box-shadow:var(--shadow); margin-bottom:8px; }
+  .inv-hist-top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .inv-hist-name { font-size:13px; font-weight:700; color:var(--ink); }
+  .inv-hist-qty { font-family:'Tiro Bangla',serif; font-size:14px; font-weight:800; white-space:nowrap; }
+  .inv-hist-qty.plus { color:var(--green); }
+  .inv-hist-qty.minus { color:var(--red); }
+  .inv-hist-meta { font-size:11px; color:var(--ink3); margin-top:3px; }
+  .report-sale-head {
+    margin-bottom: 8px;
+  }
+  #report-sale-lines .txn-item.income-row { margin-bottom: 6px; }
   .prd-item { background:#fff; border-radius:var(--radius-sm); padding:11px 13px; box-shadow:var(--shadow); margin-bottom:7px; display:flex; align-items:center; gap:10px; }
   .month-nav { display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:var(--radius-sm); padding:10px 14px; box-shadow:var(--shadow); margin-bottom:12px; }
   .month-nav-btn { background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink3); padding:4px; }
@@ -213,15 +250,15 @@
   </div>
 </div>
 
-<div class="content" id="panel-products" style="display:none;padding-bottom:var(--app-content-pad-bottom);">
+<div class="content" id="panel-products" style="display:none;padding-bottom:var(--app-content-pad-bottom);" hidden aria-hidden="true">
   <div class="sec-header"><div class="sec-title">পণ্য তালিকা</div></div>
   <button class="add-btn" onclick="openAddProduct()">+ নতুন পণ্য যোগ করুন</button>
   <div id="product-list"></div>
 </div>
 
 <div class="content" id="panel-inv" style="display:none;padding-bottom:var(--app-content-pad-bottom);">
-  <div class="sec-header"><div class="sec-title">মজুদ তালিকা</div></div>
-  <button class="add-btn" onclick="openAddInv()">+ মজুদ আপডেট করুন</button>
+  <div class="sec-header"><div class="sec-title">মজুদ</div></div>
+  <button class="add-btn" onclick="openAddInv()">+ যোগ করুন</button>
   <div id="inv-list" class="inv-grid"></div>
 </div>
 
@@ -240,6 +277,17 @@
     <div class="form-group"><label class="form-label">শেষ</label><input class="form-input" type="date" id="report-to" onchange="renderReport()"></div>
   </div>
   <div class="report-grid" id="report-summary"></div>
+  <div class="report-section">
+    <div class="report-section-title">পণ্য বিক্রির তালিকা</div>
+    <div class="txn-income-head report-sale-head">
+      <input class="txn-head-filter" type="date" id="report-sale-filter-date" title="তারিখ" onchange="renderProductSaleLinesFromReport()">
+      <select class="txn-head-filter" id="report-sale-filter-product" title="পণ্য/ধরন" onchange="renderProductSaleLinesFromReport()"></select>
+      <input class="txn-head-filter" id="report-sale-filter-qty" placeholder="পরিমাণ" title="পরিমাণ" oninput="renderProductSaleLinesFromReport()">
+      <input class="txn-head-filter" type="number" id="report-sale-filter-rate" placeholder="দর" title="দর" oninput="renderProductSaleLinesFromReport()">
+      <input class="txn-head-filter" type="number" id="report-sale-filter-total" placeholder="টাকা" title="টাকা" oninput="renderProductSaleLinesFromReport()">
+    </div>
+    <div id="report-sale-lines"></div>
+  </div>
   <div class="report-section">
     <div class="report-section-title">সবচেয়ে বেশি বিক্রিত পণ্য</div>
     <div id="report-top-products"></div>
@@ -260,7 +308,7 @@
     <span class="nav-icon"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
     <span class="nav-label">হিসাব</span>
   </div>
-  <div class="nav-item" id="nav-products" onclick="switchPanel('products')">
+  <div class="nav-item" id="nav-products" onclick="switchPanel('products')" hidden aria-hidden="true" style="display:none;">
     <span class="nav-icon"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
     <span class="nav-label">পণ্য</span>
   </div>
@@ -382,46 +430,86 @@
   </div>
 </div>
 
-<!-- ══ FLOATING MODAL: মজুদ আপডেট ══ -->
+<!-- ══ FLOATING MODAL: মজুদ যোগ / কমান ══ -->
 <div class="modal-bg modal-float" id="modal-inv">
   <div class="modal">
-    <div class="modal-title">মজুদ আপডেট <button class="modal-close" onclick="closeModal('modal-inv')">✕</button></div>
+    <div class="modal-title"><span id="inv-modal-title">যোগ করুন</span> <button class="modal-close" onclick="closeModal('modal-inv')">✕</button></div>
     <div class="stock-mode">
-      <button type="button" id="inv-mode-in" class="active" onclick="setInvMode('stock_in')">মজুদ যোগ</button>
-      <button type="button" id="inv-mode-waste" onclick="setInvMode('waste')">বাতিল / নষ্ট</button>
+      <button type="button" id="inv-mode-in" class="active" onclick="setInvMode('stock_in')">যোগ</button>
+      <button type="button" id="inv-mode-waste" onclick="setInvMode('waste')">কমান</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">পণ্য <span style="font-weight:400;color:var(--ink3)">(তালিকা থেকে)</span></label>
+    <div class="form-group" id="inv-pick-wrap">
+      <label class="form-label">কোনটি</label>
       <select class="form-input" id="inv-product" onchange="onInvProductChange()"></select>
     </div>
-    <div class="form-group"><label class="form-label">পণ্যের নাম</label><input class="form-input" id="inv-name" placeholder="যেমন: ধান, মধু"></div>
+    <div class="form-group" id="inv-name-wrap"><label class="form-label">নাম</label><input class="form-input" id="inv-name" placeholder="যেমন: ধান, মধু" oninput="onInvNameInput()"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">পরিমাণ</label><input class="form-input" type="number" id="inv-qty" placeholder="০"></div>
-      <div class="form-group"><label class="form-label">একক</label><select class="form-input" id="inv-unit"></select></div>
+      <div class="form-group"><label class="form-label">পরিমাণ</label><input class="form-input" type="number" id="inv-qty" placeholder="কত যোগ/কমান"></div>
+      <div class="form-group" id="inv-unit-wrap"><label class="form-label">একক</label><select class="form-input" id="inv-unit"></select></div>
     </div>
-    <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-notes" placeholder="কারণ / মন্তব্য"></div>
-    <button class="submit-btn" onclick="saveInv()">সংরক্ষণ করুন</button>
+    <div id="inv-new-product-fields">
+      <div class="form-group"><label class="form-label">দাম (প্রতি একক)</label><input class="form-input" type="number" id="inv-price" placeholder="০"></div>
+      <input type="checkbox" id="inv-sellable" checked hidden aria-hidden="true">
+    </div>
+    <p class="sale-hint" id="inv-add-hint" style="margin-top:0;">পরিমাণ আগের মজুদের সাথে যোগ হবে।</p>
+    <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-notes" placeholder="ঐচ্ছিক"></div>
+    <button class="submit-btn" onclick="saveInv()">সংরক্ষণ</button>
   </div>
 </div>
 
 <div class="modal-bg modal-float" id="modal-inv-edit">
   <div class="modal">
-    <div class="modal-title">মজুদ সংশোধন <button class="modal-close" onclick="closeModal('modal-inv-edit')">✕</button></div>
+    <div class="modal-title">এডিট <button class="modal-close" onclick="closeModal('modal-inv-edit')">✕</button></div>
     <input type="hidden" id="inv-edit-id">
     <input type="hidden" id="inv-edit-product-id">
-    <div class="form-group"><label class="form-label">পণ্যের নাম</label><input class="form-input" id="inv-edit-name" placeholder="যেমন: ধান, মধু"></div>
-    <div class="form-group"><label class="form-label">মজুদ একক</label><select class="form-input" id="inv-edit-stock-unit" onchange="onInvEditUnitChange()"></select></div>
-    <div class="form-group">
-      <label class="form-label">বর্তমান পরিমাণ</label>
-      <div id="inv-edit-current" style="font-family:'Tiro Bangla',serif;font-size:15px;font-weight:700;padding:8px 0;"></div>
+    <p class="sale-hint" id="inv-edit-stock-line" style="margin-top:0;"></p>
+    <div class="form-group"><label class="form-label">নাম</label><input class="form-input" id="inv-edit-name" placeholder="যেমন: ধান, মধু"></div>
+    <div class="form-group"><label class="form-label">একক</label><select class="form-input" id="inv-edit-stock-unit" onchange="onInvEditUnitChange()"></select></div>
+    <div class="form-group"><label class="form-label">দাম (প্রতি একক)</label><input class="form-input" type="number" id="inv-edit-price" placeholder="০"></div>
+    <input type="hidden" id="inv-edit-qty" value="">
+    <input type="checkbox" id="inv-edit-sellable" checked hidden aria-hidden="true">
+    <div id="inv-edit-current" hidden aria-hidden="true"></div>
+    <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-edit-notes" placeholder="ঐচ্ছিক"></div>
+    <button class="submit-btn" onclick="saveInvEdit()">সংরক্ষণ</button>
+    <button type="button" id="inv-edit-advanced-btn" onclick="openAdvancedProductFromInvEdit()" hidden aria-hidden="true" style="display:none;"></button>
+    <button type="button" id="inv-edit-delete-btn" onclick="deleteInvFromModal()" style="margin-top:8px;width:100%;padding:10px;border:0;border-radius:var(--radius-sm);background:var(--red-light);color:var(--red);font-family:'Tiro Bangla',serif;font-weight:800;cursor:pointer;">মুছে ফেলুন</button>
+  </div>
+</div>
+
+<div class="modal-bg modal-float" id="modal-inv-history">
+  <div class="modal">
+    <div class="modal-title">বিবরণ <button class="modal-close" onclick="closeInvDetail()">✕</button></div>
+    <div class="inv-detail-head">
+      <div class="inv-detail-name" id="inv-detail-name">—</div>
+      <div class="inv-detail-meta" id="inv-detail-meta"></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">নতুন পরিমাণ (মজুদ এককে)</label>
-      <input class="form-input" type="number" step="any" id="inv-edit-qty" placeholder="০">
+    <div class="inv-detail-actions" id="inv-detail-actions"></div>
+
+    <div id="inv-detail-body">
+    <div class="inv-detail-panel active" id="inv-detail-panel-history">
+      <div class="inv-detail-section">লেনদেন</div>
+      <div id="inv-hist-list"></div>
     </div>
-    <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-edit-notes" placeholder="সংশোধনের কারণ"></div>
-    <button class="submit-btn" onclick="saveInvEdit()">সংরক্ষণ করুন</button>
-    <button type="button" id="inv-edit-delete-btn" onclick="deleteInvFromModal()" style="margin-top:8px;width:100%;padding:10px;border:0;border-radius:var(--radius-sm);background:var(--red-light);color:var(--red);font-family:'Tiro Bangla',serif;font-weight:800;cursor:pointer;">মজুদ মুছে ফেলুন</button>
+
+    <div class="inv-detail-panel" id="inv-detail-panel-qty">
+      <div class="inv-detail-section" id="inv-detail-qty-title">যোগ</div>
+      <p class="sale-hint" id="inv-detail-qty-hint" style="margin-top:0;"></p>
+      <div class="form-group"><label class="form-label">পরিমাণ</label><input class="form-input" type="number" id="inv-detail-qty" placeholder="কত"></div>
+      <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-detail-notes" placeholder="ঐচ্ছিক"></div>
+      <button class="submit-btn" type="button" onclick="saveInvDetailQty()">সংরক্ষণ</button>
+    </div>
+
+    <div class="inv-detail-panel" id="inv-detail-panel-edit">
+      <div class="inv-detail-section">এডিট</div>
+      <p class="sale-hint" id="inv-detail-edit-stock-line" style="margin-top:0;"></p>
+      <div class="form-group"><label class="form-label">নাম</label><input class="form-input" id="inv-detail-edit-name" placeholder="যেমন: ধান, মধু"></div>
+      <div class="form-group"><label class="form-label">একক</label><select class="form-input" id="inv-detail-edit-unit"></select></div>
+      <div class="form-group"><label class="form-label">দাম (প্রতি একক)</label><input class="form-input" type="number" id="inv-detail-edit-price" placeholder="০"></div>
+      <div class="form-group"><label class="form-label">নোট <span style="font-weight:400;color:var(--ink3)">(ঐচ্ছিক)</span></label><input class="form-input" id="inv-detail-edit-notes" placeholder="ঐচ্ছিক"></div>
+      <button class="submit-btn" type="button" onclick="saveInvDetailEdit()">সংরক্ষণ</button>
+      <button type="button" id="inv-detail-edit-delete-btn" onclick="deleteInvDetail()" style="margin-top:8px;width:100%;padding:10px;border:0;border-radius:var(--radius-sm);background:var(--red-light);color:var(--red);font-family:'Tiro Bangla',serif;font-weight:800;cursor:pointer;">মুছে ফেলুন</button>
+    </div>
+    </div>
   </div>
 </div>
 
@@ -442,7 +530,7 @@
     <div class="dept-settings-tabs">
       <button type="button" class="dept-settings-tab active" data-tab="general" onclick="switchDeptSettingsTab('general')">সাধারণ</button>
       <button type="button" class="dept-settings-tab" data-tab="accounting" onclick="switchDeptSettingsTab('accounting')">হিসাব</button>
-      <button type="button" class="dept-settings-tab" data-tab="inventory" onclick="switchDeptSettingsTab('inventory')">পণ্য-মজুদ</button>
+      <button type="button" class="dept-settings-tab" data-tab="inventory" onclick="switchDeptSettingsTab('inventory')">মজুদ</button>
       <button type="button" class="dept-settings-tab" data-tab="report" onclick="switchDeptSettingsTab('report')">রিপোর্ট</button>
       <button type="button" class="dept-settings-tab" data-tab="security" onclick="switchDeptSettingsTab('security')">নিরাপত্তা</button>
     </div>
@@ -535,7 +623,7 @@
 <script src="../js/dept/dept-supabase-sync.js"></script>
 <script>
   const deptId   = MMSession.getDeptId();
-  const deptName = MMSession.getDeptName();
+  const deptName = DeptAPI.displayName ? DeptAPI.displayName(MMSession.getDeptName()) : (MMSession.getDeptName() || '');
   const deptEmoji= MMSession.getDeptEmoji();
   const staffUserId = MMSession.getStaffUserId && MMSession.getStaffUserId();
   let staffPin = MMSession.getStaffPin && MMSession.getStaffPin();
@@ -585,7 +673,10 @@
 
   function applyDeptSettings() {
     const s = deptSettings();
-    document.getElementById('dept-name').textContent = (deptEmoji||'') + ' ' + (s.profile.display_name || deptName || 'বিভাগ');
+    const profileName = s.profile.display_name
+      ? (DeptAPI.displayName ? DeptAPI.displayName(s.profile.display_name) : s.profile.display_name)
+      : '';
+    document.getElementById('dept-name').textContent = (deptEmoji||'') + ' ' + (profileName || deptName || 'বিভাগ');
     document.getElementById('txn-summary').style.display = s.ui.show_summary === false ? 'none' : '';
     reportRange = s.report.default_range || reportRange || 'month';
   }
@@ -678,12 +769,16 @@
   }
 
   function switchPanel(name) {
-    ['txn','products','inv','report'].forEach(p => {
-      document.getElementById('panel-'+p).style.display = p===name ? '' : 'none';
-      document.getElementById('nav-'+p).classList.toggle('active', p===name);
+    if (name === 'products') name = 'inv';
+    ['txn','inv','report'].forEach(p => {
+      const panel = document.getElementById('panel-'+p);
+      const nav = document.getElementById('nav-'+p);
+      if (panel) panel.style.display = p===name ? '' : 'none';
+      if (nav) nav.classList.toggle('active', p===name);
     });
+    const productsPanel = document.getElementById('panel-products');
+    if (productsPanel) productsPanel.style.display = 'none';
     if (name==='txn')      renderTxn();
-    if (name==='products') renderProducts();
     if (name==='inv')      renderInv();
     if (name==='report')   renderReport();
   }
@@ -765,6 +860,40 @@
     return true;
   }
 
+  function txnListTitle(t) {
+    const desc = String(t.description || '').trim();
+    if (t.type === 'income') {
+      const items = incomeItemsFromTxn(t);
+      if (items.length) {
+        const first = String(items[0].product_name || items[0].name || 'পণ্য').trim() || 'পণ্য';
+        if (items.length === 1) return first;
+        return first + ' +' + toBn(items.length - 1) + 'টি';
+      }
+      return desc || 'আয়';
+    }
+    const expItems = (t.metadata && Array.isArray(t.metadata.line_items)) ? t.metadata.line_items : [];
+    if (desc) return desc;
+    if (expItems.length) {
+      const first = String(expItems[0].name || expItems[0].product_name || 'ব্যয়').trim() || 'ব্যয়';
+      if (expItems.length === 1) return first;
+      return first + ' +' + toBn(expItems.length - 1) + 'টি';
+    }
+    return 'ব্যয়';
+  }
+
+  function txnListSub(t) {
+    const parts = [];
+    const dateStr = fmtDate(t.date || t.txn_date);
+    if (dateStr) parts.push(dateStr);
+    if (t.type === 'income') {
+      const n = incomeItemsFromTxn(t).length;
+      if (n > 1) parts.push(toBn(n) + ' পণ্য');
+    } else if (t.category) {
+      parts.push(CAT_LABEL[t.category] || t.category);
+    }
+    return parts.join(' · ');
+  }
+
   /* ── RENDER TXN ── */
   function renderTxn() {
     const settings = deptSettings();
@@ -779,57 +908,19 @@
        <div class="stat-card"><span class="stat-num" style="color:var(--red)">${fmtAmt(sum.expense)}</span><span class="stat-label">ব্যয়</span></div>`;
     document.getElementById('txn-list').innerHTML = txns.length
       ? txns.map(t => {
-          const cat = t.category ? `<span class="cat-pill ${t.category}">${DeptAPI.esc(CAT_LABEL[t.category]||t.category)}</span>` : '';
-          const saleItems = t.metadata && Array.isArray(t.metadata.line_items) ? t.metadata.line_items : [];
-          const dateStr = fmtDate(t.date||t.txn_date);
-
-          let mainTitle;
-          if (t.description) {
-            mainTitle = DeptAPI.esc(t.description);
-          } else if (t.type === 'income' && saleItems.length) {
-            mainTitle = saleItems.map(i => saleLineTitle(i)).join(' · ');
-          } else if (t.type === 'income' && t.metadata && t.metadata.product_name) {
-            mainTitle = DeptAPI.esc(t.metadata.product_name) + ' ' + saleQtyLabel({
-              qty: t.metadata.qty,
-              unit: t.metadata.unit,
-              product_id: t.metadata.product_id
-            });
-          } else {
-            mainTitle = t.type === 'income' ? 'আয়' : 'ব্যয়';
-          }
-
-          const subParts = [];
-          if (t.type === 'expense' && cat) subParts.push(cat);
-          if (dateStr) subParts.push(`<span class="txn-line-date">${dateStr}</span>`);
-          const subHtml = subParts.length ? `<div class="txn-sub">${subParts.join(' ')}</div>` : '';
-
-          const items = t.type === 'expense' && t.metadata && t.metadata.line_items && t.metadata.line_items.length
-            ? `<div style="font-size:11px;color:var(--ink3);margin-top:2px;">${t.metadata.line_items.map(i=>DeptAPI.esc(i.name||i.product_name)+' '+fmtAmt(i.amount)).join(' · ')}</div>` : '';
-          const honor = Number(t.honor_amount || (t.metadata && t.metadata.honor_amount) || 0);
-          const honorHtml = honor > 0 ? `<div style="font-size:11px;color:var(--green);margin-top:2px;">মর্যাদা মূল্য: ${fmtAmt(honor)}</div>` : '';
           const isPending = !!pendingTxnRequest(String(t.id));
-          const pendingTag = isPending ? '<div class="pending-tag">⏳ অনুমতির অপেক্ষায়</div>' : '';
+          const pendingTag = isPending ? '<span class="pending-tag">অনুমতির অপেক্ষায়</span>' : '';
           const clickAttr = isPending ? '' : `onclick="openTxnDetail('${DeptAPI.esc(t.id)}')"`;
           const pendingClass = isPending ? ' txn-item--pending' : '';
-          if (t.type === 'income') {
-            return `<div class="txn-item income-row${pendingClass}" ${clickAttr}>
-              <div class="txn-cell date">${dateStr}</div>
-              <div class="txn-cell product">${DeptAPI.esc(incomeCellProduct(t))}</div>
-              <div class="txn-cell qty">${DeptAPI.esc(incomeCellQty(t))}</div>
-              <div class="txn-cell rate">${DeptAPI.esc(incomeCellRate(t))}</div>
-              <div class="txn-cell total">${fmtAmt(t.amount)}</div>
-            </div>`;
-          }
+          const sub = txnListSub(t);
           return `<div class="txn-item${pendingClass}" ${clickAttr}>
-            <div class="txn-icon ${t.type}">${t.type==='income'?'↑':'↓'}</div>
+            <div class="txn-icon ${t.type}">${t.type === 'income' ? '↑' : '↓'}</div>
             <div class="txn-info">
-              <div class="txn-line-main"><div class="txn-desc">${mainTitle}</div></div>
-              ${subHtml}
-              ${items}
-              ${honorHtml}
-              ${pendingTag}
+              <div class="txn-desc">${DeptAPI.esc(txnListTitle(t))}</div>
+              <div class="txn-sub">${DeptAPI.esc(sub)}${pendingTag ? ' ' + pendingTag : ''}</div>
             </div>
             <div class="txn-amt ${t.type}">${fmtAmt(t.amount)}</div>
+            ${isPending ? '' : '<div class="txn-item-chevron" aria-hidden="true">›</div>'}
           </div>`;
         }).join('')
       : '<div style="text-align:center;color:var(--ink3);padding:32px 0;font-size:13px;">এখনো কোনো লেনদেন নেই</div>';
@@ -1581,7 +1672,7 @@
     closeModal('modal-txn');
     editingTxnId = null;
     renderTxn();
-    renderInv();
+    afterInvChange();
   }
 
   /* ── REPORTS ── */
@@ -1681,9 +1772,103 @@
     if (deptSettings().accounting.show_honor !== false) cards.push(['মর্যাদা মূল্য', honor, 'var(--gold)']);
     document.getElementById('report-summary').innerHTML = cards.map(c => `<div class="report-card"><div class="label">${c[0]}</div><div class="value" style="color:${c[2]}">${fmtAmt(c[1])}</div></div>`).join('');
 
+    renderProductSaleLines(txns);
     renderTopProducts(txns);
     renderMonthlyChart();
     renderExpenseCategories(txns);
+  }
+
+  function reportSaleFilterState() {
+    return {
+      date: (document.getElementById('report-sale-filter-date') || {}).value || '',
+      product: (document.getElementById('report-sale-filter-product') || {}).value || '',
+      qty: String((document.getElementById('report-sale-filter-qty') || {}).value || '').trim().toLowerCase(),
+      rate: Number((document.getElementById('report-sale-filter-rate') || {}).value || 0),
+      total: Number((document.getElementById('report-sale-filter-total') || {}).value || 0)
+    };
+  }
+
+  function hasReportSaleFilters(f) {
+    return !!(f.date || f.product || f.qty || f.rate > 0 || f.total > 0);
+  }
+
+  function populateReportSaleProductFilter() {
+    const sel = document.getElementById('report-sale-filter-product');
+    if (!sel) return;
+    const selected = sel.value || '';
+    const prds = DeptAPI.Products.getByDept(deptId).filter(isSellableProduct);
+    sel.innerHTML = '<option value="">পণ্য/ধরন</option>' +
+      prds.map(p => `<option value="${p.id}"${String(p.id) === String(selected) ? ' selected' : ''}>${DeptAPI.esc(p.name)}</option>`).join('');
+  }
+
+  function renderProductSaleLinesFromReport() {
+    renderProductSaleLines(txnsForReport());
+  }
+
+  function reportSaleLineMatches(item, txn, f) {
+    const dateIso = String(txn.date || txn.txn_date || '').slice(0, 10);
+    if (f.date && dateIso !== f.date) return false;
+    if (f.product) {
+      if (!item) return false;
+      if (String(item.product_id || '') !== String(f.product)) return false;
+    }
+    if (f.qty) {
+      const qtyTxt = item ? String(saleQtyLabel(item) || '').toLowerCase() : '';
+      if (!qtyTxt.includes(f.qty)) return false;
+    }
+    const rate = item ? Number(item.rate || item.unit_price || 0) : 0;
+    if (f.rate > 0 && rate < f.rate) return false;
+    const amount = item
+      ? Number(item.amount != null ? item.amount : (Number(item.qty || 0) * rate))
+      : Number(txn.amount || 0);
+    if (f.total > 0 && amount < f.total) return false;
+    return true;
+  }
+
+  function renderProductSaleLines(txns) {
+    const box = document.getElementById('report-sale-lines');
+    if (!box) return;
+    populateReportSaleProductFilter();
+    const filters = reportSaleFilterState();
+    const filtering = hasReportSaleFilters(filters);
+    const incomeTxns = txns
+      .filter(t => t.type === 'income')
+      .slice()
+      .sort((a, b) => String(txnDate(b)).localeCompare(String(txnDate(a))));
+    const rows = [];
+    incomeTxns.forEach(t => {
+      const dateStr = fmtDate(t.date || t.txn_date);
+      const items = incomeItemsFromTxn(t);
+      const isPending = !!pendingTxnRequest(String(t.id));
+      const clickAttr = isPending ? '' : `onclick="openTxnDetail(${jsStr(t.id)})"`;
+      const pendingClass = isPending ? ' txn-item--pending' : '';
+      if (!items.length) {
+        if (filtering && !reportSaleLineMatches(null, t, filters)) return;
+        rows.push(`<div class="txn-item income-row${pendingClass}" ${clickAttr}>
+          <div class="txn-cell date">${dateStr}</div>
+          <div class="txn-cell product">${DeptAPI.esc(t.description || 'আয়')}</div>
+          <div class="txn-cell qty"></div>
+          <div class="txn-cell rate"></div>
+          <div class="txn-cell total">${fmtAmt(t.amount)}</div>
+        </div>`);
+        return;
+      }
+      items.forEach(i => {
+        if (filtering && !reportSaleLineMatches(i, t, filters)) return;
+        const rate = Number(i.rate || i.unit_price || 0);
+        const amount = Number(i.amount != null ? i.amount : (Number(i.qty || 0) * rate));
+        rows.push(`<div class="txn-item income-row${pendingClass}" ${clickAttr}>
+          <div class="txn-cell date">${dateStr}</div>
+          <div class="txn-cell product">${DeptAPI.esc(i.product_name || i.name || 'পণ্য')}</div>
+          <div class="txn-cell qty">${DeptAPI.esc(saleQtyLabel(i))}</div>
+          <div class="txn-cell rate">${rate > 0 ? fmtAmt(rate) : ''}</div>
+          <div class="txn-cell total">${fmtAmt(amount)}</div>
+        </div>`);
+      });
+    });
+    box.innerHTML = rows.length
+      ? rows.join('')
+      : '<div class="empty-report">' + (filtering ? 'ফিল্টারে কোনো বিক্রি নেই' : 'এই সময়ে কোনো পণ্য বিক্রি নেই') + '</div>';
   }
 
   function renderTopProducts(txns) {
@@ -1931,8 +2116,7 @@
       return;
     }
     closeModal('modal-product');
-    renderProducts();
-    renderInv();
+    afterInvChange();
     showToast(editId ? 'পণ্য আপডেট হয়েছে' : 'পণ্য যোগ হয়েছে');
   }
 
@@ -1985,8 +2169,7 @@
       showToast('ডাটাবেজ থেকে পণ্য বাদ যায়নি');
       return false;
     }
-    renderProducts();
-    renderInv();
+    afterInvChange();
     showToast(mode === 'zero_stock' ? 'মজুদ শূন্য করে তালিকা থেকে বাদ দেওয়া হয়েছে' : 'তালিকা থেকে বাদ দেওয়া হয়েছে — মজুদ তালিকায় আছে');
     return true;
   }
@@ -1999,58 +2182,619 @@
     return qty + ' ' + (item.unit || 'পিস');
   }
 
+  /* Safe for double-quoted HTML onclick="..." handlers */
+  function jsStr(v) {
+    return JSON.stringify(String(v == null ? '' : v)).replace(/"/g, '&quot;');
+  }
+
   function renderInv() {
     const items = DeptAPI.Inventory.getByDept(deptId);
     const lowAt = Number(deptSettings().inventory.low_stock_qty || 0);
-    document.getElementById('inv-list').innerHTML = items.length
-      ? items.map(i=>{
-        const isLow = lowAt > 0 && Number(i.quantity || 0) <= lowAt;
-        return `<div class="inv-item${isLow ? ' low-stock' : ''}">
+    const covered = new Set(items.filter(i => i.product_id).map(i => String(i.product_id)));
+    const zeroStockProducts = DeptAPI.Products.getByDept(deptId)
+      .filter(p => isStockProduct(p) && !covered.has(String(p.id)));
+    const rows = items.map(i => {
+      const product = i.product_id ? DeptAPI.Products.getById(i.product_id) : null;
+      const isLow = lowAt > 0 && Number(i.quantity || 0) <= lowAt;
+      const price = product ? Number(product.price || 0) : null;
+      const openFn = i.product_id
+        ? `openInvDetail({productId:${jsStr(i.product_id)},inventoryId:${jsStr(i.id)}})`
+        : `openInvDetail({inventoryId:${jsStr(i.id)},name:${jsStr(i.item_name || '')}})`;
+      return `<div class="inv-item${isLow ? ' low-stock' : ''}" onclick="${openFn}">
           <div class="list-avatar">📦</div>
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;">${DeptAPI.esc(i.item_name)}</div>
-            ${isCatalogOrphanInv(i) ? '<span class="catalog-off-pill">তালিকায় নেই</span>' : ''}
-            ${isLow ? '<span class="low-stock-pill">কম মজুদ</span>' : ''}
-            <p style="font-size:11px;color:var(--ink3);margin:0;">${DeptAPI.esc(invDisplayLine(i))}</p>
+            <p style="font-size:11px;color:var(--ink3);margin:0;">মজুদ: ${DeptAPI.esc(invDisplayLine(i))}${price != null ? ' · দাম ' + fmtAmt(price) : ''}</p>
+            ${isLow ? '<span class="low-stock-pill">কম আছে</span>' : ''}
           </div>
-          <div class="inv-actions">
-            <button type="button" class="inv-action-btn" onclick="openEditInv('${DeptAPI.esc(i.id)}')">এডিট</button>
-            <button type="button" class="inv-action-btn delete" onclick="deleteInv('${DeptAPI.esc(i.id)}')">মুছুন</button>
-          </div>
+          <div class="inv-item-chevron" aria-hidden="true">›</div>
         </div>`;
-      }).join('')
-      : '<div style="text-align:center;color:var(--ink3);padding:32px 0;font-size:13px;">কোনো মজুদ নেই</div>';
+    });
+    zeroStockProducts.forEach(p => {
+      const openFn = `openInvDetail({productId:${jsStr(p.id)}})`;
+      rows.push(`<div class="inv-item" onclick="${openFn}">
+          <div class="list-avatar">📦</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">${DeptAPI.esc(p.name)}</div>
+            <p style="font-size:11px;color:var(--ink3);margin:0;">মজুদ: ০ ${DeptAPI.esc(stockUnitFor(p))} · দাম ${fmtAmt(p.price || 0)}</p>
+          </div>
+          <div class="inv-item-chevron" aria-hidden="true">›</div>
+        </div>`);
+    });
+    document.getElementById('inv-list').innerHTML = rows.length
+      ? rows.join('')
+      : '<div style="text-align:center;color:var(--ink3);padding:32px 0;font-size:13px;">এখনো কিছু নেই — উপর থেকে যোগ করুন</div>';
+  }
+
+  function afterInvChange() {
+    invHistoryByKey = Object.create(null);
+    invHistoryInflight = Object.create(null);
+    renderInv();
+    refreshInvDetailIfOpen();
+  }
+
+  function syncInvNewProductFields() {
+    const wrap = document.getElementById('inv-new-product-fields');
+    const pickWrap = document.getElementById('inv-pick-wrap');
+    const title = document.getElementById('inv-modal-title');
+    const hint = document.getElementById('inv-add-hint');
+    const nameWrap = document.getElementById('inv-name-wrap');
+    const unitWrap = document.getElementById('inv-unit-wrap');
+    const nameInput = document.getElementById('inv-name');
+    const sel = document.getElementById('inv-product');
+    const hasPick = !!(sel && sel.value);
+    const isNew = invMode === 'stock_in' && !hasPick;
+    if (title) title.textContent = invMode === 'waste' ? 'কমান' : (hasPick ? 'মজুদ যোগ' : 'নতুন যোগ');
+    if (pickWrap) pickWrap.style.display = '';
+    if (wrap) wrap.style.display = isNew ? '' : 'none';
+    if (hint) {
+      hint.style.display = '';
+      hint.textContent = invMode === 'waste'
+        ? 'এই পরিমাণ বর্তমান মজুদ থেকে কমবে।'
+        : (hasPick ? 'এই পরিমাণ আগের মজুদের সাথে যোগ হবে।' : 'নতুন আইটেম তৈরি হবে; পরে আবার যোগ করলে স্টক বাড়বে।');
+    }
+    if (nameInput) {
+      nameInput.readOnly = hasPick || invMode === 'waste';
+      nameInput.style.opacity = nameInput.readOnly ? '0.7' : '';
+    }
+    if (nameWrap) nameWrap.style.display = isNew || hasPick ? '' : '';
+    if (unitWrap) {
+      const unitEl = document.getElementById('inv-unit');
+      if (unitEl) unitEl.disabled = hasPick || invMode === 'waste';
+    }
+  }
+
+  function findStockProductByName(name, unit) {
+    const n = String(name || '').trim().toLowerCase();
+    const u = String(unit || '').trim().toLowerCase();
+    if (!n) return null;
+    return DeptAPI.Products.getByDept(deptId).filter(isStockProduct).find(p => {
+      const sameName = String(p.name || '').trim().toLowerCase() === n;
+      if (!sameName) return false;
+      if (!u) return true;
+      return String(stockUnitFor(p) || '').trim().toLowerCase() === u
+        || String(p.unit || '').trim().toLowerCase() === u;
+    }) || null;
   }
 
   function openAddInv() {
-    ['inv-name','inv-qty','inv-unit','inv-notes'].forEach(id=>document.getElementById(id).value='');
-    setInvMode('stock_in');
-    populateInvProductDropdown();
+    ['inv-name','inv-qty','inv-notes','inv-price'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const sellable = document.getElementById('inv-sellable');
+    if (sellable) sellable.checked = true;
+    invMode = 'stock_in';
+    document.getElementById('inv-mode-in').classList.add('active');
+    document.getElementById('inv-mode-waste').classList.remove('active');
+    populateInvProductDropdown('— নতুন আইটেম —');
     document.getElementById('inv-unit').innerHTML = unitOptionsHtml(deptSettings().inventory.default_stock_unit || 'পিস');
+    document.getElementById('inv-unit').disabled = false;
+    syncInvNewProductFields();
     openModal('modal-inv');
+  }
+
+  function openAddInvForProduct(productId) {
+    openAddInv();
+    const sel = document.getElementById('inv-product');
+    if (sel) {
+      sel.value = productId || '';
+      onInvProductChange();
+    }
+  }
+
+  function openAddInvForInventory(inventoryId) {
+    const item = DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(inventoryId));
+    if (!item) return;
+    if (item.product_id) return openAddInvForProduct(item.product_id);
+    openAddInv();
+    document.getElementById('inv-name').value = item.item_name || '';
+    document.getElementById('inv-unit').innerHTML = unitOptionsHtml(item.unit || 'পিস');
+    syncInvNewProductFields();
+  }
+
+  function openReduceInvForProduct(productId) {
+    openAddInv();
+    setInvMode('waste');
+    const sel = document.getElementById('inv-product');
+    if (sel) {
+      sel.value = productId || '';
+      onInvProductChange();
+    }
+  }
+
+  function openReduceInvForInventory(inventoryId) {
+    const item = DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(inventoryId));
+    if (!item) return;
+    if (item.product_id) return openReduceInvForProduct(item.product_id);
+    openAddInv();
+    setInvMode('waste');
+    document.getElementById('inv-name').value = item.item_name || '';
+    document.getElementById('inv-unit').innerHTML = unitOptionsHtml(item.unit || 'পিস');
+    syncInvNewProductFields();
+  }
+
+  function openEditProductStock(productId) {
+    const p = DeptAPI.Products.getById(productId);
+    if (!p) return;
+    document.getElementById('inv-edit-id').value = '';
+    document.getElementById('inv-edit-product-id').value = p.id;
+    document.getElementById('inv-edit-name').value = p.name || '';
+    document.getElementById('inv-edit-stock-unit').innerHTML = unitOptionsHtml(stockUnitFor(p));
+    document.getElementById('inv-edit-price').value = p.price || 0;
+    document.getElementById('inv-edit-qty').value = '';
+    document.getElementById('inv-edit-sellable').checked = p.is_sellable !== false;
+    document.getElementById('inv-edit-notes').value = '';
+    const line = document.getElementById('inv-edit-stock-line');
+    if (line) line.textContent = 'বর্তমান মজুদ: ০ ' + stockUnitFor(p) + ' (পরিমাণ বদলাতে যোগ/কমান ব্যবহার করুন)';
+    const delBtn = document.getElementById('inv-edit-delete-btn');
+    if (delBtn) delBtn.style.display = 'none';
+    openModal('modal-inv-edit');
   }
 
   function setInvMode(mode) {
     invMode = mode === 'waste' ? 'waste' : 'stock_in';
     document.getElementById('inv-mode-in').classList.toggle('active', invMode === 'stock_in');
     document.getElementById('inv-mode-waste').classList.toggle('active', invMode === 'waste');
+    const prev = document.getElementById('inv-product') ? document.getElementById('inv-product').value : '';
+    populateInvProductDropdown(invMode === 'waste' ? '— বেছে নিন —' : '— নতুন আইটেম —');
+    const sel = document.getElementById('inv-product');
+    if (sel && prev && [...sel.options].some(o => o.value === prev)) {
+      sel.value = prev;
+      onInvProductChange();
+    } else if (invMode === 'waste' && sel && sel.options.length > 1 && !sel.value) {
+      sel.selectedIndex = 1;
+      onInvProductChange();
+    }
+    syncInvNewProductFields();
   }
 
-  function populateInvProductDropdown() {
+  function populateInvProductDropdown(emptyLabel) {
     const sel = document.getElementById('inv-product');
+    if (!sel) return;
     const prds = DeptAPI.Products.getByDept(deptId).filter(isStockProduct);
-    sel.innerHTML = '<option value="">— তালিকার বাইরে / নিজে লিখুন —</option>' +
-      prds.map(p=>`<option value="${p.id}" data-name="${DeptAPI.esc(p.name)}" data-unit="${DeptAPI.esc(p.unit)}" data-stock-unit="${DeptAPI.esc(stockUnitFor(p))}">${DeptAPI.esc(p.name)}</option>`).join('');
-    document.getElementById('inv-unit').innerHTML = unitOptionsHtml('পিস');
+    sel.innerHTML = `<option value="">${DeptAPI.esc(emptyLabel || '— নতুন আইটেম —')}</option>` +
+      prds.map(p=>`<option value="${p.id}" data-name="${DeptAPI.esc(p.name)}" data-unit="${DeptAPI.esc(p.unit)}" data-stock-unit="${DeptAPI.esc(stockUnitFor(p))}" data-price="${DeptAPI.esc(String(p.price || 0))}">${DeptAPI.esc(p.name)}</option>`).join('');
   }
 
   function onInvProductChange() {
     const sel = document.getElementById('inv-product');
-    if (!sel.value) return;
+    syncInvNewProductFields();
+    if (!sel || !sel.value) {
+      document.getElementById('inv-unit').disabled = false;
+      return;
+    }
     const opt = sel.options[sel.selectedIndex];
     document.getElementById('inv-name').value = opt.dataset.name || '';
     const stockUnit = opt.dataset.stockUnit || opt.dataset.unit || 'পিস';
     document.getElementById('inv-unit').innerHTML = unitOptionsHtml(stockUnit);
+    document.getElementById('inv-unit').disabled = true;
+    const priceEl = document.getElementById('inv-price');
+    if (priceEl && opt.dataset.price != null) priceEl.value = opt.dataset.price;
+  }
+
+  function onInvNameInput() {
+    /* new-item typing only */
+  }
+
+  let invHistoryByKey = Object.create(null);
+  let invHistoryInflight = Object.create(null);
+  let invHistoryNameFilter = '';
+  let invDetailCtx = null;
+  let invDetailTab = 'history'; /* history | add | reduce | edit */
+
+  function invReasonLabel(reason) {
+    const map = {
+      stock_in: 'যোগ',
+      waste: 'কমান / নষ্ট',
+      sale: 'বিক্রি',
+      adjustment: 'সমন্বয়'
+    };
+    return map[reason] || reason || '—';
+  }
+
+  function fmtInvHistWhen(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return toBn(day + '/' + m + '/' + y + ' · ' + hh + ':' + mm);
+    } catch (e) { return ''; }
+  }
+
+  function resolveInvDetailCtx(ctx) {
+    const raw = ctx && typeof ctx === 'object' ? ctx : {};
+    let product = raw.productId ? DeptAPI.Products.getById(raw.productId) : null;
+    let item = raw.inventoryId
+      ? DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(raw.inventoryId))
+      : null;
+    if (!item && product) {
+      item = DeptAPI.Inventory.getByDept(deptId).find(i => String(i.product_id) === String(product.id)) || null;
+    }
+    if (!product && item && item.product_id) product = DeptAPI.Products.getById(item.product_id) || null;
+    const name = (product && product.name) || (item && item.item_name) || raw.name || '—';
+    const qtyLine = item
+      ? invDisplayLine(item)
+      : ('০ ' + (product ? stockUnitFor(product) : 'পিস'));
+    const price = product ? Number(product.price || 0) : null;
+    const qty = item ? Number(item.quantity || 0) : 0;
+    const unit = product ? stockUnitFor(product) : ((item && item.unit) || 'পিস');
+    return {
+      productId: product ? product.id : (raw.productId || ''),
+      inventoryId: item ? item.id : (raw.inventoryId || ''),
+      name,
+      qtyLine,
+      price,
+      unit,
+      qty,
+      canReduce: qty > 0.000001,
+      canEdit: !!(product || item)
+    };
+  }
+
+  function closeInvDetail() {
+    invDetailTab = 'history';
+    invDetailCtx = null;
+    closeModal('modal-inv-history');
+  }
+
+  function syncInvDetailHead(ctx) {
+    const nameEl = document.getElementById('inv-detail-name');
+    const metaEl = document.getElementById('inv-detail-meta');
+    if (nameEl) nameEl.textContent = ctx.name || '—';
+    if (metaEl) {
+      metaEl.textContent = 'মজুদ: ' + (ctx.qtyLine || '—') +
+        (ctx.price != null ? ' · দাম ' + fmtAmt(ctx.price) : '');
+    }
+  }
+
+  function renderInvDetailActions(ctx) {
+    const box = document.getElementById('inv-detail-actions');
+    if (!box) return;
+    const reduceDisabled = !ctx.canReduce;
+    const editDisabled = !ctx.canEdit;
+    box.innerHTML =
+      `<button type="button" class="inv-action-btn${invDetailTab === 'history' ? ' active' : ''}" onclick="showInvDetailTab('history')">লেনদেন</button>` +
+      `<button type="button" class="inv-action-btn${invDetailTab === 'add' ? ' active' : ''}" onclick="showInvDetailTab('add')">যোগ</button>` +
+      `<button type="button" class="inv-action-btn${invDetailTab === 'reduce' ? ' active' : ''}"${reduceDisabled ? ' disabled style="opacity:.4;cursor:not-allowed;"' : ' onclick="showInvDetailTab(\'reduce\')"'}>কমান</button>` +
+      `<button type="button" class="inv-action-btn${invDetailTab === 'edit' ? ' active' : ''}"${editDisabled ? ' disabled style="opacity:.4;cursor:not-allowed;"' : ' onclick="showInvDetailTab(\'edit\')"'}>এডিট</button>`;
+  }
+
+  function prepareInvDetailQtyPanel(tab) {
+    const title = document.getElementById('inv-detail-qty-title');
+    const hint = document.getElementById('inv-detail-qty-hint');
+    const qtyEl = document.getElementById('inv-detail-qty');
+    const notesEl = document.getElementById('inv-detail-notes');
+    if (qtyEl) qtyEl.value = '';
+    if (notesEl) notesEl.value = '';
+    if (title) title.textContent = tab === 'reduce' ? 'কমান' : 'যোগ';
+    if (hint) {
+      hint.textContent = tab === 'reduce'
+        ? 'এই পরিমাণ বর্তমান মজুদ থেকে কমবে।'
+        : 'এই পরিমাণ আগের মজুদের সাথে যোগ হবে।';
+    }
+  }
+
+  function prepareInvDetailEditPanel(ctx) {
+    const item = ctx.inventoryId
+      ? DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(ctx.inventoryId))
+      : null;
+    const unit = ctx.unit || 'পিস';
+    document.getElementById('inv-detail-edit-name').value = ctx.name || '';
+    document.getElementById('inv-detail-edit-unit').innerHTML = unitOptionsHtml(unit);
+    document.getElementById('inv-detail-edit-price').value = ctx.price != null ? ctx.price : '';
+    document.getElementById('inv-detail-edit-notes').value = '';
+    const line = document.getElementById('inv-detail-edit-stock-line');
+    if (line) {
+      line.textContent = 'বর্তমান মজুদ: ' + (ctx.qtyLine || '—') + ' (পরিমাণ বদলাতে যোগ/কমান ব্যবহার করুন)';
+    }
+    const delBtn = document.getElementById('inv-detail-edit-delete-btn');
+    if (delBtn) delBtn.style.display = item ? '' : 'none';
+  }
+
+  function showInvDetailTab(tab) {
+    invDetailTab = (tab === 'add' || tab === 'reduce' || tab === 'edit') ? tab : 'history';
+    const ctx = resolveInvDetailCtx(invDetailCtx || {});
+    invDetailCtx = ctx;
+    if (invDetailTab === 'add' || invDetailTab === 'reduce') prepareInvDetailQtyPanel(invDetailTab);
+    if (invDetailTab === 'edit') prepareInvDetailEditPanel(ctx);
+    renderInvDetailActions(ctx);
+    const hist = document.getElementById('inv-detail-panel-history');
+    const qty = document.getElementById('inv-detail-panel-qty');
+    const edit = document.getElementById('inv-detail-panel-edit');
+    if (hist) hist.classList.toggle('active', invDetailTab === 'history');
+    if (qty) qty.classList.toggle('active', invDetailTab === 'add' || invDetailTab === 'reduce');
+    if (edit) edit.classList.toggle('active', invDetailTab === 'edit');
+    /* লেনদেন ট্যাবে ক্যাশ দেখাও — পুনরায় fetch নয় (ফ্ল্যাশ এড়াতে) */
+  }
+
+  async function openInvDetail(ctx) {
+    invDetailCtx = resolveInvDetailCtx(ctx || {});
+    invHistoryNameFilter = invDetailCtx.productId ? '' : String(invDetailCtx.name || '').trim().toLowerCase();
+    invDetailTab = 'history';
+    syncInvDetailHead(invDetailCtx);
+    showInvDetailTab('history');
+    openModal('modal-inv-history');
+    void renderInvHistory();
+  }
+
+  async function openInvHistory(productId) {
+    await openInvDetail({ productId: productId || '' });
+  }
+
+  async function openInvHistoryByName(name) {
+    await openInvDetail({ name: name || '' });
+  }
+
+  async function refreshInvDetailIfOpen() {
+    const modal = document.getElementById('modal-inv-history');
+    if (!modal || !modal.classList.contains('open') || !invDetailCtx) return;
+    invDetailCtx = resolveInvDetailCtx(invDetailCtx);
+    syncInvDetailHead(invDetailCtx);
+    invDetailTab = 'history';
+    showInvDetailTab('history');
+    await renderInvHistory({ force: true });
+  }
+
+  function invHistoryCacheKey(ctx) {
+    const c = ctx || invDetailCtx || {};
+    if (c.productId) return 'p:' + String(c.productId);
+    const name = String(c.name || invHistoryNameFilter || '').trim().toLowerCase();
+    return name ? 'n:' + name : 'all';
+  }
+
+  function paintInvHistory(rows) {
+    const list = document.getElementById('inv-hist-list');
+    if (!list) return;
+    const filterId = invDetailCtx && invDetailCtx.productId ? invDetailCtx.productId : '';
+    let out = rows || [];
+    if (!filterId && invHistoryNameFilter) {
+      out = out.filter(m => String(m.item_name || '').trim().toLowerCase() === invHistoryNameFilter);
+    }
+    list.innerHTML = out.length ? out.map(m => {
+      const delta = Number(m.quantity_delta || 0);
+      const qtyTxt = (delta > 0 ? '+' : '') + (window.DeptUnits ? DeptUnits.formatQty(delta) : delta) + ' ' + (m.unit || '');
+      const cls = delta >= 0 ? 'plus' : 'minus';
+      return `<div class="inv-hist-item">
+        <div class="inv-hist-top">
+          <div class="inv-hist-name">${DeptAPI.esc(invReasonLabel(m.reason))}</div>
+          <div class="inv-hist-qty ${cls}">${DeptAPI.esc(qtyTxt)}</div>
+        </div>
+        <div class="inv-hist-meta">${fmtInvHistWhen(m.created_at)}${m.notes ? ' · ' + DeptAPI.esc(m.notes) : ''}</div>
+      </div>`;
+    }).join('') : '<div style="text-align:center;color:var(--ink3);padding:24px 0;font-size:13px;">কোনো লেনদেন নেই</div>';
+  }
+
+  async function renderInvHistory(opts) {
+    const list = document.getElementById('inv-hist-list');
+    if (!list) return;
+    const force = !!(opts && opts.force);
+    const filterId = invDetailCtx && invDetailCtx.productId ? invDetailCtx.productId : '';
+    const key = invHistoryCacheKey(invDetailCtx);
+
+    if (!force && Array.isArray(invHistoryByKey[key])) {
+      paintInvHistory(invHistoryByKey[key]);
+      return;
+    }
+
+    if (Array.isArray(invHistoryByKey[key])) {
+      paintInvHistory(invHistoryByKey[key]);
+    } else {
+      list.innerHTML = '<div style="text-align:center;color:var(--ink3);padding:20px 0;font-size:12px;">লোড হচ্ছে…</div>';
+    }
+
+    if (invHistoryInflight[key]) {
+      try { await invHistoryInflight[key]; } catch (e) { /* painted below or error */ }
+      if (Array.isArray(invHistoryByKey[key])) paintInvHistory(invHistoryByKey[key]);
+      return;
+    }
+
+    invHistoryInflight[key] = (async () => {
+      const data = await DeptSync.listInventoryMovements(staffUserId, staffPin, deptId, filterId || null, 80);
+      invHistoryByKey[key] = data || [];
+    })();
+
+    try {
+      await invHistoryInflight[key];
+      paintInvHistory(invHistoryByKey[key] || []);
+    } catch (e) {
+      console.warn('[Dept] inventory history failed:', e);
+      if (!Array.isArray(invHistoryByKey[key])) {
+        list.innerHTML = '<div style="text-align:center;color:var(--red);padding:20px 0;font-size:12px;">বিবরণ লোড হয়নি</div>';
+      }
+    } finally {
+      delete invHistoryInflight[key];
+    }
+  }
+
+  async function saveInvDetailQty() {
+    const ctx = resolveInvDetailCtx(invDetailCtx || {});
+    if (!ctx.name || ctx.name === '—') { showToast('আইটেম পাওয়া যায়নি'); return; }
+    const qty = parseFloat(document.getElementById('inv-detail-qty').value);
+    const notes = document.getElementById('inv-detail-notes').value.trim();
+    const mode = invDetailTab === 'reduce' ? 'waste' : 'stock_in';
+    if (isNaN(qty) || qty <= 0) { showToast('পরিমাণ দিন'); return; }
+    if (mode === 'waste' && deptSettings().inventory.require_waste_note && !notes) {
+      showToast('নোট দিন');
+      return;
+    }
+    const unit = ctx.unit || 'পিস';
+    const productId = ctx.productId || '';
+    const delta = mode === 'waste' ? -Math.abs(qty) : Math.abs(qty);
+    if (delta < 0 && !validateSaleStock([{
+      product_id: productId || '',
+      product_name: ctx.name,
+      name: ctx.name,
+      unit,
+      qty: Math.abs(qty)
+    }], null)) return;
+    try {
+      await DeptSync.adjustInventory(staffUserId, staffPin, deptId, {
+        product_id: productId || null,
+        item_name: ctx.name,
+        unit,
+        quantity_delta: delta,
+        reason: mode,
+        notes
+      });
+    } catch (e) {
+      console.warn('[Dept] detail qty update failed:', e);
+      if (/stock|মজুদ|insufficient/i.test(String(e && e.message || e))) {
+        showToast('মজুদ যথেষ্ট নেই');
+        return;
+      }
+      showToast('সংরক্ষণ হয়নি');
+      return;
+    }
+    showToast('সংরক্ষণ হয়েছে');
+    afterInvChange();
+  }
+
+  async function saveInvDetailEdit() {
+    const ctx = resolveInvDetailCtx(invDetailCtx || {});
+    const item = ctx.inventoryId
+      ? DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(ctx.inventoryId))
+      : null;
+    const product = ctx.productId ? DeptAPI.Products.getById(ctx.productId) : null;
+    const name = document.getElementById('inv-detail-edit-name').value.trim();
+    const stockUnitName = document.getElementById('inv-detail-edit-unit').value.trim() || ctx.unit || 'পিস';
+    const price = parseFloat(document.getElementById('inv-detail-edit-price').value);
+    const notes = document.getElementById('inv-detail-edit-notes').value.trim();
+    const isSellable = product ? product.is_sellable !== false : true;
+    if (!name) { showToast('নাম দিন'); return; }
+
+    if (!item) {
+      if (!product) { showToast('আইটেম পাওয়া যায়নি'); return; }
+      try {
+        await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+          id: product.id,
+          name,
+          unit: product.unit || stockUnitName,
+          stock_unit: stockUnitName,
+          pack_size: product.pack_size == null ? null : product.pack_size,
+          price: isNaN(price) ? 0 : price,
+          is_active: true,
+          stock_product_id: product.stock_product_id || null,
+          is_stock_item: product.is_stock_item !== false,
+          is_sellable: isSellable
+        });
+      } catch (e) {
+        console.warn('[Dept] detail product edit failed:', e);
+        showToast('সংরক্ষণ হয়নি');
+        return;
+      }
+      showToast('সংরক্ষণ হয়েছে');
+      afterInvChange();
+      return;
+    }
+
+    const prevUnit = item.unit || 'পিস';
+    const safeQty = Number(item.quantity || 0);
+    const nameChanged = name.toLowerCase() !== String(item.item_name || '').toLowerCase();
+    const unitChanged = stockUnitName.toLowerCase() !== String(prevUnit).toLowerCase();
+    const priceChanged = !product || Math.abs((isNaN(price) ? 0 : price) - Number(product.price || 0)) >= 0.000001;
+    const needsProductCreate = isCatalogOrphanInv(item);
+    if (!nameChanged && !unitChanged && !priceChanged && !needsProductCreate) {
+      showToast('কোনো পরিবর্তন নেই');
+      showInvDetailTab('history');
+      return;
+    }
+    try {
+      let productId = product ? product.id : null;
+      if (needsProductCreate || !productId) {
+        productId = await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+          id: null,
+          name,
+          unit: stockUnitName,
+          stock_unit: stockUnitName,
+          pack_size: null,
+          price: isNaN(price) ? 0 : price,
+          is_active: true,
+          stock_product_id: null,
+          is_stock_item: true,
+          is_sellable: true
+        });
+        await DeptSync.adjustInventory(staffUserId, staffPin, deptId, {
+          product_id: productId,
+          item_name: name,
+          unit: stockUnitName,
+          quantity_delta: safeQty,
+          reason: 'adjustment',
+          notes: notes || 'মজুদ আইটেম সংযুক্ত'
+        });
+        await DeptSync.deleteInventoryItem(staffUserId, staffPin, deptId, item.id, 'orphan মজুদ রূপান্তর');
+        invDetailCtx = { productId: productId };
+      } else {
+        if (nameChanged || priceChanged || unitChanged) {
+          await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+            id: productId,
+            name,
+            unit: product.unit || stockUnitName,
+            stock_unit: stockUnitName,
+            pack_size: product.pack_size == null ? null : product.pack_size,
+            price: isNaN(price) ? 0 : price,
+            is_active: true,
+            stock_product_id: product.stock_product_id || null,
+            is_stock_item: product.is_stock_item !== false,
+            is_sellable: isSellable
+          });
+        }
+        if (nameChanged || unitChanged) {
+          await DeptSync.updateInventoryItem(staffUserId, staffPin, deptId, {
+            inventory_id: item.id,
+            item_name: name,
+            unit: stockUnitName,
+            quantity: unitChanged ? safeQty : null,
+            notes: notes || 'মজুদ সংশোধন'
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[Dept] detail inventory edit failed:', e);
+      const err = String((e && e.message) || e || '');
+      if (/duplicate/i.test(err)) {
+        showToast('একই নাম ও এককে আরেকটি আছে');
+        return;
+      }
+      showToast('সংরক্ষণ হয়নি');
+      return;
+    }
+    showToast('সংরক্ষণ হয়েছে');
+    afterInvChange();
+  }
+
+  async function deleteInvDetail() {
+    const ctx = resolveInvDetailCtx(invDetailCtx || {});
+    if (!ctx.inventoryId) {
+      showToast('মজুদ পাওয়া যায়নি');
+      return;
+    }
+    await deleteInv(ctx.inventoryId);
   }
 
   let invEditBaseUnit = 'পিস';
@@ -2065,10 +2809,24 @@
     document.getElementById('inv-edit-product-id').value = item.product_id || '';
     document.getElementById('inv-edit-name').value = item.item_name || '';
     document.getElementById('inv-edit-stock-unit').innerHTML = unitOptionsHtml(stockUnitName);
-    document.getElementById('inv-edit-current').textContent = invDisplayLine(item);
-    document.getElementById('inv-edit-qty').value = window.DeptUnits ? DeptUnits.formatQty(item.quantity) : item.quantity;
+    const cur = document.getElementById('inv-edit-current');
+    if (cur) cur.textContent = invDisplayLine(item);
+    document.getElementById('inv-edit-qty').value = String(item.quantity == null ? '' : item.quantity);
+    document.getElementById('inv-edit-price').value = product ? (product.price || 0) : '';
+    document.getElementById('inv-edit-sellable').checked = product ? product.is_sellable !== false : true;
     document.getElementById('inv-edit-notes').value = '';
+    const line = document.getElementById('inv-edit-stock-line');
+    if (line) line.textContent = 'বর্তমান মজুদ: ' + invDisplayLine(item) + ' (পরিমাণ বদলাতে যোগ/কমান ব্যবহার করুন)';
+    const delBtn = document.getElementById('inv-edit-delete-btn');
+    if (delBtn) delBtn.style.display = '';
     openModal('modal-inv-edit');
+  }
+
+  function openAdvancedProductFromInvEdit() {
+    const productId = document.getElementById('inv-edit-product-id').value;
+    if (!productId) return;
+    closeModal('modal-inv-edit');
+    openEditProduct(productId);
   }
 
   function onInvEditUnitChange() {
@@ -2111,7 +2869,10 @@
       return;
     }
     closeModal('modal-inv-edit');
-    renderInv();
+    if (invDetailCtx && String(invDetailCtx.inventoryId || '') === String(id)) {
+      closeInvDetail();
+    }
+    afterInvChange();
     showToast('মজুদ মুছে ফেলা হয়েছে');
   }
 
@@ -2122,63 +2883,162 @@
   }
 
   async function saveInvEdit() {
-    const item = DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(document.getElementById('inv-edit-id').value));
-    if (!item) { showToast('মজুদ পাওয়া যায়নি'); return; }
+    const invId = document.getElementById('inv-edit-id').value;
+    const productIdRaw = document.getElementById('inv-edit-product-id').value;
+    const item = invId ? DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(invId)) : null;
+    const product = productIdRaw
+      ? DeptAPI.Products.getById(productIdRaw)
+      : (item && item.product_id ? DeptAPI.Products.getById(item.product_id) : null);
     const name = document.getElementById('inv-edit-name').value.trim();
-    const stockUnitName = document.getElementById('inv-edit-stock-unit').value.trim() || item.unit || 'পিস';
-    const target = parseFloat(document.getElementById('inv-edit-qty').value);
+    const stockUnitName = document.getElementById('inv-edit-stock-unit').value.trim() || (item && item.unit) || (product && stockUnitFor(product)) || 'পিস';
+    const price = parseFloat(document.getElementById('inv-edit-price').value);
+    const isSellable = document.getElementById('inv-edit-sellable').checked;
     const notes = document.getElementById('inv-edit-notes').value.trim();
-    if (!name) { showToast('পণ্যের নাম দিন'); return; }
-    if (isNaN(target) || target < 0) { showToast('সঠিক পরিমাণ দিন'); return; }
+    if (!name) { showToast('নাম দিন'); return; }
+
+    /* Product-only row (qty 0, no inventory yet) */
+    if (!item) {
+      if (!product) { showToast('আইটেম পাওয়া যায়নি'); return; }
+      try {
+        await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+          id: product.id,
+          name,
+          unit: product.unit || stockUnitName,
+          stock_unit: stockUnitName,
+          pack_size: product.pack_size == null ? null : product.pack_size,
+          price: isNaN(price) ? 0 : price,
+          is_active: true,
+          stock_product_id: product.stock_product_id || null,
+          is_stock_item: product.is_stock_item !== false,
+          is_sellable: isSellable
+        });
+      } catch (e) {
+        console.warn('[Dept] product edit failed:', e);
+        showToast('সংরক্ষণ হয়নি');
+        return;
+      }
+      closeModal('modal-inv-edit');
+      afterInvChange();
+      showToast('সংরক্ষণ হয়েছে');
+      return;
+    }
+
     const prevUnit = item.unit || 'পিস';
+    const keepQty = Number(document.getElementById('inv-edit-qty').value);
+    const safeQty = isNaN(keepQty) ? Number(item.quantity || 0) : keepQty;
     const nameChanged = name.toLowerCase() !== String(item.item_name || '').toLowerCase();
     const unitChanged = stockUnitName.toLowerCase() !== String(prevUnit).toLowerCase();
-    const qtyChanged = Math.abs(target - Number(item.quantity || 0)) >= 0.000001;
-    if (!nameChanged && !unitChanged && !qtyChanged) {
+    const priceChanged = !product || Math.abs((isNaN(price) ? 0 : price) - Number(product.price || 0)) >= 0.000001;
+    const sellableChanged = !product || ((product.is_sellable !== false) !== isSellable);
+    const needsProductCreate = isCatalogOrphanInv(item);
+    if (!nameChanged && !unitChanged && !priceChanged && !sellableChanged && !needsProductCreate) {
       closeModal('modal-inv-edit');
       showToast('কোনো পরিবর্তন নেই');
       return;
     }
     try {
-      await DeptSync.updateInventoryItem(staffUserId, staffPin, deptId, {
-        inventory_id: item.id,
-        item_name: name,
-        unit: stockUnitName,
-        quantity: (qtyChanged || !unitChanged) ? target : null,
-        notes: notes || 'মজুদ সংশোধন'
-      });
+      let productId = product ? product.id : null;
+      if (needsProductCreate || !productId) {
+        productId = await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+          id: null,
+          name,
+          unit: stockUnitName,
+          stock_unit: stockUnitName,
+          pack_size: null,
+          price: isNaN(price) ? 0 : price,
+          is_active: true,
+          stock_product_id: null,
+          is_stock_item: true,
+          is_sellable: isSellable
+        });
+        await DeptSync.adjustInventory(staffUserId, staffPin, deptId, {
+          product_id: productId,
+          item_name: name,
+          unit: stockUnitName,
+          quantity_delta: safeQty,
+          reason: 'adjustment',
+          notes: notes || 'মজুদ আইটেম সংযুক্ত'
+        });
+        await DeptSync.deleteInventoryItem(staffUserId, staffPin, deptId, item.id, 'orphan মজুদ রূপান্তর');
+      } else {
+        if (nameChanged || unitChanged || priceChanged || sellableChanged) {
+          await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+            id: productId,
+            name,
+            unit: product.unit || stockUnitName,
+            stock_unit: stockUnitName,
+            pack_size: product.pack_size == null ? null : product.pack_size,
+            price: isNaN(price) ? 0 : price,
+            is_active: true,
+            stock_product_id: product.stock_product_id || null,
+            is_stock_item: product.is_stock_item !== false,
+            is_sellable: isSellable
+          });
+        }
+        if (nameChanged || unitChanged) {
+          await DeptSync.updateInventoryItem(staffUserId, staffPin, deptId, {
+            inventory_id: item.id,
+            item_name: name,
+            unit: stockUnitName,
+            quantity: unitChanged ? safeQty : null,
+            notes: notes || 'মজুদ সংশোধন'
+          });
+        }
+      }
     } catch (e) {
       console.warn('[Dept] inventory edit failed:', e);
       const err = String((e && e.message) || e || '');
       if (/duplicate/i.test(err)) {
-        showToast('একই নাম ও এককে আরেকটি মজুদ আছে');
+        showToast('একই নাম ও এককে আরেকটি আছে');
         return;
       }
-      if (/stock|মজুদ|insufficient/i.test(err)) {
-        showToast('মজুদ যথেষ্ট নেই — আপডেট হয়নি');
-        return;
-      }
-      showToast('ডাটাবেজে মজুদ আপডেট হয়নি');
+      showToast('সংরক্ষণ হয়নি');
       return;
     }
     closeModal('modal-inv-edit');
-    renderInv();
-    showToast('মজুদ সংশোধন হয়েছে');
+    afterInvChange();
+    showToast('সংরক্ষণ হয়েছে');
   }
 
   async function saveInv() {
     const name = document.getElementById('inv-name').value.trim();
     const qty  = parseFloat(document.getElementById('inv-qty').value);
     const unit = document.getElementById('inv-unit').value.trim();
-    const productId = document.getElementById('inv-product').value;
+    let productId = document.getElementById('inv-product').value || '';
     const notes = document.getElementById('inv-notes').value.trim();
-    if (!name) { showToast('পণ্যের নাম দিন'); return; }
+    const price = parseFloat(document.getElementById('inv-price').value);
+    const isSellable = document.getElementById('inv-sellable').checked;
+    if (!name) { showToast('নাম দিন'); return; }
     if (!unit) { showToast('একক দিন'); return; }
     if (isNaN(qty) || qty <= 0) { showToast('পরিমাণ দিন'); return; }
+    if (invMode === 'waste' && !productId) {
+      const matched = findStockProductByName(name, unit);
+      productId = matched ? matched.id : '';
+      if (!productId) { showToast('তালিকা থেকে বেছে নিন'); return; }
+    }
     const delta = invMode === 'waste' ? -Math.abs(qty) : Math.abs(qty);
-    if (invMode === 'waste' && deptSettings().inventory.require_waste_note && !notes) { showToast('নষ্ট/বাতিলের নোট দিন'); return; }
+    if (invMode === 'waste' && deptSettings().inventory.require_waste_note && !notes) { showToast('নোট দিন'); return; }
     if (delta < 0 && !validateSaleStock([{ product_id: productId || '', product_name:name, name, unit, qty:Math.abs(qty) }], null)) return;
     try {
+      if (!productId && invMode === 'stock_in') {
+        const existing = findStockProductByName(name, unit);
+        if (existing) {
+          productId = existing.id;
+        } else {
+          productId = await DeptSync.saveProduct(staffUserId, staffPin, deptId, {
+            id: null,
+            name,
+            unit,
+            stock_unit: unit,
+            pack_size: null,
+            price: isNaN(price) ? 0 : price,
+            is_active: true,
+            stock_product_id: null,
+            is_stock_item: true,
+            is_sellable: isSellable
+          });
+        }
+      }
       await DeptSync.adjustInventory(staffUserId, staffPin, deptId, {
         product_id: productId || null,
         item_name: name,
@@ -2190,15 +3050,15 @@
     } catch (e) {
       console.warn('[Dept] inventory update failed:', e);
       if (/stock|মজুদ|insufficient/i.test(String(e && e.message || e))) {
-        showToast('মজুদ যথেষ্ট নেই — আপডেট হয়নি');
+        showToast('মজুদ যথেষ্ট নেই');
         return;
       }
-      showToast('ডাটাবেজে মজুদ আপডেট হয়নি');
+      showToast('সংরক্ষণ হয়নি');
       return;
     }
     closeModal('modal-inv');
-    renderInv();
-    showToast('মজুদ আপডেট হয়েছে');
+    afterInvChange();
+    showToast('সংরক্ষণ হয়েছে');
   }
 
   function switchDeptSettingsTab(tab) {

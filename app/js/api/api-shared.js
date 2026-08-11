@@ -960,6 +960,15 @@ const MMSharedAPI = (() => {
         p_notes: notes || null,
       });
     },
+    listDeptInventoryMovements(actorId, pin, deptCode, productId, limit) {
+      return rpc('mdr_dept_rel_list_inventory_movements', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_dept_code: deptCode,
+        p_product_id: productId && /^[0-9a-f-]{36}$/i.test(String(productId)) ? productId : null,
+        p_limit: Math.max(1, Math.min(Number(limit) || 50, 200)),
+      });
+    },
     classRoutineGet(actorId, pin, classCode, routineId) {
       return rpc('mdr_rel_class_routine_get', {
         p_actor_id: actorId,

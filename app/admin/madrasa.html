@@ -768,10 +768,7 @@
   }
 
   function deptDisplayName(name) {
-    return String(name || '')
-      .replace(/বেকারি|bakery/gi, 'মাখাবিজ')
-      .replace(/স্টোর|store/gi, 'খাজানা')
-      .replace(/নার্সারি|nursery/gi, 'মাশতাল');
+    return DeptAPI.displayName ? DeptAPI.displayName(name) : String(name || '');
   }
 
   function renderDepartmentSlide() {
