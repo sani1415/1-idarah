@@ -21,3 +21,4 @@ output/
 !app/madrasa/templates/
 !app/madrasa/templates/daftar-hisab-template.xlsx
 !app/madrasa/templates/daftar-hisab-template-v2.xlsx
+app/prototype
