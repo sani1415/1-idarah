@@ -356,6 +356,10 @@
       <span class="shortcut-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
       <span class="shortcut-label">নিজাম</span>
     </div>
+    <div class="shortcut-card" data-admin-perm="teacher_hazira" onclick="openDeptRoute('/madrasa/admin/teacher-hazira.html')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')this.click()">
+      <span class="shortcut-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M16 19l2 2 4-4"/></svg></span>
+      <span class="shortcut-label">শিক্ষক হাজিরা<span id="hz-hub-badge" style="display:none;min-width:16px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:9px;font-weight:700;line-height:16px;margin-left:4px;vertical-align:middle;"></span></span>
+    </div>
     <div class="shortcut-card" data-admin-perm="exams" onclick="openDeptRoute('/madrasa/admin/exams.html')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')this.click()">
       <span class="shortcut-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6M10 12h4M10 16h4"/></svg></span>
       <span class="shortcut-label">পরীক্ষা</span>
@@ -1531,6 +1535,26 @@
     }
   }
   MMLoading.run(initDashboard);
+
+  (async function loadHaziraBadge() {
+    const el = document.getElementById('hz-hub-badge');
+    if (!el || !MMSession.canAdmin('teacher_hazira') || !window.MMSharedAPI || !MMSharedAPI.darsAdminBoard) return;
+    try {
+      const res = await MMSharedAPI.darsAdminBoard(MMSession.getAdminUserId(), MMSession.getAdminPin(), null);
+      if (!res || !res.ok) return;
+      let n = 0;
+      (res.classes || []).forEach(c => (c.slots || []).forEach(s => {
+        if (s.status === 'auto' || s.status === 'missed' || s.status === 'late') n++;
+      }));
+      if (n > 0) {
+        el.textContent = String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+        el.style.display = 'inline-block';
+        el.title = 'আজ যাচাই বাকি';
+      }
+    } catch (e) {
+      console.warn('hazira badge failed', e);
+    }
+  })();
 </script>
 <script src="../js/shared/admin-nav.js?v=20260521-akhlaq-consistency"></script>
 </body>

@@ -1006,6 +1006,106 @@ const MMSharedAPI = (() => {
         p_pin: pin,
       });
     },
+    darsClassTeachers(actorId, pin) {
+      return rpc('mdr_rel_dars_class_teachers', {
+        p_actor_id: actorId,
+        p_pin: pin,
+      });
+    },
+    darsKioskGet(actorId, pin) {
+      return rpc('mdr_rel_dars_kiosk_get', {
+        p_actor_id: actorId,
+        p_pin: pin,
+      });
+    },
+    darsStart(actorId, pin, startMin, teacherPin, closePrev) {
+      return rpc('mdr_rel_dars_start', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_start_min: startMin,
+        p_teacher_pin: teacherPin,
+        p_close_prev: !!closePrev,
+      });
+    },
+    darsEnd(actorId, pin, startMin, teacherPin) {
+      return rpc('mdr_rel_dars_end', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_start_min: startMin,
+        p_teacher_pin: teacherPin,
+      });
+    },
+    darsClassOffSet(actorId, pin, date, off, note) {
+      return rpc('mdr_rel_dars_class_off_set', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_date: date,
+        p_off: !!off,
+        p_note: note || null,
+      });
+    },
+    darsAdminBootstrap(actorId, pin) {
+      return rpc('mdr_rel_dars_admin_bootstrap', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+      });
+    },
+    darsAdminBoard(actorId, pin, date) {
+      return rpc('mdr_rel_dars_admin_board', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_date: date || null,
+      });
+    },
+    darsAdminReport(actorId, pin, classId, from, to) {
+      return rpc('mdr_rel_dars_admin_report', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_class_id: classId || null,
+        p_from: from,
+        p_to: to,
+      });
+    },
+    darsAdminFix(actorId, pin, classId, date, startMin, startedMin, endedMin, reason) {
+      return rpc('mdr_rel_dars_admin_fix', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_class_id: classId,
+        p_date: date,
+        p_start_min: startMin,
+        p_started_min: startedMin,
+        p_ended_min: endedMin,
+        p_reason: reason,
+      });
+    },
+    darsAdminTeacherSave(actorId, pin, teacher) {
+      return rpc('mdr_rel_dars_admin_teacher_save', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_teacher_id: teacher.id || null,
+        p_name: teacher.name,
+        p_teacher_pin: teacher.pin || null,
+        p_class_ids: teacher.class_ids || [],
+        p_is_active: teacher.is_active !== false,
+      });
+    },
+    darsAdminHolidaySet(actorId, pin, date, classId, on, note) {
+      return rpc('mdr_rel_dars_admin_holiday_set', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_date: date,
+        p_class_id: classId || null,
+        p_on: !!on,
+        p_note: note || null,
+      });
+    },
+    darsAdminSettingsSave(actorId, pin, fridayOff) {
+      return rpc('mdr_rel_dars_admin_settings_save', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_friday_off: !!fridayOff,
+      });
+    },
   };
 })();
 
