@@ -194,7 +194,7 @@
       '<div class="dan-title-sub">নোটে ট্যাপ করলে সম্পাদনা খুলবে</div></div>' +
       '<button type="button" class="modal-close" aria-label="বন্ধ" onclick="MDRDaftarNotes.close()">✕</button>' +
       '</div>' +
-      '<p class="dan-hint">চিন্তা, পরিকল্পনা বা ঘটনার বিবরণ। লগইন থাকলে ডেটাবেসে সংরক্ষিত। সংযোগ না থাকলে ব্রাউজারে সংরক্ষিত হবে।</p>' +
+      '<p class="dan-hint">চিন্তা, পরিকল্পনা বা ঘটনার বিবরণ। ডাটাবেজে সংরক্ষিত হয়।</p>' +
       '<div class="dan-list-wrap"><div class="dan-list" id="dan-list-root"></div></div>' +
       '<div class="dan-composer">' +
       '<div class="dan-editor-label" id="dan-editor-label">নতুন নোট</div>' +
@@ -348,8 +348,11 @@
           syncEditorChrome();
           helpers.showToast(wasEdit ? 'নোট আপডেট হয়েছে ✓' : 'নোট সংরক্ষিত ✓');
         })
-        .catch(function () {
-          saveLocalFallback(text);
+        .catch(function (e) {
+          /* ফোনে রাখা হয় না — লেখা বক্সেই থাকে, আবার চাপুন */
+          helpers.showToast(String((e && e.message) || e) === 'pin_locked'
+            ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন'
+            : 'সংরক্ষণ হয়নি — ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন');
         });
       return;
     }

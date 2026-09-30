@@ -73,11 +73,10 @@
 </nav>
 
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="../../supabase-config.js"></script>
 <script src="../../js/api/api-shared.js?v=20260717-photo-daftar"></script>
 <script src="../../js/api/api-mdr.js"></script>
-<script src="../../js/core/mm-sample-data.js"></script>
 <script src="../../js/api/api.js?v=20260517-attendance-consistency"></script>
 <script src="../../js/core/mm-hijri.js"></script>
 <script src="../../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
@@ -181,7 +180,7 @@
     try {
       await MDRSupabaseSync.syncAdminStudents();
     } catch (e) {
-      showToast('Supabase ছাত্র তালিকা আনা যায়নি');
+      showToast('ছাত্র তালিকা আনা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন');
       console.warn('madrasa supabase sync failed', e);
     }
     renderAll();

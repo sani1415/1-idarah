@@ -1611,38 +1611,6 @@ const API = (() => {
     if (changed) save(KEYS.classes, next);
   }
 
-  const OldMadrasaImport = {
-    summarize(pack) {
-      const data = pack || {};
-      const hifzClassIds = new Set((Array.isArray(data.classes) ? data.classes : []).filter(isHifzClass).map((c) => c.id));
-      const classes = (Array.isArray(data.classes) ? data.classes : []).filter((c) => !hifzClassIds.has(c.id) && !isHifzClass(c));
-      const students = (Array.isArray(data.students) ? data.students : []).filter((s) => !hifzClassIds.has(s.class_id));
-      const kitabs = (Array.isArray(data.kitabs) ? data.kitabs : []).filter((k) => !hifzClassIds.has(k.class_id));
-      return {
-        classes: classes.length,
-        students: students.length,
-        kitabs: kitabs.length,
-      };
-    },
-    replaceCoreData(pack) {
-      if (!pack || !Array.isArray(pack.classes) || !Array.isArray(pack.students) || !Array.isArray(pack.kitabs)) {
-        throw new Error('invalid import pack');
-      }
-      const hifzClassIds = new Set(pack.classes.filter(isHifzClass).map((c) => c.id));
-      const baseClassIds = new Set(pack.classes.filter((c) => !hifzClassIds.has(c.id) && !isHifzClass(c)).map((c) => c.id));
-      save(KEYS.classes, pack.classes.filter((c) => baseClassIds.has(c.id)).map(normalizeClass));
-      save(KEYS.students, pack.students.map((s) => {
-        if (!hifzClassIds.has(s.class_id)) return s;
-        return { ...s, class_id: '', hifz: true, active: false, import_needs_review: true };
-      }));
-      save(KEYS.kitabs, pack.kitabs.filter((k) => baseClassIds.has(k.class_id)));
-      save(KEYS.kitab_prog, Array.isArray(pack.kitab_progress) ? pack.kitab_progress : []);
-      [KEYS.attendance, KEYS.khuluk, KEYS.logs, KEYS.fees, KEYS.exams, KEYS.results].forEach((key) => save(key, []));
-      persistSaveArr('mm_withdrawals', []);
-      return this.summarize(pack);
-    },
-  };
-
   /* ── INIT ── */
   seedIfEmpty();
   purgeKnownSampleData();
@@ -1654,7 +1622,6 @@ const API = (() => {
   return {
     Students, Classes, Teachers, Attendance, KitabProgress, Khuluk, Logs, Fees, Exams,
     Settings, Sessions, Holidays,
-    OldMadrasaImport,
     persistLoadArr, persistSaveArr,
     hydrateSessionCache, clearSessionCache, isSessionCacheWarm, isDaftarSessionCacheWarm, hasSessionCacheEntry,
     markDaftarBootstrapComplete, persistDaftarAttendanceSessionCache, applyAttendanceDateIndexFromServer,

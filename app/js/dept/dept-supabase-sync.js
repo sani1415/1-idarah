@@ -43,7 +43,6 @@
       name: d.name || '',
       emoji: normalizeEmoji(d.code, d.emoji),
       is_active: d.is_active !== false,
-      pin: d.head_pin || '',
       head_user_id: d.head_user_id ? String(d.head_user_id) : '',
       head_name: d.head_name || '',
       head_login_id: d.head_login_id || '',

@@ -1,0 +1,133 @@
+  /* ── shared stats hero ── */
+  .kh-hero { background:var(--ink); border-radius:var(--radius); overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow); min-height:78px; }
+  .kh-hero-stats { display:grid; grid-template-columns:repeat(3,1fr); min-height:78px; align-items:stretch; }
+  .kh-stat { padding:14px 8px; text-align:center; border-right:1px solid rgba(255,255,255,.08); display:flex; flex-direction:column; justify-content:center; }
+  .kh-stat:last-child { border-right:none; }
+  .kh-stat-val { font-family:'Tiro Bangla',serif; font-size:18px; font-weight:700; color:var(--gold2); line-height:1.15; display:block; min-height:22px; }
+  .kh-stat-val.green { color:#7dcea0; }
+  .kh-stat-val.red { color:#f1948a; }
+  .kh-stat-lbl { font-size:10px; color:rgba(255,255,255,.62); margin-top:4px; display:block; line-height:1.3; min-height:26px; }
+
+  /* ── মাখদুম list ── */
+  .ben-card { background:#fff; border-radius:var(--radius); padding:14px 15px; box-shadow:var(--shadow); margin-bottom:10px; cursor:pointer; transition:transform .12s, box-shadow .12s; border:1px solid rgba(26,18,8,.04); }
+  .ben-card:active { transform:scale(.985); }
+  .ben-top { display:flex; align-items:center; gap:12px; }
+  .ben-avatar { width:46px; height:46px; border-radius:50%; background:var(--ink); color:var(--gold2); display:flex; align-items:center; justify-content:center; font-family:'Tiro Bangla',serif; font-size:17px; font-weight:700; flex-shrink:0; }
+  .ben-info { flex:1; min-width:0; }
+  .ben-name { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:700; color:var(--ink2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ben-addr { font-size:11px; color:var(--ink3); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ben-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .ben-chip { font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; background:var(--cream2); color:var(--ink3); }
+  .ben-chip.amt { background:rgba(39,174,96,.1); color:var(--green); }
+  .ben-side { text-align:right; flex-shrink:0; }
+  .ben-side-amt { font-family:'Tiro Bangla',serif; font-size:14px; font-weight:700; color:var(--red); }
+  .ben-side-sub { font-size:10px; color:var(--ink3); margin-top:2px; }
+  .kh-empty { text-align:center; color:var(--ink3); padding:36px 16px; font-size:13px; background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow); }
+
+  /* ── মাখদুম detail profile ── */
+  .bd-profile { background:#fff; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:12px; border:1px solid rgba(26,18,8,.04); }
+  .bd-profile-top { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .bd-avatar { width:56px; height:56px; border-radius:50%; background:var(--ink); color:var(--gold2); display:flex; align-items:center; justify-content:center; font-family:'Tiro Bangla',serif; font-size:22px; font-weight:700; flex-shrink:0; }
+  .bd-name { font-family:'Tiro Bangla',serif; font-size:17px; font-weight:700; color:var(--ink2); line-height:1.3; }
+  .bd-addr { font-size:12px; color:var(--ink3); margin-top:3px; }
+  .bd-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .bd-stat { background:var(--cream); border-radius:var(--radius-sm); padding:10px 8px; text-align:center; }
+  .bd-stat-val { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:700; color:var(--ink2); display:block; }
+  .bd-stat-val.red { color:var(--red); }
+  .bd-stat-lbl { font-size:10px; color:var(--ink3); margin-top:2px; display:block; }
+  .bd-info-grid { display:flex; flex-direction:column; gap:6px; }
+  .bd-info-row { font-size:13px; line-height:1.45; }
+  .bd-info-row span { color:var(--ink3); }
+
+  /* ── activity timeline ── */
+  .act-item { background:#fff; border-radius:var(--radius-sm); padding:0 0 0 14px; margin-bottom:10px; position:relative; border-left:3px solid var(--gold); box-shadow:var(--shadow); }
+  .act-inner { padding:12px 14px 12px 0; }
+  .act-head { display:flex; align-items:flex-start; gap:8px; margin-bottom:5px; }
+  .act-emoji { font-size:18px; line-height:1.2; flex-shrink:0; }
+  .act-title { font-size:13px; font-weight:700; color:var(--ink); flex:1; line-height:1.4; }
+  .act-amt { font-family:'Tiro Bangla',serif; font-size:13px; font-weight:700; color:var(--red); flex-shrink:0; }
+  .act-desc { font-size:12px; color:var(--ink3); line-height:1.55; }
+  .act-date { font-size:10px; color:var(--ink3); margin-top:5px; }
+  .item-actions { display:none; gap:6px; justify-content:flex-end; margin-top:10px; padding-top:8px; border-top:1px solid var(--cream2); }
+  .act-item.open .item-actions { display:flex; }
+  .mini-action { border:1px solid var(--cream3); background:var(--cream); color:var(--ink2); border-radius:8px; padding:6px 10px; font-family:'Tiro Bangla',serif; font-size:11px; font-weight:700; cursor:pointer; }
+  .mini-action.danger { color:var(--red); border-color:rgba(178,67,51,.25); background:rgba(178,67,51,.06); }
+  .act-images { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .act-img-thumb { width:58px; height:58px; border-radius:8px; object-fit:cover; border:1px solid var(--cream3); cursor:pointer; background:var(--cream2); }
+  .act-img-add { width:58px; height:58px; border-radius:8px; border:2px dashed var(--cream3); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink3); font-size:20px; background:var(--cream); }
+  .d-section { margin-top:4px; }
+  .d-section-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+  .d-section-title { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:700; color:var(--ink2); }
+
+  /* ── তহবিল / ledger ── */
+  .fin-amt { font-family:'Tiro Bangla',serif; font-size:15px; font-weight:700; white-space:nowrap; }
+  .fin-amt.income { color:var(--green); }
+  .fin-amt.expense { color:var(--red); }
+  .fin-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+  .fin-card { background:#fff; border-radius:var(--radius-sm); padding:12px 13px; box-shadow:var(--shadow); border:1px solid rgba(26,18,8,.05); }
+  .fin-card-val { font-family:'Tiro Bangla',serif; font-size:17px; font-weight:700; color:var(--ink2); line-height:1.2; display:block; }
+  .fin-card-val.green { color:var(--green); }
+  .fin-card-val.red { color:var(--red); }
+  .fin-card-lbl { font-size:10px; color:var(--ink3); margin-top:4px; display:block; line-height:1.3; }
+  .fin-card--balance { background:var(--ink); border-color:var(--ink); }
+  .fin-card--balance .fin-card-val { color:var(--gold2); font-size:19px; }
+  .fin-card--balance .fin-card-lbl { color:rgba(255,255,255,.65); }
+  .fin-filter-row { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+  .fin-filter-row .form-input { margin:0; flex:1; min-width:0; }
+  .fin-period-nav { display:flex; align-items:center; gap:4px; flex:1.15; min-width:0; background:#fff; border:1px solid var(--cream3); border-radius:var(--radius-sm); padding:0 6px; height:42px; box-sizing:border-box; }
+  .fin-period-btn { background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink3); padding:4px 6px; line-height:1; flex-shrink:0; }
+  .fin-period-label { font-family:'Tiro Bangla',serif; font-size:13px; font-weight:600; color:var(--ink2); text-align:center; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fin-period-nav .form-input { border:0; box-shadow:none; height:40px; padding:0 4px; }
+  .ledger-panel { background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow); border:1px solid rgba(26,18,8,.04); overflow:hidden; margin-bottom:10px; }
+  .ledger-panel--flat .ledger-body { padding:0; }
+  .ledger-list-meta { padding:10px 14px; font-size:11px; color:var(--ink3); border-bottom:1px solid var(--cream2); background:var(--cream); }
+  .ledger-head { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; padding:11px 14px; background:var(--cream); border-bottom:1px solid var(--cream2); }
+  .ledger-title { font-family:'Tiro Bangla',serif; font-size:14px; font-weight:700; color:var(--ink2); line-height:1.3; }
+  .ledger-sub { font-size:11px; color:var(--ink3); margin-top:2px; }
+  .ledger-opening { padding:10px 14px; border-bottom:1px dashed var(--cream3); font-size:12px; color:var(--ink3); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .ledger-opening strong { font-family:'Tiro Bangla',serif; font-size:14px; font-weight:700; }
+  .ledger-opening strong.pos { color:var(--green); }
+  .ledger-opening strong.neg { color:var(--red); }
+  .ledger-table-head { display:grid; grid-template-columns:minmax(72px,1fr) minmax(64px,auto) minmax(64px,auto) minmax(64px,auto); gap:6px; padding:8px 14px; background:var(--cream2); font-size:10px; font-weight:800; color:var(--ink3); text-align:right; align-items:center; }
+  .ledger-table-head span:first-child { text-align:left; }
+  .ledger-body { overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .ledger-body .kh-empty { padding:28px 16px; box-shadow:none; border-radius:0; margin:0; background:transparent; }
+  .ledger-sum-row { display:grid; grid-template-columns:minmax(72px,1fr) minmax(64px,auto) minmax(64px,auto) minmax(64px,auto); gap:6px; padding:10px 14px; border-top:1px solid var(--cream2); font-size:12px; text-align:right; align-items:center; }
+  .ledger-sum-row span:first-child { text-align:left; color:var(--ink2); font-weight:600; }
+  .ledger-sum-row .acct-in, .ledger-sum-row .acct-out, .ledger-sum-row .acct-net { font-family:'Tiro Bangla',serif; font-weight:700; font-size:12px; }
+  .acct-in { color:var(--green); }
+  .acct-out { color:var(--red); }
+  .acct-net.pos { color:var(--green); }
+  .acct-net.neg { color:var(--red); }
+  .fin-entry { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--cream2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .fin-entry:last-child { border-bottom:none; }
+  .fin-entry-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; flex-shrink:0; }
+  .fin-entry-icon.income { background:var(--green-light); color:var(--green); }
+  .fin-entry-icon.expense { background:var(--red-light); color:var(--red); }
+  .fin-entry-body { flex:1; min-width:0; }
+  .fin-entry-title { font-size:13px; font-weight:700; color:var(--ink); line-height:1.35; }
+  .fin-entry-sub { font-size:11px; color:var(--ink3); margin-top:2px; line-height:1.35; }
+  .fin-entry-actions { display:none; gap:6px; padding:0 14px 10px 60px; }
+  .fin-entry.open + .fin-entry-actions { display:flex; }
+
+  .log-tools { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .log-tools .form-input { margin:0; }
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:300; align-items:center; justify-content:center; }
+  .lightbox.open { display:flex; }
+  .lb-close { position:absolute; top:16px; right:16px; color:#fff; font-size:28px; cursor:pointer; z-index:1; background:none; border:none; }
+  .lb-counter { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; font-size:12px; opacity:.7; }
+  .lb-nav { position:absolute; top:50%; transform:translateY(-50%); color:#fff; font-size:36px; cursor:pointer; background:rgba(255,255,255,.15); border:none; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .lb-prev { left:12px; } .lb-next { right:12px; }
+  .lb-img { max-width:92vw; max-height:82vh; object-fit:contain; border-radius:8px; }
+
+  @media (min-width: 960px) {
+    .content { max-width: 900px; }
+    .fin-card-val { font-size: 19px; }
+    .fin-card--balance .fin-card-val { font-size: 22px; }
+    .ben-card { padding: 16px 18px; }
+    .ben-name { font-size: 16px; }
+    .act-inner { padding: 14px 16px 14px 0; }
+    .act-title { font-size: 14px; }
+    .act-img-thumb, .act-img-add { width: 68px; height: 68px; }
+    .ledger-table-head, .ledger-sum-row { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  }

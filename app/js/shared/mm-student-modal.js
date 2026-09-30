@@ -709,19 +709,29 @@
       return;
     }
     var reviewRequested = !!(reviewCb && reviewCb.checked);
-    API.Logs.add('student', _openSid, text, logAuthorName(), 'normal', { reviewRequested: reviewRequested });
-    ta.value = '';
-    if (reviewCb) reviewCb.checked = false;
-    toast('ছাত্রের লগ সংরক্ষিত');
-    open(_openSid);
+    var sid = _openSid;
 
-    if (global.MMSharedAPI && global.MMSession && UUID_RE.test(_openSid)) {
+    if (global.MMSharedAPI && global.MMSession && UUID_RE.test(sid)) {
+      /* আগে সার্ভার — ব্যর্থ হলে লেখা বক্সেই থাকে, ব্যবহারকারী আবার চাপবেন */
+      var isAdminActor = global.MMSession.isAdmin && global.MMSession.isAdmin();
       try {
-        var isAdminActor = global.MMSession.isAdmin && global.MMSession.isAdmin();
         var actorId = isAdminActor ? global.MMSession.getAdminUserId() : global.MMSession.getStaffUserId();
         var pin = isAdminActor ? global.MMSession.getAdminPin() : global.MMSession.getStaffPin();
-        var res = await global.MMSharedAPI.saveTeacherLog(actorId, pin, 'student', _openSid, text, reviewRequested);
+        var res = await global.MMSharedAPI.saveTeacherLog(actorId, pin, 'student', sid, text, reviewRequested);
         if (!res || !res.ok) throw new Error((res && res.error) || 'log_failed');
+      } catch (e) {
+        console.warn('Save teacher log failed', e);
+        toast(String((e && e.message) || e) === 'pin_locked'
+          ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন'
+          : 'সংরক্ষণ হয়নি — ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন');
+        return;
+      }
+      API.Logs.add('student', sid, text, logAuthorName(), 'normal', { reviewRequested: reviewRequested });
+      ta.value = '';
+      if (reviewCb) reviewCb.checked = false;
+      toast('ছাত্রের লগ সংরক্ষিত');
+      open(sid);
+      try {
         if (global.MDRSupabaseSync) {
           if (isAdminActor && global.MDRSupabaseSync.syncAdminStudents) {
             await global.MDRSupabaseSync.syncAdminStudents({ force: true });
@@ -729,12 +739,18 @@
             await global.MDRSupabaseSync.syncTeacherClass();
           }
         }
-        open(_openSid);
-      } catch (e) {
-        console.warn('Save teacher log failed', e);
-        toast('লোকালি সংরক্ষিত, ডাটাবেজে হয়নি');
+        if (_openSid === sid) open(sid);
+      } catch (e2) {
+        console.warn('Refresh after student log failed', e2);
       }
+      return;
     }
+
+    API.Logs.add('student', sid, text, logAuthorName(), 'normal', { reviewRequested: reviewRequested });
+    ta.value = '';
+    if (reviewCb) reviewCb.checked = false;
+    toast('ছাত্রের লগ সংরক্ষিত');
+    open(sid);
   }
 
   function canChangeStatus() {
@@ -848,8 +864,10 @@
       var src = scripts[i].src || '';
       if (src.indexOf('mm-student-modal') < 0) continue;
       var base = src.replace(/mm-student-modal\.js(?:\?.*)?$/, '');
+      /* build.js যে ?v= দেয় সেটাই নাও — JS ১ বছর immutable cache হয়, স্থির ভার্সন দিলে আপডেট পৌঁছায় না */
+      var ver = (src.match(/[?&]v=([^&#]+)/) || [])[1] || '';
       var el = document.createElement('script');
-      el.src = base + 'mm-student-documents.js?v=20260705';
+      el.src = base + 'mm-student-documents.js' + (ver ? '?v=' + ver : '');
       el.async = false;
       el.onload = function () {
         ensureDocumentsModule._loading = false;

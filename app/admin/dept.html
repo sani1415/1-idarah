@@ -205,10 +205,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="../supabase-config.js"></script>
 <script src="../js/api/api-shared.js"></script>
-<script src="../js/core/mm-sample-data.js"></script>
 <script src="../js/core/mm-session.js"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script src="../js/dept/dept-api.js"></script>
@@ -446,7 +445,7 @@
         <span class="ds-dept-ico">${d.emoji||'🏢'}</span>
         <span class="ds-dept-name" style="${inactive?'opacity:.5;':''}">
           ${DeptAPI.esc(deptDisplayName(d.name))}${inactive?' <small style="color:var(--red);font-size:10px;">(নিষ্ক্রিয়)</small>':''}
-          <span class="ds-pin-chip">PIN: ${DeptAPI.esc(d.pin || '—')}</span>
+          ${d.head_name ? `<span class="ds-pin-chip">দায়িত্বশীল: ${DeptAPI.esc(d.head_name)}</span>` : ''}
         </span>
         <div style="display:flex;gap:5px;flex-shrink:0;">
           <button class="ds-btn" onclick="openDeptConfig('${d.id}')">⚙</button>
@@ -533,7 +532,7 @@
         switchTab(requestedTab);
       }
     } catch (e) {
-      showToast('Supabase থেকে বিভাগ ডেটা লোড হয়নি');
+      showToast('বিভাগের তথ্য লোড হয়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন');
       document.getElementById('dept-list').innerHTML = '<div style="text-align:center;color:var(--red);padding:32px 0;font-size:13px;">ডাটাবেজ সংযোগ ব্যর্থ। আবার চেষ্টা করুন।</div>';
     }
   }

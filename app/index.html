@@ -237,10 +237,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="supabase-config.js"></script>
 <script src="js/api/api-shared.js"></script>
-<script src="js/core/mm-sample-data.js"></script>
 <script src="js/api/api.js"></script>
 <script src="js/core/mm-session.js"></script>
 <script>
@@ -403,10 +402,13 @@
     MMSession.setTeacherProfile(row);
   }
 
+  let lastLoginError = '';
+
   async function trySupabaseStaffLogin(role, loginId) {
     if (!window.MMSharedAPI || !STAFF_ROLE_TO_DB[role]) return null;
     try {
       const res = await MMSharedAPI.loginStaff(STAFF_ROLE_TO_DB[role], loginId || null, pinVal);
+      if (res && !res.ok) lastLoginError = res.error || '';
       return res && res.ok ? res.user : null;
     } catch (e) {
       return null;
@@ -414,29 +416,21 @@
   }
 
   async function checkPin() {
-    const settings = API.Settings.get();
+    lastLoginError = '';
     let ok = false;
     let redirect = '';
 
     if (currentRole === 'admin') {
-      const supaOn = !!(window.MMSharedAPI && MMSharedAPI.supabaseClient);
       try {
         const res = window.MMSharedAPI ? await MMSharedAPI.loginAdmin(pinVal) : null;
         if (res && res.ok && res.user) {
           ok = true;
           MMSession.setAdminSession(res.user.name || 'জিম্মাদার', res.user.admin_perms, res.user.id, pinVal);
           redirect = '/admin/madrasa.html';
-          if (settings.admin_pin !== pinVal) {
-            settings.admin_pin = pinVal;
-            API.Settings.save(settings);
-          }
+        } else if (res) {
+          lastLoginError = res.error || '';
         }
       } catch (e) {}
-      if (!ok && !supaOn && pinVal === settings.admin_pin) {
-        ok = true;
-        MMSession.setAdminSession('জিম্মাদার', null, null, pinVal);
-        redirect = '/admin/madrasa.html';
-      }
     } else if (currentRole === 'restricted_admin') {
       const loginId = normalizeLoginId(document.getElementById('teacher-login-id').value);
       const su = await trySupabaseStaffLogin('restricted_admin', loginId);
@@ -546,7 +540,9 @@
     if (ok) {
       window.location.href = redirect;
     } else {
-      document.getElementById('pin-error').textContent = (currentRole === 'teacher' || currentRole === 'restricted_admin') ? 'আইডি বা পিন ভুল হয়েছে।' : 'পিন ভুল হয়েছে।';
+      document.getElementById('pin-error').textContent = lastLoginError === 'pin_locked'
+        ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন।'
+        : (currentRole === 'teacher' || currentRole === 'restricted_admin') ? 'আইডি বা পিন ভুল হয়েছে।' : 'পিন ভুল হয়েছে।';
       pinVal = '';
       updateDots();
     }

@@ -22,10 +22,19 @@ const MMSharedAPI = (() => {
 
   const supabaseClient = createClientOrNull();
 
+  /* ভুল পিনে লক (DB: private.mdr_pin_ok) exception হিসেবে আসে — সব caller যেহেতু
+     {ok:false, error} সামলায়, তাই এটাকে সেই আকারে ফেরত দিই। */
+  function isPinLocked(err) {
+    return !!err && String(err.message || err) === 'pin_locked';
+  }
+
   async function rpc(name, params) {
     if (supabaseClient) {
       const { data, error } = await supabaseClient.rpc(name, params || {});
-      if (error) throw error;
+      if (error) {
+        if (isPinLocked(error)) return { ok: false, error: 'pin_locked' };
+        throw error;
+      }
       return data;
     }
     const key = getSupabaseKey();
@@ -48,6 +57,7 @@ const MMSharedAPI = (() => {
     }
     if (!res.ok) {
       const msg = payload && payload.message ? payload.message : (text || ('RPC failed: ' + name));
+      if (msg === 'pin_locked') return { ok: false, error: 'pin_locked' };
       throw new Error(msg);
     }
     return payload;
