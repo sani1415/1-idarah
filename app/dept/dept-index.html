@@ -155,10 +155,9 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="../supabase-config.js"></script>
 <script src="../js/api/api-shared.js"></script>
-<script src="../js/core/mm-sample-data.js"></script>
 <script src="../js/api/api.js"></script>
 <script src="../js/core/mm-session.js"></script>
 <script src="../js/dept/dept-api.js"></script>
@@ -243,10 +242,12 @@
 
   async function checkPin() {
     let remoteUser = null;
+    let loginError = '';
     if (window.MMSharedAPI) {
       try {
         const res = await MMSharedAPI.loginStaff('dept_head', selectedDept.id, pinVal);
         remoteUser = res && res.ok ? res.user : null;
+        if (res && !res.ok) loginError = res.error || '';
       } catch (e) {
         remoteUser = null;
       }
@@ -256,11 +257,13 @@
       MMSession.clearAppSession();
       MMSession.setDeptSession(selectedDept.id, deptDisplayName(selectedDept.name), selectedDept.emoji, remoteUser.id, pinVal);
       location.href = 'dept-staff.html';
-    } else { showError(); }
+    } else { showError(loginError); }
   }
 
-  function showError() {
-    document.getElementById('pin-error').textContent='পিন ভুল হয়েছে।';
+  function showError(code) {
+    document.getElementById('pin-error').textContent = code === 'pin_locked'
+      ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন।'
+      : 'পিন ভুল হয়েছে।';
     pinVal=''; updateDots();
   }
 

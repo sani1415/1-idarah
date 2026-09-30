@@ -1,0 +1,2 @@
+  .admin-ai-launch{position:fixed;right:16px;bottom:calc(var(--app-content-pad-bottom,78px) + 14px);z-index:45;width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(145deg,#176b4d,#0e4934);color:#fff;text-decoration:none;font-weight:800;letter-spacing:.03em;box-shadow:0 9px 25px rgba(14,73,52,.28);border:1px solid rgba(255,255,255,.24)}
+  .admin-ai-launch:active{transform:scale(.96)}

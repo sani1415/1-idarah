@@ -16,6 +16,8 @@
       "destination": "/admin/",
       "permanent": false
     },
+    { "source": "/dept/dept-dashboard.html", "destination": "/admin/dept.html", "permanent": false },
+    { "source": "/madrasa/madrasa-staff.html", "destination": "/index.html", "permanent": false },
     { "source": "/main-admin-madrasa.html", "destination": "/admin/madrasa.html", "permanent": false },
     { "source": "/main-admin-dept.html", "destination": "/admin/dept.html", "permanent": false },
     { "source": "/main-admin-khedmat.html", "destination": "/admin/khedmat.html", "permanent": false },

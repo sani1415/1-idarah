@@ -441,7 +441,6 @@
         login_id: u.login_id || '',
         class_id: CLASS_CODE_TO_LOCAL_ID[u.class_code] || '',
         class_code: u.class_code || '',
-        pin: u.pin || '',
         role: SUPA_ROLE_TO_LOCAL[u.role] || u.role,
         admin_perms: u.admin_perms || {},
         is_active: u.is_active !== false,

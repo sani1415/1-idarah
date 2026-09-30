@@ -164,6 +164,7 @@
   }
 
   function sessionErrorMessage(error) {
+    if (error === 'pin_locked') return 'অনেকবার ভুল PIN — ১৫ মিনিট পরে আবার চেষ্টা করুন';
     if (error === 'invalid_current_pin' || error === 'invalid_pin') return 'বর্তমান PIN ভুল';
     if (error === 'invalid_new_pin' || error === 'pin_too_short') return 'নতুন PIN ৪ সংখ্যার হতে হবে';
     if (error === 'same_pin') return 'নতুন PIN আগের PIN থেকে আলাদা দিন';
@@ -340,17 +341,35 @@
       if (global.MDRDaftarSupabase && MDRDaftarSupabase.hydrateClassTeachersCache) {
         MDRDaftarSupabase.hydrateClassTeachersCache();
       }
-      var needDaftar = opts.force || !(global.API && API.isDaftarSessionCacheWarm && API.isDaftarSessionCacheWarm());
-      if (needDaftar && global.MDRDaftarSupabase && MDRDaftarSupabase.sync) {
-        await wrap(async function () {
-          await MDRDaftarSupabase.sync(opts.force ? { force: true } : undefined);
-        });
+      /* দফতর/অ্যাডমিন: সেশন summary না থাকলে বা লোকাল হলে সার্ভার থেকে পূর্ণ হিসাব —
+         request এখনই শুরু, ফল বসানো হয় দফতর sync-এর পরে (নিচে) */
+      var absPromise = null;
+      if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && global.API &&
+          API.applyDaftarAbsentSummaryFromServer) {
+        var sumRaw = API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw();
+        if (!sumRaw || sumRaw.source !== 'server') {
+          var isAdminActor = this.isAdmin && this.isAdmin();
+          var absActor = isAdminActor ? (this.getAdminUserId && this.getAdminUserId()) : (this.getStaffUserId && this.getStaffUserId());
+          var absPin = isAdminActor ? (this.getAdminPin && this.getAdminPin()) : (this.getStaffPin && this.getStaffPin());
+          if (absPin) {
+            absPromise = MMSharedAPI.adminAbsentSummary(absActor || null, absPin).catch(function (eAbs) {
+              console.warn('[MMSession] absent summary ensure failed', eAbs);
+              return null;
+            });
+          }
+        }
       }
+      /* দফতর ডাটা ও হিসাব একে অপরের উপর নির্ভর করে না — একসাথে লোড (আগে পরপর চলত) */
+      var needDaftar = opts.force || !(global.API && API.isDaftarSessionCacheWarm && API.isDaftarSessionCacheWarm());
+      var runDaftar = needDaftar && global.MDRDaftarSupabase && MDRDaftarSupabase.sync;
       var needAcc = global.MdrAccAPI && MdrAccAPI.bootstrapRemote &&
         (!MdrAccAPI.isLocalCacheWarm || !MdrAccAPI.isLocalCacheWarm());
-      if (needAcc) {
-        await wrap(async function () {
-          await MdrAccAPI.bootstrapRemote(opts.force ? { force: true } : undefined);
+      if (runDaftar || needAcc) {
+        await wrap(function () {
+          var tasks = [];
+          if (runDaftar) tasks.push(MDRDaftarSupabase.sync(opts.force ? { force: true } : undefined));
+          if (needAcc) tasks.push(MdrAccAPI.bootstrapRemote(opts.force ? { force: true } : undefined));
+          return Promise.all(tasks);
         });
       }
       if (global.API && API.rebuildDaftarAbsentSummary && API.loadDaftarAbsentSummaryRaw &&
@@ -362,28 +381,12 @@
           }
         } catch (e) {}
       }
-      /* দফতর/অ্যাডমিন: সেশন summary না থাকলে বা লোকাল হলে সার্ভার থেকে পূর্ণ হিসাব */
-      if (global.MMSharedAPI && MMSharedAPI.adminAbsentSummary && global.API &&
-          API.applyDaftarAbsentSummaryFromServer) {
+      if (absPromise) {
         try {
-          var sumRaw = API.loadDaftarAbsentSummaryRaw && API.loadDaftarAbsentSummaryRaw();
-          if (!sumRaw || sumRaw.source !== 'server') {
-            var absActor = null;
-            var absPin = null;
-            if (this.isAdmin && this.isAdmin()) {
-              absActor = this.getAdminUserId && this.getAdminUserId();
-              absPin = this.getAdminPin && this.getAdminPin();
-            } else {
-              absActor = this.getStaffUserId && this.getStaffUserId();
-              absPin = this.getStaffPin && this.getStaffPin();
-            }
-            if (absPin) {
-              var absRes = await MMSharedAPI.adminAbsentSummary(absActor || null, absPin);
-              if (absRes && absRes.ok) API.applyDaftarAbsentSummaryFromServer(absRes.rows || []);
-            }
-          }
+          var absRes = await absPromise;
+          if (absRes && absRes.ok) API.applyDaftarAbsentSummaryFromServer(absRes.rows || []);
         } catch (eAbsReady) {
-          console.warn('[MMSession] absent summary ensure failed', eAbsReady);
+          console.warn('[MMSession] absent summary apply failed', eAbsReady);
         }
       }
       if (global.MDRDaftarAttendanceGate && MDRDaftarAttendanceGate.enforceAfterBootstrap) {
@@ -777,12 +780,23 @@
     return true;
   }
 
-  async function syncCurrentAcademicYearSettings() {
+  /* শিক্ষাবর্ষ/হিজরী সেটিং খুব কম বদলায় — প্রতি পেজ ও প্রতিবার অ্যাপে ফেরায় না এনে ৫ মিনিটে একবার */
+  var SETTINGS_SYNC_KEY = 'mm_public_settings_synced_at';
+  var SETTINGS_SYNC_TTL_MS = 5 * 60 * 1000;
+
+  async function syncCurrentAcademicYearSettings(opts) {
     if (settingsSyncInFlight || !global.MMSharedAPI || !global.MMSharedAPI.publicSettings) return false;
+    if (!(opts && opts.force)) {
+      try {
+        var last = Number(sessionStorage.getItem(SETTINGS_SYNC_KEY) || 0);
+        if (last && Date.now() - last < SETTINGS_SYNC_TTL_MS) return false;
+      } catch (eTtl) {}
+    }
     settingsSyncInFlight = true;
     try {
       var res = await global.MMSharedAPI.publicSettings();
       if (!res || res.ok !== true) return false;
+      try { sessionStorage.setItem(SETTINGS_SYNC_KEY, String(Date.now())); } catch (eSet) {}
       return mergeAcademicSettings(res.settings || {});
     } catch (e) {
       return false;

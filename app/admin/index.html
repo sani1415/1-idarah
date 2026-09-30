@@ -107,10 +107,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="../supabase-config.js"></script>
 <script src="../js/api/api-shared.js"></script>
-<script src="../js/core/mm-sample-data.js"></script>
 <script src="../js/api/api.js"></script>
 <script src="../js/core/mm-session.js"></script>
 <script>
@@ -149,28 +148,20 @@
 
   async function checkPin() {
     document.getElementById('pin-error').textContent = '';
-    const settings = (window.API && API.Settings) ? API.Settings.get() : {};
     let ok = false;
     let redirect = '';
+    let loginError = '';
 
-    const supaOn = !!(window.MMSharedAPI && MMSharedAPI.supabaseClient);
     try {
       const res = window.MMSharedAPI ? await MMSharedAPI.loginAdmin(pinVal) : null;
       if (res && res.ok && res.user) {
         ok = true;
         MMSession.setAdminSession(res.user.name || 'জিম্মাদার', res.user.admin_perms, res.user.id, pinVal);
         redirect = '/admin/madrasa.html';
-        if (settings && settings.admin_pin !== pinVal && window.API && API.Settings) {
-          settings.admin_pin = pinVal;
-          API.Settings.save(settings);
-        }
+      } else if (res) {
+        loginError = res.error || '';
       }
     } catch (e) {}
-    if (!ok && !supaOn && settings && pinVal === settings.admin_pin) {
-      ok = true;
-      MMSession.setAdminSession('জিম্মাদার', null, null, pinVal);
-      redirect = '/admin/madrasa.html';
-    }
 
     if (ok) {
       // dashboard ফ্ল্যাশ এড়াতে: redirect-এর আগেই লোডিং কভার দেখাই, আর nav flag
@@ -179,7 +170,7 @@
       if (window.MMLoading && MMLoading.show) MMLoading.show();
       window.location.href = redirect;
     } else {
-      showError('পিন ভুল হয়েছে।');
+      showError(loginError === 'pin_locked' ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন।' : 'পিন ভুল হয়েছে।');
       pinVal = '';
       updateDots();
     }

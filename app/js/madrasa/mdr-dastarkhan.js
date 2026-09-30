@@ -367,9 +367,11 @@
           }
           throw new Error((res && res.error) || 'save_failed');
         })
-        .catch(function () {
-          saveBundleLocal(bundle);
-          helpers.showToast('সার্ভারে সংরক্ষণ ব্যর্থ; ব্রাউজারে সংরক্ষিত ✓');
+        .catch(function (e) {
+          /* ফোনে রাখা হয় না — অন্যরা দেখতে পাবে না বলে; ফর্মে লেখা থেকে যায়, আবার চাপুন */
+          helpers.showToast(String((e && e.message) || e) === 'pin_locked'
+            ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন'
+            : 'সংরক্ষণ হয়নি — ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন');
         });
       return;
     }
