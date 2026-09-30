@@ -78,10 +78,21 @@
   .role-grid.role-grid-dept .role-btn {
     padding: 12px 12px;
     gap: 10px;
-    align-items: flex-start;
+    align-items: center;
   }
-  .role-grid.role-grid-dept .role-icon { font-size: 22px; }
-  .role-grid.role-grid-dept .role-name { font-size: 13px; line-height: 1.25; }
+  .role-grid.role-grid-dept .role-icon {
+    font-size: 22px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .role-grid.role-grid-dept .role-name {
+    font-size: 13px;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+  }
   .role-grid.role-grid-dept .role-desc { font-size: 10px; line-height: 1.3; margin-top: 3px; }
 </style>
 </head>
@@ -92,8 +103,8 @@
   <div class="topbar">
     <div class="topbar-left dept-head-stack">
       <div class="dept-head-year" id="dept-year-display"></div>
-      <div class="dept-head-one-line" title="مدرسة المدينة · বিভাগ নির্বাচন · স্টাফ লগইন">
-        <span class="dept-ar" dir="rtl">مدرسة المدينة</span><span class="dept-dot">·</span><span class="dept-bn">বিভাগ নির্বাচন</span><span class="dept-dot">·</span><span class="dept-tag">স্টাফ লগইন</span>
+      <div class="dept-head-one-line" title="مدرسة المدينة · বিভাগ নির্বাচন">
+        <span class="dept-ar" dir="rtl">مدرسة المدينة</span><span class="dept-dot">·</span><span class="dept-bn">বিভাগ নির্বাচন</span>
       </div>
     </div>
     <div class="topbar-actions">
@@ -156,6 +167,7 @@
   const BN = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
   let selectedDept = null;
   let pinVal = '';
+  const deptDisplayName = name => (DeptAPI.displayName ? DeptAPI.displayName(name) : String(name || ''));
 
   function updateYearDisplay() {
     const el = document.getElementById('dept-year-display');
@@ -177,7 +189,7 @@
       ? depts.map(d=>
           `<div class="role-btn" onclick="selectDept('${d.id}')">
             <div class="role-icon">${d.emoji}</div>
-            <div><div class="role-name">${DeptAPI.esc(d.name)}</div><div class="role-desc">স্টাফ লগইন</div></div>
+            <div><div class="role-name">${DeptAPI.esc(deptDisplayName(d.name))}</div></div>
           </div>`
         ).join('')
       : '<div style="text-align:center;color:var(--ink3);padding:32px 0;font-size:13px;">কোনো বিভাগ পাওয়া যায়নি।</div>';
@@ -201,7 +213,7 @@
     selectedDept = DeptAPI.Departments.getById(id);
     if (!selectedDept) return;
     document.getElementById('dept-icon').textContent  = selectedDept.emoji;
-    document.getElementById('dept-title').textContent = selectedDept.name;
+    document.getElementById('dept-title').textContent = deptDisplayName(selectedDept.name);
     document.getElementById('dept-screen').style.display = 'none';
     document.getElementById('pin-screen').style.display  = 'flex';
     resetPin();
@@ -242,7 +254,7 @@
     if (remoteUser) {
       /* বিভাগ স্টাফ: আগের জিম্মাদার/মাদ্রাসা সেশন থাকলে সরিয়ে শুধু বিভাগ সেশন */
       MMSession.clearAppSession();
-      MMSession.setDeptSession(selectedDept.id, selectedDept.name, selectedDept.emoji, remoteUser.id, pinVal);
+      MMSession.setDeptSession(selectedDept.id, deptDisplayName(selectedDept.name), selectedDept.emoji, remoteUser.id, pinVal);
       location.href = 'dept-staff.html';
     } else { showError(); }
   }

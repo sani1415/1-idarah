@@ -362,6 +362,7 @@
         <label class="check-item"><input type="checkbox" class="adm-menu" value="daftar"> দফতর</label>
         <label class="check-item"><input type="checkbox" class="adm-menu" value="teachers"> শিক্ষক</label>
         <label class="check-item"><input type="checkbox" class="adm-menu" value="dars"> দরস</label>
+        <label class="check-item"><input type="checkbox" class="adm-menu" value="teacher_hazira"> শিক্ষক হাজিরা</label>
         <label class="check-item"><input type="checkbox" class="adm-menu" value="exams"> পরীক্ষা</label>
         <label class="check-item"><input type="checkbox" class="adm-menu" value="withdrawn"> বিদায় ছাত্র</label>
         <label class="check-item"><input type="checkbox" class="adm-menu" value="hifz"> হিফজ</label>
@@ -813,6 +814,7 @@
     ['dashboard', 'daftar', 'teachers', 'dars', 'exams', 'withdrawn', 'hifz', 'library', 'alumni', 'messages', 'recent'].forEach(k => {
       permissions[k] = true;
     });
+    permissions.teacher_hazira = false;
     permissions.settings_teachers = false;
     permissions.settings_kitab = false;
     return { scope: { madrasa_depts: ['kitab', 'maktab'] }, permissions };
@@ -835,7 +837,7 @@
     const p = normalizeAdminPerms(perms);
     const deptNames = p.scope.madrasa_depts.map(d => d === 'maktab' ? 'মক্তব' : 'কিতাব').join(', ') || 'কোনো বিভাগ নয়';
     const menuLabels = {
-      dashboard:'ড্যাশবোর্ড', daftar:'দফতর', teachers:'শিক্ষক', dars:'দরস', exams:'পরীক্ষা',
+      dashboard:'ড্যাশবোর্ড', daftar:'দফতর', teachers:'শিক্ষক', dars:'দরস', teacher_hazira:'শিক্ষক হাজিরা', exams:'পরীক্ষা',
       withdrawn:'বিদায় ছাত্র', hifz:'হিফজ', library:'মাকতাবা', alumni:'পুরনো ছাত্র',
       messages:'বার্তা', recent:'কার্যক্রম', settings_teachers:'শিক্ষক নিয়োগ', settings_kitab:'কিতাব যোগ-বিয়োগ'
     };

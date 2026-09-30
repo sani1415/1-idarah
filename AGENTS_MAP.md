@@ -15,6 +15,7 @@
 | Admin hub (subdomain `admin.idarah786.com`) | `app/admin/` (`index.html`, `madrasa.html`, `dept.html`, `khedmat.html`, `recent.html`) | `app/js/shared/admin-nav.js`, `app/js/shared/admin-recent-feed.js` |
 | মাদরাসা — staff UI | `app/madrasa/madrasa-*.html` | `app/js/madrasa/madrasa-*.js`, `mdr-*.js` |
 | মাদরাসা — admin UI | `app/madrasa/admin/*.html` (জিম্মাদার view) | `app/js/madrasa/mdr-*.js` |
+| শিক্ষক হাজিরা (দরস কিয়স্ক) | `app/madrasa/madrasa-teacher-hazira.html` (কিয়স্ক), `app/madrasa/admin/teacher-hazira.html` (জিম্মাদার); হোম কার্ড `#hz-home-card` → `madrasa-class.html`; CSS `app/css/teacher-hazira.css` | `app/js/madrasa/mdr-teacher-hazira-{core,kiosk,card,admin}.js`; দরস-শিক্ষক বাছাই `mdr-class-routine.js`; RPC `mdr_rel_dars_*` → `supabase/migrations/20260930120000_mdr_teacher_hazira.sql` |
 | বিভাগ (Department) | `app/dept/*.html` | `app/js/dept/` |
 | খেদমত (Khedmat) | `app/khedmat/*.html` | `app/js/khedmat/` |
 

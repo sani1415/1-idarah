@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<script src="../js/core/mm-boot.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1208">
+<title>শিক্ষক হাজিরা — কিয়স্ক</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/teacher-hazira.css">
+</head>
+<body class="hz-kiosk">
+
+<div class="hz-ki-top">
+  <div>
+    <small>শিক্ষক হাজিরা</small>
+    <b id="hz-class-name">বর্ষ</b>
+  </div>
+  <button type="button" class="hz-ki-exit" id="hz-exit-btn">বের হোন</button>
+</div>
+
+<div class="hz-ki-body">
+  <div class="hz-ki-clock">
+    <div class="hz-ki-date" id="hz-date">—</div>
+    <div class="hz-ki-time"><span id="hz-time">—</span><span class="hz-ki-part" id="hz-part"></span></div>
+    <div class="hz-ki-sub">সময় সার্ভারের ঘড়ি থেকে নেওয়া হয় · স্ক্রিন বন্ধ হবে না</div>
+  </div>
+  <div id="hz-root"><div class="hz-empty">লোড হচ্ছে…</div></div>
+</div>
+
+<div class="hz-sheet-bg" id="hz-pin-sheet" role="dialog" aria-modal="true" aria-labelledby="hz-pin-title">
+  <div class="hz-sheet">
+    <h3 id="hz-pin-title">পিন দিন</h3>
+    <p id="hz-pin-sub"></p>
+    <div class="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="numpad" id="hz-numpad"></div>
+    <div class="hz-sheet-err" id="hz-pin-err"></div>
+    <div class="hz-sheet-actions">
+      <button type="button" class="hz-btn-ghost" id="hz-pin-cancel">বাতিল</button>
+    </div>
+  </div>
+</div>
+
+<div class="hz-sheet-bg" id="hz-confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="hz-confirm-title">
+  <div class="hz-sheet">
+    <h3 id="hz-confirm-title">আগের দরস চলছে</h3>
+    <p id="hz-confirm-sub"></p>
+    <div class="hz-sheet-actions">
+      <button type="button" class="hz-btn-ghost" id="hz-confirm-no">না</button>
+      <button type="button" class="hz-btn-main" id="hz-confirm-yes">বন্ধ করে শুরু করুন</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<script src="../js/api/api-shared.js"></script>
+<script src="../js/core/mm-session.js"></script>
+<script src="../js/madrasa/mdr-teacher-hazira-core.js"></script>
+<script src="../js/madrasa/mdr-teacher-hazira-kiosk.js"></script>
+</body>
+</html>

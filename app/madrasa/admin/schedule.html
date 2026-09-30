@@ -23,6 +23,7 @@
   .sched-slot { display:flex; gap:10px; padding:10px 12px; border-top:1px solid var(--cream2); }
   .sched-slot-time { font-size:11px; font-weight:800; color:var(--ink2); white-space:nowrap; min-width:108px; }
   .sched-slot-label { font-size:13px; font-weight:700; color:var(--ink); }
+  .sched-slot-who { font-size:10px; font-weight:400; color:var(--green); margin-top:2px; }
   .sched-empty { text-align:center; color:var(--ink3); padding:20px; font-size:12px; }
   .sched-badge { display:inline-block; margin-left:6px; font-size:9px; font-weight:800; color:var(--green); background:#d1fae5; padding:1px 6px; border-radius:6px; }
   .sched-versions { padding:10px 12px 12px; border-top:1px solid var(--cream2); background:#fff; }
@@ -295,7 +296,7 @@
     const slots = sortSlots(routine.slots || []).map(slot => {
       return `<div class="sched-slot">
         <div class="sched-slot-time">${esc(formatRange(slot))}</div>
-        <div class="sched-slot-label">${esc(slot.label)}</div>
+        <div class="sched-slot-label">${esc(slot.label)}${['dars', 'revision', 'kitab'].includes(slot.activity_type) ? `<div class="sched-slot-who">হাজিরা · ${esc(slot.dars_teacher_name || 'দায়িত্বশীল')}</div>` : ''}</div>
       </div>`;
     }).join('');
 

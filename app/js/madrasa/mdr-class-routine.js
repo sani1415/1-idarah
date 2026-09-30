@@ -24,7 +24,14 @@
     editMode: null,
     draftSlots: [],
     saving: false,
+    teachers: null,
   };
+
+  var HAZIRA_TYPES = ['dars', 'revision', 'kitab'];
+
+  function isHaziraType(t) {
+    return HAZIRA_TYPES.indexOf(String(t || '')) >= 0;
+  }
 
   function esc(s) { return hooks.escapeHtml(s); }
   function toBn(n) { return hooks.toBn(n); }
@@ -170,19 +177,31 @@
       end_clock: '',
       end_ampm: 'AM',
       label: '',
+      activity_type: 'other',
+      hazira: '',
     };
   }
 
   function cloneSlots(slots) {
     return sortSlots(slots || []).map(function (s) {
+      var hazira = '';
+      if (isHaziraType(s.activity_type)) hazira = s.dars_teacher_id || 'lead';
       return {
         start_clock: formatClockText(s.start_hour, s.start_minute),
         start_ampm: s.start_ampm === 'PM' ? 'PM' : 'AM',
         end_clock: s.end_hour ? formatClockText(s.end_hour, s.end_minute) : '',
         end_ampm: s.end_ampm === 'PM' ? 'PM' : 'AM',
         label: String(s.label || ''),
+        activity_type: String(s.activity_type || 'other'),
+        hazira: hazira,
       };
     });
+  }
+
+  function slotActivity(s) {
+    var orig = String(s.activity_type || 'other');
+    if (s.hazira) return isHaziraType(orig) ? orig : 'dars';
+    return isHaziraType(orig) ? 'other' : orig;
   }
 
   function draftSortKey(slot) {
@@ -207,7 +226,8 @@
         start_minute: start.minute,
         start_ampm: start.ampm,
         label: String(s.label || '').trim(),
-        activity_type: 'other',
+        activity_type: slotActivity(s),
+        dars_teacher_id: s.hazira && s.hazira !== 'lead' ? s.hazira : null,
       };
       if (end) {
         row.end_hour = end.hour;
@@ -231,6 +251,28 @@
     return state.viewingRoutineId !== state.data.current.id;
   }
 
+  async function loadTeachers(actor) {
+    if (!global.MMSharedAPI || !global.MMSharedAPI.darsClassTeachers) return;
+    try {
+      var res = await global.MMSharedAPI.darsClassTeachers(actor.id, actor.pin);
+      if (res && res.ok) {
+        state.teachers = { lead: res.lead || null, list: Array.isArray(res.teachers) ? res.teachers : [] };
+      }
+    } catch (e) {
+      console.warn('[MDRClassRoutine] teachers load failed', e);
+    }
+  }
+
+  function leadName() {
+    return (state.teachers && state.teachers.lead && state.teachers.lead.name) || 'দায়িত্বশীল';
+  }
+
+  function teacherNameFor(slot) {
+    if (!isHaziraType(slot.activity_type)) return '';
+    if (slot.dars_teacher_id) return slot.dars_teacher_name || 'দরস শিক্ষক';
+    return leadName();
+  }
+
   async function load() {
     var actor = hooks.getActor();
     if (!actor || !actor.id || !actor.pin) return;
@@ -246,6 +288,7 @@
       if (!res || !res.ok) throw new Error((res && res.error) || 'load_failed');
       state.data = res;
       state.loaded = true;
+      if (!state.teachers) await loadTeachers(actor);
     } catch (e) {
       console.warn('[MDRClassRoutine] load failed', e);
       hooks.notify('নিজাম লোড হয়নি');
@@ -304,6 +347,9 @@
       }
       if (!String(s.label || '').trim()) {
         return 'স্লট ' + toBn(i + 1) + ': কাজের নাম লিখুন';
+      }
+      if (s.hazira && !String(s.end_clock || '').trim()) {
+        return 'স্লট ' + toBn(i + 1) + ': হাজিরার দরসে শেষের সময়ও লিখুন';
       }
     }
     return '';
@@ -426,7 +472,25 @@
         '</div>' +
         '<input class="form-input awqat-label-input" type="text" maxlength="120" placeholder="কাজের নাম, যেমন: নাহু দরস" ' +
           'value="' + esc(slot.label) + '" data-field="label" data-idx="' + idx + '">' +
+        haziraSelect(slot, idx) +
       '</div>'
+    );
+  }
+
+  function haziraSelect(slot, idx) {
+    var list = (state.teachers && state.teachers.list) || [];
+    var cur = slot.hazira || '';
+    if (cur && cur !== 'lead' && !list.some(function (t) { return t.id === cur; })) cur = 'lead';
+    var opts = '<option value=""' + (cur === '' ? ' selected' : '') + '>হাজিরা লাগবে না (খাবার, বিশ্রাম ইত্যাদি)</option>' +
+      '<option value="lead"' + (cur === 'lead' ? ' selected' : '') + '>দরস — ' + esc(leadName()) + ' (দায়িত্বশীল)</option>';
+    list.forEach(function (t) {
+      opts += '<option value="' + esc(t.id) + '"' + (cur === t.id ? ' selected' : '') + '>দরস — ' + esc(t.name) + '</option>';
+    });
+    return (
+      '<label class="awqat-hazira">' +
+        '<span class="awqat-hazira-lbl">শিক্ষক হাজিরা</span>' +
+        '<select class="form-input form-select awqat-hazira-select" data-field="hazira" data-idx="' + idx + '" aria-label="এই স্লটের শিক্ষক">' + opts + '</select>' +
+      '</label>'
     );
   }
 
@@ -436,11 +500,13 @@
       return '<div class="awqat-empty">এখনো কোনো স্লট নেই।</div>';
     }
     return sorted.map(function (slot) {
+      var who = teacherNameFor(slot);
       return (
         '<div class="awqat-slot">' +
           '<div class="awqat-slot-time">' + esc(formatRange(slot)) + '</div>' +
           '<div class="awqat-slot-body">' +
             '<div class="awqat-slot-label">' + esc(slot.label) + '</div>' +
+            (who ? '<div class="awqat-slot-who">হাজিরা · ' + esc(who) + '</div>' : '') +
           '</div>' +
         '</div>'
       );
@@ -495,6 +561,7 @@
       } else {
         html += '<p class="awqat-lead">চলমান নিজাম সম্পাদনা করুন। সংরক্ষণ করলে একই ভার্সন আপডেট হবে।</p>';
       }
+      html += '<p class="awqat-hazira-hint">প্রতিটি দরসের নিচে «শিক্ষক হাজিরা» থেকে যিনি পড়ান তাঁকে বাছাই করুন। শুধু বাছাই করা দরসগুলো হাজিরা কিয়স্কে আসবে। নতুন শিক্ষক যোগ করেন জিম্মাদার (শিক্ষক হাজিরা → শিক্ষক)।</p>';
       html += '<div class="awqat-edit-list">' + state.draftSlots.map(renderSlotEditor).join('') + '</div>';
       html += '<button type="button" class="btn-secondary awqat-add-btn" data-action="add-slot">+ স্লট যোগ করুন</button>';
       html += '<div class="awqat-actions">';
@@ -594,6 +661,7 @@
     state.editing = false;
     state.editMode = null;
     state.draftSlots = [];
+    state.teachers = null;
   }
 
   global.MDRClassRoutine = {

@@ -107,7 +107,7 @@
   /* ── IDENTITY ── */
   const myRole     = MMSession.getRole()     || '';
   const myDeptRole = MMSession.getDeptRole()|| '';
-  const myName     = MMSession.getName() || MMSession.getDeptName() || 'স্টাফ';
+  const myName     = MMSession.getName() || (DeptAPI.displayName ? DeptAPI.displayName(MMSession.getDeptName()) : MMSession.getDeptName()) || 'স্টাফ';
   const isAdmin    = myRole === 'admin';
   if (isAdmin && !MMSession.canAdmin('messages')) {
     location.href = '/admin/madrasa.html';
@@ -774,7 +774,8 @@
     });
     // Dept heads
     DeptAPI.Departments.getAll().forEach(d => {
-      pushStaff({ thread_id:'dept-'+d.id, name:d.name+' দায়িত্বশীল', icon:d.emoji, role:'বিভাগ দায়িত্বশীল' });
+      const label = DeptAPI.displayName ? DeptAPI.displayName(d.name) : d.name;
+      pushStaff({ thread_id:'dept-'+d.id, name:label+' দায়িত্বশীল', icon:d.emoji, role:'বিভাগ দায়িত্বশীল' });
     });
     return list;
   }

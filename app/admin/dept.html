@@ -222,12 +222,7 @@
   const fmtAmt = n => '৳' + toBn(Number(n).toLocaleString('en'));
   const fmtDate = d => { if (!d) return ''; const p = d.split('-'); return toBn(p[2]+'/'+p[1]); };
   const monthLabel = m => { const p = m.split('-'); return toBn(p[1]) + ' — ' + toBn(p[0]); };
-  const deptNameReplacements = [
-    [/বেকারি|bakery/gi, 'মাখাবিজ'],
-    [/স্টোর|store/gi, 'খাজানা'],
-    [/নার্সারি|nursery/gi, 'মাশতাল'],
-  ];
-  const deptDisplayName = name => deptNameReplacements.reduce((out, pair) => out.replace(pair[0], pair[1]), String(name || ''));
+  const deptDisplayName = name => (DeptAPI.displayName ? DeptAPI.displayName(name) : String(name || ''));
   const pctText = (value, base) => base > 0 ? toBn((value / base * 100).toFixed(1)) + '%' : '০%';
 
   let curMonth = new Date().toISOString().slice(0,7);

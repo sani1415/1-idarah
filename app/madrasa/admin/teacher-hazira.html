@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<script src="../../js/core/mm-boot.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>শিক্ষক হাজিরা — জিম্মাদার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/main-admin-nav.css">
+<link rel="stylesheet" href="../../css/teacher-hazira.css">
+<style>
+  .content { padding-bottom:var(--app-content-pad-bottom); }
+  .hz-toolbar { display:flex; gap:8px; align-items:flex-end; margin-bottom:10px; flex-wrap:wrap; }
+  .hz-toolbar > div { flex:1 1 140px; min-width:0; }
+  .hz-toolbar label { display:block; font-size:11px; color:var(--ink3); margin-bottom:5px; }
+  .hz-print-btn { flex:0 0 auto; }
+  @media (min-width: 960px) {
+    html body .content { max-width: 1100px !important; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-role">জিম্মাদার</div>
+    <div class="topbar-name">শিক্ষক হাজিরা</div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" class="topbar-btn" onclick="location.replace('/admin/madrasa.html')">← এডমিন</button>
+  </div>
+</div>
+
+<div class="content" style="max-width:760px; margin:0 auto;">
+  <div class="hz-tabs" role="tablist">
+    <button type="button" class="hz-tab active" data-tab="today" role="tab">আজ</button>
+    <button type="button" class="hz-tab" data-tab="report" role="tab">রিপোর্ট</button>
+    <button type="button" class="hz-tab" data-tab="teachers" role="tab">শিক্ষক</button>
+    <button type="button" class="hz-tab" data-tab="holidays" role="tab">ছুটি</button>
+  </div>
+  <div class="hz-filters" id="hz-dept-filters"></div>
+  <div id="hz-panel"><div class="hz-empty">লোড হচ্ছে…</div></div>
+</div>
+
+<div class="hz-sheet-bg" id="hz-sheet" role="dialog" aria-modal="true">
+  <div class="hz-sheet" id="hz-sheet-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav class="main-nav" role="navigation" aria-label="জিম্মাদার নেভিগেশন">
+  <a class="main-nav-btn is-active" href="/admin/madrasa.html" aria-label="মাদ্রাসা">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    <span class="main-nav-lbl">মাদ্রাসা</span>
+  </a>
+  <a class="main-nav-btn" href="/madrasa/admin/accounts.html" aria-label="হিসাব" data-admin-perm="daftar">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18v12H3z"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M7 10h.01M17 14h.01"/><circle stroke-width="1.75" cx="12" cy="12" r="2.5"/></svg>
+    <span class="main-nav-lbl">হিসাব</span>
+  </a>
+  <a class="main-nav-btn" href="/admin/khedmat.html" aria-label="খেদমত">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    <span class="main-nav-lbl">খেদমত</span>
+  </a>
+  <a class="main-nav-btn" href="../../chat.html" aria-label="বার্তা">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M22 6l-10 7L2 6"/></svg>
+    <span class="main-nav-lbl">বার্তা</span>
+  </a>
+  <a class="main-nav-btn" href="/admin/recent.html" aria-label="কার্যক্রম">
+    <svg class="main-nav-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle stroke-width="1.75" cx="12" cy="12" r="9"/><path stroke-width="1.75" stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+    <span class="main-nav-lbl">কার্যক্রম</span>
+  </a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../supabase-config.js"></script>
+<script src="../../js/api/api-shared.js"></script>
+<script src="../../js/core/mm-session.js"></script>
+<script>
+  if (!MMSession.requireAdminPerm('teacher_hazira', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
+</script>
+<script src="../../js/madrasa/mdr-teacher-hazira-core.js"></script>
+<script src="../../js/madrasa/mdr-teacher-hazira-admin.js"></script>
+<script src="../../js/shared/admin-nav.js"></script>
+</body>
+</html>

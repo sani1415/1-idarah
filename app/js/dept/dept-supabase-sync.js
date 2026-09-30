@@ -257,6 +257,13 @@
     return true;
   }
 
+  async function listInventoryMovements(actorId, pin, deptCode, productId, limit) {
+    var api = requireShared();
+    var res = await api.listDeptInventoryMovements(actorId, pin, deptCode, productId || null, limit || 50);
+    if (!res || !res.ok) throw new Error((res && res.error) || 'list_inventory_movements_failed');
+    return res.movements || [];
+  }
+
   async function saveSettings(actorId, pin, deptCode, settings) {
     var api = requireShared();
     var res = await api.saveDeptSettings(actorId, pin, deptCode, settings || {});
@@ -311,6 +318,7 @@
     adjustInventory: adjustInventory,
     updateInventoryItem: updateInventoryItem,
     deleteInventoryItem: deleteInventoryItem,
+    listInventoryMovements: listInventoryMovements,
     saveSettings: saveSettings,
     saveExtraField: saveExtraField,
     deleteExtraField: deleteExtraField,
