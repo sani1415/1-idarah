@@ -183,7 +183,7 @@
       '.dst-table-wrap{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;border-radius:12px;border:1px solid var(--cream3)}' +
       '.dst-sheet{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}' +
       '.dst-sheet th,.dst-sheet td{border:1px solid var(--cream2);padding:0;vertical-align:top}' +
-      '.dst-sheet thead th{background:var(--ink);color:var(--gold2);padding:8px 6px;text-align:left;font-weight:700;font-size:10px}' +
+      '.dst-sheet thead th{background:var(--thead-bg);color:var(--thead-fg);padding:8px 6px;text-align:left;font-weight:700;font-size:10px}' +
       '.dst-sheet .dst-day-col{width:22%;background:var(--cream2);font-weight:800;color:var(--ink2);padding:8px 6px;white-space:nowrap}' +
       '.dst-cell{width:100%;min-height:48px;border:0;resize:vertical;margin:0;font-family:\"Tiro Bangla\",serif;font-size:11px;' +
       'padding:8px;box-sizing:border-box;background:#fff;color:var(--ink2);line-height:1.4}' +

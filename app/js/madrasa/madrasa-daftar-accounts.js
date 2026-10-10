@@ -130,10 +130,10 @@ body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-btn{position:relative;overflow:hidden;height:38px;padding:0 4px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 18px rgba(26,18,8,.08);white-space:nowrap}
 .acc-add-btns.has-month .acc-btn{height:38px;padding:0 4px;font-size:12px;border-radius:12px}
 .acc-filter-icon-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(26,18,8,.12);background:#fff;color:var(--ink2);border-radius:12px;padding:0 10px;height:38px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(26,18,8,.06);white-space:nowrap;width:100%}
-.acc-filter-icon-btn.is-on{background:var(--ink);color:var(--gold2);border-color:var(--ink)}
+.acc-filter-icon-btn.is-on{background:var(--sel-bg);color:var(--sel-fg);border-color:var(--sel-line)}
 .acc-filter-badge{position:absolute;top:-5px;right:-5px;background:#e53e3e;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 2px;line-height:1}
 .acc-report-top{height:38px;border:1px solid var(--cream2);border-radius:12px;background:#fff;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;padding:0 4px;box-shadow:0 5px 13px rgba(26,18,8,.055);white-space:nowrap}
-.acc-report-top.active{background:var(--ink);color:var(--gold2);border-color:var(--ink)}
+.acc-report-top.active{background:var(--sel-bg);color:var(--sel-fg);border-color:var(--sel-line)}
 .acc-top-settings{white-space:nowrap}
 .acc-btn:active{transform:scale(.98)}
 .acc-btn-inc{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#065f46}
@@ -392,11 +392,11 @@ body.page-daftar #modal-account-entry .modal,body.page-admin-accounts #modal-acc
 .acc-ms-selall{background:none;border:none;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline}
 .acc-ms-list{display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto;padding:2px 0 4px}
 .acc-ms-item{display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid rgba(26,18,8,.1);border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer;font-size:12px;color:var(--ink2);user-select:none;transition:background .12s,border-color .12s}
-.acc-ms-item.is-on{background:var(--ink);border-color:var(--ink);color:var(--gold2)}
+.acc-ms-item.is-on{background:var(--sel-bg);border-color:var(--sel-line);color:var(--sel-fg)}
 .acc-ms-cb{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
 .acc-ms-circle{width:16px;height:16px;flex-shrink:0;border:2px solid rgba(26,18,8,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .12s;font-weight:900}
 .acc-ms-item.is-on .acc-ms-circle{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:var(--gold2)}
-.acc-ms-chip{display:inline-flex;align-items:center;gap:4px;background:var(--ink);color:var(--gold2);border-radius:20px;padding:3px 8px 3px 10px;font-size:11px;font-weight:700}
+.acc-ms-chip{display:inline-flex;align-items:center;gap:4px;background:var(--sel-bg);color:var(--sel-fg);border-radius:20px;padding:3px 8px 3px 10px;font-size:11px;font-weight:700}
 .acc-ms-chip-x{background:none;border:none;color:var(--gold2);cursor:pointer;font-size:13px;padding:0 0 0 2px;line-height:1}
 .acc-dd-backdrop{position:fixed;inset:0;z-index:9996;background:rgba(26,18,8,.15)}
 .acc-dd-panel{background:#fffaf1;border:1px solid rgba(154,106,33,.22);border-radius:18px;box-shadow:0 20px 52px rgba(26,18,8,.22);overflow-y:auto;animation:accCalIn .12s ease-out}
@@ -406,7 +406,7 @@ body.page-daftar #modal-account-entry .modal,body.page-admin-accounts #modal-acc
 .acc-dd-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px 12px 0;border-bottom:1px solid rgba(26,18,8,.06)}
 .acc-dd-tab{border:none;background:none;color:var(--ink3);font-size:10px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:7px 7px 0 0;font-family:inherit;white-space:nowrap}
 .acc-dd-tab:hover,.acc-dd-tab:focus-visible{background:rgba(26,18,8,.04);color:var(--ink2)}
-.acc-dd-tab.acc-dd-tab-on{background:var(--ink);color:var(--gold2)}
+.acc-dd-tab.acc-dd-tab-on{background:var(--sel-bg);color:var(--sel-fg)}
 .acc-income-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
 .acc-income-table th{position:sticky;top:0;z-index:2;text-align:left;padding:8px 6px;font-size:10px;font-weight:800;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid var(--cream2);background:#faf3e8;white-space:nowrap;user-select:none}
 .acc-income-table th.acc-sort-th{cursor:pointer}

@@ -47,7 +47,7 @@
   .inv-detail-meta { font-size:12px; color:var(--ink3); margin-top:4px; }
   .inv-detail-actions { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:14px; }
   .inv-detail-actions .inv-action-btn { width:100%; padding:10px 4px; font-size:11px; }
-  .inv-detail-actions .inv-action-btn.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+  .inv-detail-actions .inv-action-btn.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); }
   .inv-detail-section { font-size:12px; font-weight:700; color:var(--ink2); margin:4px 0 8px; }
   .inv-detail-panel { display:none; }
   .inv-detail-panel.active { display:block; }
@@ -114,7 +114,7 @@
   .sale-row .form-input { height:42px; }
   .sale-total { height:42px; display:flex; align-items:center; justify-content:flex-end; padding:0 10px; background:var(--cream2); border:1px solid var(--cream3); border-radius:var(--radius-sm); font-family:'Tiro Bangla',serif; font-weight:700; color:var(--ink2); white-space:nowrap; }
   .sale-total-input { height:42px; text-align:right; font-weight:700; }
-  .sale-action-btn { width:42px; height:42px; border:0; border-radius:var(--radius-sm); background:var(--ink); color:var(--gold2); font-size:18px; cursor:pointer; }
+  .sale-action-btn { width:42px; height:42px; border:0; border-radius:var(--radius-sm); background:var(--sel-bg); color:var(--sel-fg); font-size:18px; cursor:pointer; }
   .sale-action-btn.remove { background:#fff; color:var(--red); border:1px solid var(--cream3); }
   .sale-hint { font-size:11px; color:var(--ink3); margin:0 0 8px; }
   .expense-lines { display:grid; gap:8px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px; }
@@ -128,7 +128,7 @@
   .stock-mode button.active { border-color:var(--ink); background:var(--cream2); font-weight:700; }
   .report-filter { display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; }
   .report-filter button { flex:0 0 auto; border:1px solid var(--cream3); background:#fff; color:var(--ink3); border-radius:999px; padding:8px 11px; font-family:'Tiro Bangla',serif; font-size:12px; cursor:pointer; }
-  .report-filter button.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); font-weight:700; }
+  .report-filter button.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); font-weight:700; }
   .report-custom { display:none; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
   .report-custom.open { display:grid; }
   .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
@@ -159,7 +159,7 @@
   #modal-dept-settings .modal { width:min(720px, calc(100vw - 24px)); max-width:720px; min-height:min(680px, calc(100vh - 32px)); max-height:calc(100vh - 32px); display:flex; flex-direction:column; }
   .dept-settings-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; }
   .dept-settings-tab { flex:0 0 auto; border:1px solid var(--cream3); background:#fff; color:var(--ink3); border-radius:999px; padding:7px 10px; font-family:'Tiro Bangla',serif; font-size:12px; cursor:pointer; }
-  .dept-settings-tab.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); font-weight:800; }
+  .dept-settings-tab.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); font-weight:800; }
   .dept-settings-body { flex:1; min-height:360px; overflow-y:auto; padding-right:2px; }
   .dept-settings-panel { display:none; }
   .dept-settings-panel.active { display:block; }

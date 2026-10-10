@@ -5,8 +5,8 @@
 .inbox-topbar {
   background:linear-gradient(180deg,#fffefb 0%,#f3ecdf 100%);
   padding:16px 18px; display:flex; align-items:center; justify-content:space-between;
-  border-bottom:1px solid rgba(26,18,8,.06);
-  box-shadow:0 4px 18px rgba(26,18,8,.04);
+  border-bottom:1px solid rgba(42,35,24,.06);
+  box-shadow:0 4px 18px rgba(42,35,24,.04);
 }
 .inbox-title { font-family:'Tiro Bangla',serif; font-size:18px; font-weight:700; color:var(--ink2); }
 .inbox-sub { font-size:11px; color:var(--ink3); margin-top:2px; }
@@ -34,11 +34,11 @@
   background:linear-gradient(180deg,#fffefb 0%,#f3ecdf 100%);
   color:var(--ink);
   padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0;
-  border-bottom:1px solid rgba(26,18,8,.06);
-  box-shadow:0 2px 12px rgba(26,18,8,.04);
+  border-bottom:1px solid rgba(42,35,24,.06);
+  box-shadow:0 2px 12px rgba(42,35,24,.04);
 }
 .chat-back { font-size:24px; cursor:pointer; line-height:1; padding:4px; color:var(--ink3); background:none; border:none; font-family:inherit; -webkit-tap-highlight-color:transparent; }
-.chat-peer-avatar { width:36px; height:36px; border-radius:50%; background:var(--cream2); border:1px solid rgba(26,18,8,.08); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.chat-peer-avatar { width:36px; height:36px; border-radius:50%; background:var(--cream2); border:1px solid rgba(42,35,24,.08); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 .chat-peer-info { flex:1; }
 .chat-peer-name { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:600; color:var(--ink2); }
 .chat-peer-role { font-size:11px; color:var(--ink3); }
@@ -50,12 +50,12 @@
 .msg-row.other { align-items:flex-start; }
 .msg-sender { font-size:10px; font-weight:600; color:var(--ink3); margin-bottom:3px; }
 .msg-bubble { max-width:80%; padding:10px 14px; border-radius:18px; font-size:13px; line-height:1.6; word-break:break-word; }
-.msg-row.me   .msg-bubble { background:linear-gradient(145deg,#4a3d2a,#3d3220); color:#fff; border-bottom-right-radius:4px; }
+.msg-row.me   .msg-bubble { background:#f3e5bf; color:var(--ink); border:1px solid rgba(184,137,42,.22); border-bottom-right-radius:4px; animation:mm-rise .22s var(--ease-out) both; }
 .msg-row.other .msg-bubble { background:#fff; color:var(--ink); border-bottom-left-radius:4px; box-shadow:var(--shadow); }
 .msg-time { font-size:10px; margin-top:3px; }
 .msg-row.me   .msg-time { color:var(--ink3); text-align:right; }
 .msg-row.other .msg-time { color:var(--ink3); }
-.msg-read { font-size:10px; color:rgba(255,255,255,0.4); }
+.msg-read { font-size:10px; color:var(--ink3); }
 .msg-request-card { margin-top:8px; background:rgba(255,248,232,.78); border:1px solid rgba(154,106,33,.18); border-radius:12px; padding:8px; color:var(--ink2); }
 .msg-request-status { display:inline-block; font-size:10px; font-weight:800; border-radius:999px; padding:2px 7px; margin-bottom:6px; background:#fff4d9; color:#9a6a21; }
 .msg-request-status.approved { background:#dcfce7; color:#065f46; }

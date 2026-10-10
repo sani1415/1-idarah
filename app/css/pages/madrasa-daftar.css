@@ -9,28 +9,29 @@
 .hero-date {
   display: flex;
   align-items: center;
-  background: var(--ink);
+  background: var(--sel-bg);
+  border-bottom: 1px solid var(--sel-line);
   padding: 0;
 }
 .hd-nav {
   flex: 0 0 36px; height: 36px;
   background: none; border: none;
-  font-size: 20px; color: rgba(255,255,255,.5);
+  font-size: 20px; color: rgba(94,67,12,.55);
   display: flex; align-items: center; justify-content: center;
   transition: color .15s, background .15s;
 }
-.hd-nav:hover  { color: #fff; background: rgba(255,255,255,.07); }
-.hd-nav:active { background: rgba(255,255,255,.12); transform: scale(.94); }
+.hd-nav:hover  { color: var(--sel-fg); background: rgba(255,255,255,.4); }
+.hd-nav:active { background: rgba(255,255,255,.6); transform: scale(.94); }
 .hd-center {
   flex: 1; text-align: center; cursor: pointer;
   position: relative; padding: 5px 4px; user-select: none;
 }
-.hd-compact-line { font-family: 'Tiro Bangla', serif; font-size: 12px; font-weight: 600; color: #fff; line-height: 1.25; }
-.hd-cal-chev { margin-left: 4px; font-size: 12px; color: rgba(255,255,255,.5); display: inline-block; transition: transform .15s ease; }
-.hero-date.is-cal-open .hd-cal-chev { transform: rotate(180deg); color: rgba(255,255,255,.8); }
+.hd-compact-line { font-family: 'Tiro Bangla', serif; font-size: 12px; font-weight: 700; color: var(--sel-fg); line-height: 1.25; }
+.hd-cal-chev { margin-left: 4px; font-size: 12px; color: rgba(94,67,12,.55); display: inline-block; transition: transform .15s ease; }
+.hero-date.is-cal-open .hd-cal-chev { transform: rotate(180deg); color: var(--sel-fg); }
 .hd-today-dot {
   display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-  background: var(--gold2); margin-right: 4px; vertical-align: middle; margin-top: -1px;
+  background: var(--green2); margin-right: 4px; vertical-align: middle; margin-top: -1px;
 }
 /* নেটিভ তারিখ নির্বাচন: ক্যালেন্ডার প্যানেলে */
 
@@ -76,7 +77,7 @@
 .hero-audit-strip {
   padding: 5px 10px 6px;
   background: #fff;
-  border-bottom: 1px solid rgba(255,255,255,.12);
+  border-bottom: 1px solid var(--cream2);
   font-size: 10px;
   line-height: 1.35;
 }
@@ -88,7 +89,7 @@
 .hero-audit-panel[hidden] { display: none !important; }
 .audit-mnav {
   width: 32px; height: 30px; border: none; border-radius: 8px;
-  background: rgba(26,18,8,.05); color: var(--ink2);
+  background: rgba(42,35,24,.05); color: var(--ink2);
   font-size: 16px; line-height: 1; cursor: pointer; flex-shrink: 0;
 }
 .audit-mnav:hover { background: var(--cream); }
@@ -263,7 +264,7 @@
 
 .s-row {
   display: flex; align-items: center; padding: 6px 6px;
-  border-bottom: 1px solid rgba(26,18,8,.04); transition: background .1s;
+  border-bottom: 1px solid rgba(42,35,24,.04); transition: background .1s;
 }
 .s-row:last-child { border-bottom: none; }
 .s-row.is-absent  { background: rgba(193,68,14,.03); }
@@ -301,7 +302,7 @@
 }
 .save-btn:hover   { filter: brightness(1.06); }
 .save-btn:active  { transform: scale(.98); filter: brightness(.96); }
-.save-btn.all-saved { background: var(--ink); box-shadow: 0 3px 14px rgba(26,18,8,.2); }
+.save-btn.all-saved { background: var(--ink2); box-shadow: 0 3px 14px rgba(42,35,24,.18); }
 .save-btn-count   { font-size: 11px; opacity: .88; font-weight: 400; flex-shrink: 0; }
 
 .s-name-col { flex: 1; min-width: 0; padding: 0 2px; }
@@ -384,9 +385,9 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
   font-weight:800; cursor:pointer;
 }
 .madrasa-tab:first-child { border-left:none; }
-.madrasa-tab.active { background:var(--ink); color:var(--gold2); }
+.madrasa-tab.active { background:var(--sel-bg); color:var(--sel-fg); }
 .hero-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 10px; }
-.hero-metric { background:#fff; border:1px solid rgba(26,18,8,.06); border-radius:14px; box-shadow:0 5px 13px rgba(26,18,8,.055); padding:9px 5px; text-align:center; min-width:0; }
+.hero-metric { background:#fff; border:1px solid rgba(42,35,24,.06); border-radius:14px; box-shadow:0 5px 13px rgba(42,35,24,.055); padding:9px 5px; text-align:center; min-width:0; }
 .hero-metric .hm-val { display:block; font-family:'Tiro Bangla',serif; font-size:16px; font-weight:900; color:var(--ink2); line-height:1.1; white-space:nowrap; }
 .hero-metric .hm-lbl { display:block; font-size:9px; color:var(--ink3); margin-top:3px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hero-metric.good .hm-val { color:var(--green); }
@@ -398,7 +399,7 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
 .class-summary-date { font-size:10px; color:var(--ink3); white-space:nowrap; }
 .class-summary-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .class-summary-table { width:100%; min-width:430px; border-collapse:collapse; font-size:11px; }
-.class-summary-table th { background:var(--ink); color:var(--gold2); padding:7px 5px; text-align:left; white-space:nowrap; font-size:10px; font-weight:700; }
+.class-summary-table th { background:var(--thead-bg); color:var(--thead-fg); padding:7px 5px; text-align:left; white-space:nowrap; font-size:10px; font-weight:700; }
 .class-summary-table td { padding:7px 5px; border-bottom:1px solid var(--cream2); color:var(--ink2); vertical-align:middle; }
 .class-summary-table tbody tr:last-child td { border-bottom:none; }
 .class-summary-table tbody tr:nth-child(even) td { background:#fffaf2; }
@@ -415,7 +416,7 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
 .student-tools-tabs { display:grid; grid-template-columns:repeat(3,1fr); background:#fff; }
 .student-tools-tab { border:none; border-left:1px solid var(--cream2); background:#fff; padding:10px 4px; font-family:'Tiro Bangla',serif; font-size:11px; font-weight:800; color:var(--ink3); cursor:pointer; }
 .student-tools-tab:first-child { border-left:none; }
-.student-tools-tab.active { background:var(--ink); color:var(--gold2); }
+.student-tools-tab.active { background:var(--sel-bg); color:var(--sel-fg); }
 .student-section { display:none; }
 .student-section.active { display:block; }
 .stu-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:6px; }
@@ -433,7 +434,7 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
 .csv-hint { font-size:12px; color:var(--ink3); line-height:1.6; }
 .csv-preview { overflow-x:auto; margin-bottom:12px; }
 .csv-table { width:100%; border-collapse:collapse; font-size:11px; }
-.csv-table th { background:var(--ink); color:var(--gold2); padding:6px 8px; text-align:right; white-space:nowrap; }
+.csv-table th { background:var(--thead-bg); color:var(--thead-fg); padding:6px 8px; text-align:right; white-space:nowrap; }
 .csv-table td { padding:6px 8px; border-bottom:1px solid var(--cream2); white-space:nowrap; }
 .csv-table tr:last-child td { border-bottom:none; }
 .csv-table tr.row-err td { color:var(--red); background:var(--red-light); }
@@ -470,7 +471,7 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
   color:var(--ink2); font-family:'Tiro Bangla',serif; font-size:12px;
   padding:9px 6px; cursor:pointer;
 }
-.acct-action.primary { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+.acct-action.primary { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); }
 .acct-tabs { margin-bottom: 8px; }
 .acct-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; }
 .acct-stat {
@@ -500,7 +501,7 @@ body.page-daftar .att-card .empty-state { padding: 18px 8px; }
 .acct-day-head span { font-size:11px; color:var(--ink3); text-align:right; }
 .acct-rank-row, .acct-entry {
   display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
-  padding:7px 0; border-top:1px solid rgba(26,18,8,.06);
+  padding:7px 0; border-top:1px solid rgba(42,35,24,.06);
 }
 .acct-rank-row:first-of-type { border-top: none; }
 .acct-rank-row span, .acct-entry span { color: var(--ink3); font-size:11px; line-height:1.35; }
@@ -577,10 +578,10 @@ body.page-daftar #modal-account-entry .modal {
 
 /* ══ Desktop app (≥ 1024px): হাজিরা তালিকা দুই কলামে, সেভ বাটন নিচে ══ */
 @media (min-width: 1024px) {
-  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1px; background: rgba(26,18,8,.05); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1px; background: rgba(42,35,24,.05); }
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list > .class-sep { grid-column: 1 / -1; padding: 10px 14px 9px; }
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list > :not(.class-sep):not(.s-row) { grid-column: 1 / -1; background: #fff; }
-  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row { background: #fff; padding: 8px 12px; border-bottom: 1px solid rgba(26,18,8,.05); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row { background: #fff; padding: 8px 12px; border-bottom: 1px solid rgba(42,35,24,.05); }
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row.is-absent { background: #fdf6f2; }
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row.is-holiday { background: #f6f7fd; }
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row:hover { background: #fffaf0; }

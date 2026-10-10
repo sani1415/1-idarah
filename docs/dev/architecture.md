@@ -104,4 +104,5 @@ HTML page
 - User data render করার সময় escape করতে হবে (`API.esc` / page-এর `esc` helper)।
 - Mobile-first layout: বেশিরভাগ দায়িত্বশীল ফোন থেকে ব্যবহার করেন।
 - Desktop (≥1024px): নেভ থাকা পেজে `js/core/mm-shell.js` `html.mm-desk-shell` দেয়; তখন নিচের নেভ বাঁ পাশের sidebar হয় আর কনটেন্ট `--desk-max` পর্যন্ত চওড়া হয়। পেজভেদে ডেস্কটপ layout সেই পেজের CSS-এ `@media (min-width: 1024px)`-এ লিখুন। কনটেন্টের প্রস্থ inline style-এ না দিয়ে `.content-520/640/760` class ব্যবহার করুন, আর ছোট dialog-এ `.modal-md/sm/xs`।
+- রং ও motion: `style.css`-এর `:root` token ব্যবহার করুন, নতুন hex ছড়াবেন না। নির্বাচিত ট্যাব/চিপ/অ্যাভাটার = `--sel-bg` / `--sel-fg` / `--sel-line` (হালকা মধুরঙা tint — আগের মতো গাঢ় কালি + সোনালি লেখা নয়), টেবিল হেডার = `--thead-bg` / `--thead-fg`, hairline = `--line`, ছায়া = `--shadow` / `--shadow-md`, motion = `--ease-out` / `--dur`। হলুদ-সোনালি লেখা দরকার হলে `--gold-deep` (পড়ার মতো contrast)। `prefers-reduced-motion`-এ সব animation বন্ধ হয়।
 - Admin পেজে navigation link absolute path হবে। কারণ ও path বদলানোর নিয়ম: [code-map.md](code-map.md#path-বা-নাম-বদলানোর-আগে)।

@@ -27,11 +27,11 @@
   .rank-3 { color:var(--red); }
   .class-chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px; }
   .chip { background:#fff; border:1px solid var(--cream3); border-radius:20px; padding:6px 13px; font-size:11px; white-space:nowrap; cursor:pointer; font-family:'Tiro Bangla',serif; color:var(--ink3); flex-shrink:0; }
-  .chip.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+  .chip.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); }
   .chip-section { background:var(--cream2); color:var(--ink2); font-weight:700; cursor:default; }
   .dept-tab { display:flex; gap:6px; margin-bottom:14px; }
   .dept-tab-btn { flex:1; padding:10px; border:1px solid var(--cream3); border-radius:var(--radius-sm); text-align:center; font-family:'Tiro Bangla',serif; font-size:12px; font-weight:600; cursor:pointer; background:#fff; color:var(--ink3); transition:all .15s; }
-  .dept-tab-btn.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); }
+  .dept-tab-btn.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); }
   .subj-row { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
   .mark-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--cream2); }
   .mark-row:last-child { border-bottom:none; }
@@ -45,7 +45,7 @@
   .g-rasib   { background:var(--red-light);  color:var(--red);  }
   .cls-overlay { position:fixed; inset:0; z-index:200; background:var(--bg,#faf6ef); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
   .cls-overlay.is-open { transform:translateX(0); }
-  .cls-ov-header { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; background:var(--ink); color:var(--gold2); flex-shrink:0; }
+  .cls-ov-header { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; background:var(--sel-bg); color:var(--sel-fg); flex-shrink:0; }
   .cls-ov-back { background:none; border:none; color:inherit; font-size:22px; cursor:pointer; padding:4px 10px 4px 0; line-height:1; }
   .cls-ov-info { flex:1; min-width:0; }
   .cls-ov-title { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:700; }

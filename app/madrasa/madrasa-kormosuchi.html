@@ -12,7 +12,7 @@
 <style>
 .prog-select-wrap { display:flex; gap:8px; align-items:center; }
 .prog-select { flex:1; padding:10px 12px; border:1px solid var(--cream3); border-radius:var(--radius-sm); background:#fff; font-family:'Tiro Bangla',serif; font-size:14px; color:var(--ink); }
-.prog-new-btn { flex:0 0 auto; border:1px solid var(--ink); border-radius:var(--radius-sm); background:var(--ink); color:var(--gold2); padding:8px 10px; font-family:'Tiro Bangla',serif; font-size:12px; font-weight:800; line-height:1; white-space:nowrap; cursor:pointer; }
+.prog-new-btn { flex:0 0 auto; border:1px solid var(--ink); border-radius:var(--radius-sm); background:var(--sel-bg); color:var(--sel-fg); padding:8px 10px; font-family:'Tiro Bangla',serif; font-size:12px; font-weight:800; line-height:1; white-space:nowrap; cursor:pointer; }
 .prog-new-btn:disabled,.t4-btn:disabled,.submit-btn:disabled,.settings-danger-btn:disabled { opacity:.45; cursor:not-allowed; }
 .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:10px; }
 .kpi-card { background:var(--cream); border:1px solid var(--cream2); border-radius:var(--radius-sm); padding:8px 4px; text-align:center; min-width:0; }
@@ -36,7 +36,7 @@
 .type-hint { font-size:11px; color:var(--ink3); line-height:1.5; margin-top:-6px; margin-bottom:10px; }
 .k-tabs { display:flex; gap:5px; background:var(--gold-light); border-radius:var(--radius-sm); padding:4px; margin-bottom:10px; overflow-x:auto; }
 .k-tab { border:none; background:transparent; border-radius:var(--radius-sm); padding:8px 11px; font-family:'Tiro Bangla',serif; font-weight:700; font-size:12px; color:var(--ink3); white-space:nowrap; cursor:pointer; transition:.12s; }
-.k-tab.active { background:var(--ink); color:var(--gold2); }
+.k-tab.active { background:var(--sel-bg); color:var(--sel-fg); }
 .tbl-wrap { overflow:auto; border:1px solid var(--cream2); border-radius:var(--radius-sm); max-height:420px; }
 .tbl { border-collapse:separate; border-spacing:0; width:100%; table-layout:fixed; font-size:13px; }
 .tbl th, .tbl td { text-align:left; padding:8px; border-bottom:1px solid var(--cream2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:top; }
@@ -66,7 +66,7 @@
 .chip button { background:none; border:none; color:var(--red); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
 .rpt-bar { display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding:2px 0 6px; }
 .rpt-bar button { flex:0 0 auto; border:1px solid var(--cream3); background:#fff; border-radius:999px; padding:7px 11px; font-family:'Tiro Bangla',serif; font-size:12px; color:var(--ink3); cursor:pointer; }
-.rpt-bar button.active { background:var(--ink); color:var(--gold2); border-color:var(--ink); font-weight:700; }
+.rpt-bar button.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); font-weight:700; }
 .act-btns { display:flex; gap:5px; }
 .tbl-act { border:1px solid var(--cream3); border-radius:6px; background:#fff; padding:4px 8px; cursor:pointer; font-family:'Tiro Bangla',serif; font-size:11px; color:var(--ink2); }
 .tbl-del { border:1px solid var(--red); border-radius:6px; background:var(--red-light); color:var(--red); padding:4px 8px; cursor:pointer; font-family:'Tiro Bangla',serif; font-size:11px; }

@@ -16,9 +16,9 @@
   padding: 6px 8px max(10px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
-  border: 1px solid rgba(26, 18, 8, 0.08);
+  border: 1px solid rgba(42, 35, 24, 0.08);
   border-radius: 999px;
-  box-shadow: 0 4px 6px rgba(26, 18, 8, 0.04), 0 14px 36px rgba(26, 18, 8, 0.1);
+  box-shadow: 0 4px 6px rgba(42, 35, 24, 0.04), 0 14px 36px rgba(42, 35, 24, 0.1);
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }

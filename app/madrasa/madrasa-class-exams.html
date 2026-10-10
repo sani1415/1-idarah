@@ -27,12 +27,12 @@
   .mark-sheet-scroll { overflow:auto; -webkit-overflow-scrolling:touch; height:calc(100vh - 268px); border-radius:var(--radius); box-shadow:var(--shadow); background:#fff; }
   .mark-grid { border-collapse:collapse; width:100%; }
   .mark-grid th,.mark-grid td { padding:6px 4px; text-align:center; border-bottom:1px solid var(--cream2); white-space:nowrap; font-size:12px; }
-  .mark-grid th { background:var(--ink); color:var(--gold2); font-size:11px; font-weight:600; position:sticky; top:0; z-index:2; }
+  .mark-grid th { background:var(--thead-bg); color:var(--thead-fg); font-size:11px; font-weight:600; position:sticky; top:0; z-index:2; }
   .mark-grid td:first-child,.mark-grid th:first-child { position:sticky; left:0; text-align:left; min-width:80px; max-width:110px; white-space:normal; z-index:3; }
   .mark-grid td:first-child { background:var(--cream); }
-  .mark-grid th:first-child { background:var(--ink); z-index:5; }
+  .mark-grid th:first-child { background:var(--thead-bg); z-index:5; }
   .mark-grid td:last-child { position:sticky; right:0; background:var(--cream); font-family:'Tiro Bangla',serif; font-weight:700; min-width:62px; z-index:3; }
-  .mark-grid th:last-child { background:var(--ink); z-index:5; }
+  .mark-grid th:last-child { background:var(--thead-bg); z-index:5; }
   .mark-cell { width:52px; border:1.5px solid var(--cream3); border-radius:6px; padding:5px 2px; text-align:center; font-size:13px; font-family:'Tiro Bangla',serif; outline:none; }
   .mark-cell:focus { border-color:var(--gold); }
   .row-done { background:rgba(34,197,94,.07); }
@@ -47,7 +47,7 @@
   .g-rasib   { background:var(--red-light);  color:var(--red);  }
   .cls-overlay { position:fixed; inset:0; z-index:200; background:var(--bg,#faf6ef); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
   .cls-overlay.is-open { transform:translateX(0); }
-  .cls-ov-header { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; background:var(--ink); color:var(--gold2); flex-shrink:0; }
+  .cls-ov-header { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; background:var(--sel-bg); color:var(--sel-fg); flex-shrink:0; }
   .cls-ov-back { background:none; border:none; color:inherit; font-size:22px; cursor:pointer; padding:4px 10px 4px 0; line-height:1; }
   .cls-ov-info { flex:1; min-width:0; }
   .cls-ov-title { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:700; }
