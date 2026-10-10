@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "idarah", "runtimeExecutable": "npx", "runtimeArgs": ["serve", "app", "-l", "5502", "--no-clipboard"], "port": 5502 }
+  ]
+}
