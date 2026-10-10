@@ -237,6 +237,7 @@
 <script src="../js/madrasa/mdr-supabase-sync.js"></script>
 <script src="../js/shared/alumni-integration.js"></script>
 <script src="../js/core/mm-session.js"></script>
+<script src="../js/core/mm-shell.js"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script>
   if (!MMSession.requireStaffRoleOrAdminPerm('alumni', 'alumni', '/admin/madrasa.html')) { throw new Error('alumni permission denied'); }
@@ -506,7 +507,7 @@
 </script>
 
 <div class="modal-bg" id="modal-pin-change" onclick="if(event.target===this)closePinChangeModal()">
-  <div class="modal" style="max-width:380px">
+  <div class="modal modal-sm">
     <div class="modal-title"><span>PIN পরিবর্তন</span><button type="button" class="modal-close" onclick="closePinChangeModal()">✕</button></div>
     <form onsubmit="event.preventDefault();saveOwnPin()">
       <div class="form-group"><label class="form-label">বর্তমান PIN</label><input class="form-input" type="password" id="pc-cur" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" placeholder="বর্তমান PIN"></div>

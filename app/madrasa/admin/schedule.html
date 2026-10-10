@@ -35,7 +35,7 @@
   .sched-readonly { font-size:11px; color:var(--gold); background:#fffbeb; border-top:1px solid #fde68a; padding:8px 12px; }
   .content { padding-bottom:var(--app-content-pad-bottom); }
   @media (min-width: 960px) {
-    html body .content { max-width: 1100px !important; }
+    html body .content { max-width: 1100px; }
     .sched-tab { font-size: 13px; padding: 12px 8px; }
   }
 </style>
@@ -51,7 +51,7 @@
   </div>
 </div>
 
-<div class="content" style="max-width:640px; margin:0 auto;">
+<div class="content content-640">
   <p class="sched-lead">উপরে <strong>বর্ষ</strong> বেছে নিন—নিচে ওই বর্ষের চলমান নিজাম দেখাবে। পুরনো ভার্সনও দেখা যাবে (শুধু পড়া)।</p>
   <div class="sched-tabs">
     <button type="button" class="sched-tab active" id="stab-a" onclick="setDept('all')">সামগ্রিক</button>
@@ -92,6 +92,7 @@
 <script src="../../supabase-config.js"></script>
 <script src="../../js/api/api-shared.js"></script>
 <script src="../../js/core/mm-session.js"></script>
+<script src="../../js/core/mm-shell.js"></script>
 <script>
   if (!MMSession.requireAdminPerm('dars', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
 

@@ -95,6 +95,7 @@
 <script src="js/madrasa/mdr-supabase-sync.js"></script>
 <script src="js/madrasa/mdr-daftar-supabase.js"></script>
 <script src="js/core/mm-session.js"></script>
+<script src="js/core/mm-shell.js"></script>
 <script src="js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
 <script src="js/core/mm-push.js"></script>
 <script src="js/dept/dept-api.js"></script>
@@ -326,7 +327,7 @@
     if (isAdmin) {
       await syncChatRemote();
       await syncRemoteStaffUsers();
-      document.body.classList.add('chat-page', 'chat-has-bottom-nav', 'chat-admin');
+      document.body.classList.add('chat-page', 'chat-has-bottom-nav', 'chat-admin', 'chat-split');
       const hubNav = document.getElementById('chat-page-hub-nav');
       if (hubNav) hubNav.style.display = 'flex';
       const inboxBack = document.getElementById('inbox-back-btn');
@@ -373,6 +374,11 @@
     }
   }
 
+  /* ডেস্কটপে (≥1024px) জিম্মাদারের জন্য দুই ভাগ: বাঁয়ে তালিকা, ডানে কথোপকথন (chat-page.css) */
+  function isDeskSplit() {
+    return isAdmin && !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches);
+  }
+
   /* ── INBOX ── */
   function showInbox() {
     document.getElementById('view-inbox').style.display = 'block';
@@ -393,8 +399,9 @@
     }
     el.innerHTML = threads.map(t => {
       const isUnread = t.unread > 0;
+      const isActive = activeThread === t.thread_id && document.body.classList.contains('chat-split-open');
       const preview  = t.last_msg ? (t.last_msg.from_role==='admin'?'আপনি: ':'')+t.last_msg.text.slice(0,45)+(t.last_msg.text.length>45?'...':'') : '—';
-      return `<div class="thread-item" onclick="openChat('${t.thread_id}','${ChatAPI.esc(t.staff_name)}','${t.label.icon}','${ChatAPI.esc(t.label.name)}')">
+      return `<div class="thread-item${isActive ? ' is-active' : ''}" onclick="openChat('${t.thread_id}','${ChatAPI.esc(t.staff_name)}','${t.label.icon}','${ChatAPI.esc(t.label.name)}')">
         <div class="thread-avatar">
           ${t.label.icon}
           ${isUnread ? `<div class="unread-dot">${t.unread}</div>` : ''}
@@ -418,7 +425,12 @@
     activePeerName = peerName;
     activePeerIcon = peerIcon || '👤';
 
-    document.getElementById('view-inbox').style.display = 'none';
+    if (isDeskSplit()) {
+      document.body.classList.add('chat-split-open');
+      document.getElementById('view-inbox').style.display = 'block';
+    } else {
+      document.getElementById('view-inbox').style.display = 'none';
+    }
     document.getElementById('view-chat').style.display  = 'flex';
     document.getElementById('peer-avatar').textContent  = activePeerIcon;
     document.getElementById('peer-name').textContent    = isAdmin ? peerName : 'জিম্মাদার';
@@ -428,6 +440,7 @@
 
     if (isAdmin) ChatAPI.markReadAdmin(thread_id);
     else         ChatAPI.markReadStaff(thread_id);
+    if (isDeskSplit()) renderInbox();
     renderMsgs();
     setTimeout(scrollEnd, 60);
     await markActiveThreadRead();

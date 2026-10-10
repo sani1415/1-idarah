@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/main-admin-nav.css">
 <style>
+  .adt-wrap { max-width:520px; margin:0 auto; padding:8px 16px 0; }
   .dept-table-wrap { overflow-x:auto; background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow); border:1px solid rgba(26,18,8,.06); }
   .dept-table { width:100%; min-width:430px; border-collapse:collapse; table-layout:fixed; font-family:'Tiro Bangla',serif; }
   .dept-col-name { width:28%; }
@@ -64,7 +65,10 @@
 
   /* ══ Desktop (≥ 960px) ══ */
   @media (min-width: 960px) {
-    .adt-wrap { max-width: 1100px !important; }
+    .adt-wrap { max-width: 1100px; }
+  }
+  @media (min-width: 1024px) {
+    .adt-wrap { max-width: var(--desk-max); padding: 24px var(--desk-gutter) 0; }
     .dept-table th { font-size:12px; padding:10px 12px; }
     .dept-table td { font-size:13px; padding:11px 12px; }
   }
@@ -83,7 +87,7 @@
   </div>
 </div>
 
-<div class="adt-wrap" style="max-width:520px;margin:0 auto;padding:8px 16px 0;">
+<div class="adt-wrap">
   <div class="tab-bar" style="padding-bottom:0;margin-bottom:0;">
     <button class="tab-btn active" id="nav-overview" onclick="switchTab('overview')">বিভাগ</button>
     <button class="tab-btn" id="nav-filter" onclick="switchTab('filter')">ফিল্টার</button>
@@ -209,6 +213,7 @@
 <script src="../supabase-config.js"></script>
 <script src="../js/api/api-shared.js"></script>
 <script src="../js/core/mm-session.js"></script>
+<script src="../js/core/mm-shell.js"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script src="../js/dept/dept-api.js"></script>
 <script src="../js/dept/dept-units.js"></script>

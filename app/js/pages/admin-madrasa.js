@@ -339,7 +339,7 @@
       slide.classList.toggle('is-active', i === commandSlideIndex);
       slide.classList.toggle('is-prev', i === prev);
       slide.classList.toggle('is-next', i === next);
-      slide.setAttribute('aria-hidden', i === commandSlideIndex ? 'false' : 'true');
+      slide.setAttribute('aria-hidden', i === commandSlideIndex || isDeskGrid() ? 'false' : 'true');
     });
     document.querySelectorAll('.cc-deck-dot').forEach((dot, i) => {
       dot.classList.toggle('is-active', i === commandSlideIndex);
@@ -350,6 +350,9 @@
   function goCommandSlide(index) {
     updateCommandDeckState(index);
   }
+
+  // ডেস্কটপে তিনটা প্যানেল পাশাপাশি grid-এ থাকে (admin-madrasa.css), তখন swipe deck বন্ধ
+  function isDeskGrid() { return !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches); }
 
   function initCommandDeck() {
     const wrap = document.getElementById('cc-deck-wrap');
@@ -365,7 +368,7 @@
           event.preventDefault();
           return;
         }
-        if (i === commandSlideIndex) return;
+        if (i === commandSlideIndex || isDeskGrid()) return;
         event.preventDefault();
         goCommandSlide(i);
       });
@@ -528,6 +531,7 @@
       wrap.addEventListener('pointerdown', (event) => {
         if (event.button !== undefined && event.button !== 0) return;
         if (event.target.closest('input, select, textarea')) return;
+        if (isDeskGrid()) return;
         pointerId = event.pointerId;
         startX = event.clientX;
         startY = event.clientY;

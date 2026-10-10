@@ -112,6 +112,11 @@ body {
 
 /* ── CONTENT ── */
 .content { padding: 16px; max-width: 480px; margin: 0 auto; }
+/* পেজভেদে কনটেন্টের প্রস্থ (মোবাইল/ট্যাবলেট); ডেস্কটপ শেলে সব --desk-max পর্যন্ত চওড়া হয় */
+.content.content-520 { max-width: 520px; }
+.content.content-640 { max-width: 640px; }
+.content.content-760 { max-width: 760px; }
+.content.content-nav-pad { padding-bottom: var(--app-content-pad-bottom); }
 .pb-safe { height: 100px; }
 
 /* ── Class / year pill tabs (shared: admin, daftar, dept, …) ── */
@@ -1148,6 +1153,13 @@ body {
   border-radius: var(--radius); max-width: 460px;
   width: calc(100% - 32px); max-height: 90vh; padding: 20px 18px 24px;
 }
+/* ছোট dialog-এর মাপ (আগে inline style ছিল) */
+.modal.modal-md,
+.modal-bg .modal.modal-md { max-width: 420px; }
+.modal.modal-sm,
+.modal-bg .modal.modal-sm { max-width: 380px; }
+.modal.modal-xs,
+.modal-bg .modal.modal-xs { max-width: 320px; text-align: center; }
 
 /* ── RIGHT-SIDE SLIDE PANEL ── */
 .side-panel {
@@ -1297,4 +1309,191 @@ body {
   .empty-state { padding: 48px 24px; }
   .empty-icon { font-size: 48px; }
   .empty-text { font-size: 15px; }
+}
+
+/* ═══════════════════════════════════════════
+   DESKTOP APP SHELL (≥ 1024px)
+   body-র সরাসরি child হিসেবে .main-nav / .bottom-nav থাকলে CSS নিজেই (:has) শেল চালু করে,
+   তাই প্রথম paint থেকেই sidebar — JS-এর অপেক্ষায় মোবাইল layout ঝলক দেয় না। chat.html-এর নেভ
+   (id chat-page-*) JS দেখায়, তাই সেখানে js/core/mm-shell.js-এর html.mm-desk-shell লাগে।
+   নিচের পিল নেভ (.main-nav / .bottom-nav) বাঁ পাশের sidebar হয়ে যায়,
+   টপবার কনটেন্টের উপরে থাকে। মোবাইল/ট্যাবলেটে কিছুই বদলায় না।
+   ═══════════════════════════════════════════ */
+.mm-sb-brand { display: none; }
+
+@media (min-width: 1024px) {
+  :root {
+    --sb-w: 248px;
+    --desk-gutter: 36px;
+    --desk-max: 1240px;
+    --desk-surface: #fffdf9;
+    --desk-line: rgba(26, 18, 8, 0.07);
+    --desk-shadow: 0 1px 2px rgba(26, 18, 8, 0.04), 0 10px 28px -10px rgba(26, 18, 8, 0.12);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) {
+    --app-content-pad-bottom: 48px;
+    --app-fab-bottom: 28px;
+    --app-floating-above-nav: 28px;
+    --app-nav-layout-offset: 0px;
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) body {
+    padding-left: var(--sb-w);
+    background:
+      radial-gradient(1200px 520px at 85% -10%, rgba(232, 184, 75, 0.10), transparent 60%),
+      var(--cream);
+    background-attachment: fixed;
+  }
+
+  /* ── Sidebar ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .bottom-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: var(--sb-w);
+    max-width: none;
+    margin: 0;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 2px;
+    /* উপরের 96px brand-এর জন্য আগে থেকেই রাখা — brand JS পরে বসালেও মেনু সরে না */
+    padding: 96px 14px 24px;
+    border: 0;
+    border-right: 1px solid var(--desk-line);
+    border-radius: 0;
+    background: linear-gradient(180deg, #fffdf8 0%, #f9f3e7 100%);
+    box-shadow: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 120;
+  }
+
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .mm-sb-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: absolute;
+    top: 18px;
+    left: 14px;
+    right: 14px;
+    height: 64px;
+    padding: 0 8px 14px;
+    margin: 0;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--desk-line);
+    text-decoration: none;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+  .mm-sb-logo { width: 40px; height: 40px; border-radius: 12px; box-shadow: 0 6px 16px -6px rgba(201, 149, 42, 0.55); }
+  .mm-sb-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .mm-sb-ar { font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif; font-size: 18px; font-weight: 700; color: var(--ink); }
+  .mm-sb-bn { font-size: 12px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    text-align: left;
+    color: var(--ink3);
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn:hover,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item:hover {
+    background: rgba(26, 18, 8, 0.04);
+    color: var(--ink);
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn:active,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item:active { transform: scale(0.98); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item.active,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn.is-active {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item.active { background: rgba(232, 184, 75, 0.22); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-ico,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-icon svg.nav-svg,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item > svg.nav-svg {
+    width: 20px;
+    height: 20px;
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn.is-active .main-nav-ico { transform: none; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-lbl,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-label,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item > span:not(.nav-icon) {
+    font-size: 14.5px;
+    margin-top: 0;
+    text-align: left;
+    letter-spacing: 0;
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .nav-item .mm-chat-badge,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .main-nav-btn .mm-chat-badge {
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+  }
+
+  /* ── Topbar: কনটেন্ট কলামের উপরে, কাচের মতো হালকা ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .topbar {
+    padding: 18px var(--desk-gutter);
+    min-height: 72px;
+    background: rgba(250, 246, 239, 0.82);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom: 1px solid var(--desk-line);
+    box-shadow: none;
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .topbar-name { font-size: 21px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .topbar-role { font-size: 12px; margin-bottom: 2px; }
+
+  /* ── Content column ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) body .content {
+    max-width: var(--desk-max);
+    padding: 28px var(--desk-gutter) var(--app-content-pad-bottom);
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .pb-safe { height: 40px; }
+
+  /* ── Cards & stats: ডেস্কটপে নরম গভীরতা ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .card,
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .stat-card {
+    box-shadow: var(--desk-shadow);
+    border: 1px solid var(--desk-line);
+  }
+
+  /* ── Modal: নিচের sheet নয়, মাঝখানে dialog; sidebar-এর ডানে কেন্দ্র ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .modal-bg {
+    padding: 32px 32px 32px calc(var(--sb-w) + 32px);
+    align-items: center;
+    background: rgba(26, 18, 8, 0.36);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .modal-bg.open .modal { animation: mm-desk-pop 0.24s var(--ease-out) both; }
+
+  /* ── Toast: কনটেন্ট কলামের মাঝে ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .toast { left: calc(50% + var(--sb-w) / 2); }
+}
+
+@keyframes mm-desk-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 1440px) {
+  :root { --desk-gutter: 48px; --sb-w: 264px; }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .modal-bg.open .modal { animation: none; }
 }

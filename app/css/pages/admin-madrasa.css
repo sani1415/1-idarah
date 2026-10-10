@@ -238,3 +238,77 @@
     .cls-ov-body { padding: 18px 24px 32px; }
     .kh-ov-body { padding: 18px 24px 32px; }
   }
+
+  /* ══ Desktop app (≥ 1024px): তিন প্যানেল পাশাপাশি, shortcut সারি, drawer overlay ══ */
+  @media (min-width: 1024px) {
+    .dept-tab { display:inline-flex; gap:4px; padding:4px; margin-bottom:22px; background:rgba(26,18,8,.05); border-radius:14px; }
+    .dept-tab-btn { flex:0 0 auto; min-width:128px; padding:9px 18px; border:0; border-radius:10px; background:transparent; font-size:14px; transition:background .2s var(--ease-out), color .2s var(--ease-out), box-shadow .2s var(--ease-out); }
+    .dept-tab-btn:hover { color:var(--ink); }
+    .dept-tab-btn[aria-selected="true"] { background:#fff; color:var(--ink); font-weight:700; box-shadow:0 1px 2px rgba(26,18,8,.06), 0 4px 12px -4px rgba(26,18,8,.14); }
+
+    .cc-deck-wrap { overflow:visible; padding-bottom:0; margin-bottom:22px; touch-action:auto; user-select:auto; -webkit-user-select:auto; }
+    .cc-deck { height:auto !important; overflow:visible; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:stretch; }
+    .cc-deck .cc-slide--overall { grid-column:1 / -1; }
+    .cc-deck .cc-panel,
+    .cc-deck .cc-panel.is-prev,
+    .cc-deck .cc-panel.is-next,
+    .cc-deck .cc-panel.is-active { position:relative; inset:auto; height:auto; opacity:1; visibility:visible; transform:none; pointer-events:auto; z-index:auto; padding:20px; box-shadow:var(--desk-shadow); border:1px solid var(--desk-line); animation:mm-desk-rise .42s var(--ease-out) both; }
+    .cc-deck .cc-panel:nth-child(2) { animation-delay:.06s; }
+    .cc-deck .cc-panel:nth-child(3) { animation-delay:.12s; }
+    .cc-deck-dots { display:none; }
+    .cc-head { margin-bottom:14px; }
+    .cc-title { font-size:19px; }
+    .cc-slide--overall .cc-health-grid { grid-template-columns:repeat(8,minmax(0,1fr)); }
+    #cc-accounts-grid,
+    #cc-dept-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    #cc-accounts-grid .cc-health-card,
+    #cc-dept-grid .cc-health-card { padding:12px 6px; }
+    #cc-accounts-grid .cc-health-val,
+    #cc-dept-grid .cc-health-val { font-size:16px; letter-spacing:-0.01em; }
+    .cc-health-card { border:1px solid var(--desk-line); box-shadow:none; background:var(--desk-surface); transition:transform .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+    .cc-health-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px -10px rgba(26,18,8,.25); }
+    .cc-health-label,
+    .cc-health-meta { font-size:11px; }
+    .cc-section-title { font-size:13px; }
+    .cc-section-meta { font-size:11px; }
+    .cc-alert-list { display:flex; flex-direction:column; gap:8px; }
+    .cc-slide--overall .cc-alert-list { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .cc-alert-row { cursor:pointer; transition:background .15s, border-color .15s; }
+    .cc-alert-row:hover { border-color:rgba(201,149,42,.35); background:#fffdf7; }
+    .cc-alert-title { font-size:13px; }
+    .cc-alert-meta { font-size:11px; }
+
+    .shortcut-grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin-bottom:26px; }
+    .shortcut-card { flex-direction:row; justify-content:flex-start; gap:12px; padding:14px 16px; text-align:left; border-radius:14px; box-shadow:none; border:1px solid var(--desk-line); background:var(--desk-surface); transition:transform .18s var(--ease-out), box-shadow .18s var(--ease-out), border-color .18s; }
+    .shortcut-card:hover { transform:translateY(-2px); border-color:rgba(201,149,42,.35); box-shadow:0 10px 24px -12px rgba(26,18,8,.28); }
+    .shortcut-ico { width:38px; height:38px; padding:9px; border-radius:11px; background:var(--gold-light); color:#8a6512; opacity:1; }
+    .shortcut-label { font-size:14px; font-weight:700; color:var(--ink2); }
+
+    .class-table-wrap { border-radius:18px; border:1px solid var(--desk-line); box-shadow:var(--desk-shadow); }
+    .class-table { font-size:13px; }
+    .class-table thead th { padding:12px 10px; font-size:12px; }
+    .class-table thead th.col-num { font-size:12px; }
+    .class-table thead th.col-hk { font-size:11px; }
+    .class-table tbody td { padding:12px 10px; }
+    .class-table .td-name,
+    .class-table .td-num { font-size:14px; }
+    .class-table thead th.col-sticky,
+    .class-table tbody td.td-name { min-width:180px; max-width:260px; width:22%; padding-left:18px; }
+    .class-table thead th.col-num,
+    .class-table tbody td.td-num { width:auto; min-width:72px; }
+    .class-table tbody tr.class-row:hover td { background:#fffaf0; }
+
+    /* ফুল-স্ক্রিন overlay → ডান পাশের drawer */
+    .kh-overlay,
+    .cls-overlay { left:auto; width:min(640px, calc(100vw - var(--sb-w) - 48px)); box-shadow:none; border-left:1px solid var(--desk-line); transition:transform .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+    .kh-overlay.is-open,
+    .cls-overlay.is-open { box-shadow:0 0 0 100vmax rgba(26,18,8,.28), -24px 0 48px rgba(26,18,8,.16); }
+  }
+
+  @keyframes mm-desk-rise {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:none; }
+  }
+  @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+    .cc-deck .cc-panel { animation:none !important; }
+  }

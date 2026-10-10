@@ -56,3 +56,6 @@
     .t-name { font-size: 14px; }
     .perm-card { padding: 14px 15px; }
   }
+  .devices-logout-btn { display:block; width:100%; margin-top:10px; padding:11px 12px; border:1px solid rgba(193,68,14,.28); border-radius:var(--radius-sm); background:#fff; color:var(--red); font-family:'Tiro Bangla',serif; font-size:13px; font-weight:700; cursor:pointer; }
+  .devices-logout-btn:hover { background:var(--red-light); }
+  .devices-logout-btn[hidden] { display:none; }

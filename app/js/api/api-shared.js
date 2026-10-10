@@ -28,6 +28,18 @@ const MMSharedAPI = (() => {
     return !!err && String(err.message || err) === 'pin_locked';
   }
 
+  /* টোকেন দিয়ে করা call ব্যর্থ হলে টোকেনটা এখনো বৈধ কিনা mm-session.js যাচাই করে
+     (বাতিল/মেয়াদোত্তীর্ণ হলে আবার লগইনে পাঠায়)। */
+  function noteRpcResult(name, params, data) {
+    if (!data || data.ok !== false || !params) return;
+    if (/^mdr_rel_session_/.test(name)) return;
+    const sent = params.p_pin || params.p_current_pin;
+    if (typeof sent !== 'string' || sent.indexOf('mdrs1.') !== 0) return;
+    try {
+      if (window.MMSession && window.MMSession.checkSessionToken) window.MMSession.checkSessionToken();
+    } catch (e) {}
+  }
+
   async function rpc(name, params) {
     if (supabaseClient) {
       const { data, error } = await supabaseClient.rpc(name, params || {});
@@ -35,6 +47,7 @@ const MMSharedAPI = (() => {
         if (isPinLocked(error)) return { ok: false, error: 'pin_locked' };
         throw error;
       }
+      noteRpcResult(name, params, data);
       return data;
     }
     const key = getSupabaseKey();
@@ -60,6 +73,7 @@ const MMSharedAPI = (() => {
       if (msg === 'pin_locked') return { ok: false, error: 'pin_locked' };
       throw new Error(msg);
     }
+    noteRpcResult(name, params, payload);
     return payload;
   }
 
@@ -68,6 +82,19 @@ const MMSharedAPI = (() => {
     rpc,
     loginAdmin(pin) {
       return rpc('mdr_rel_admin_login', { p_pin: pin });
+    },
+    /* সেশন টোকেন — লগইনের পর আসল পিনের বদলে ব্রাউজারে থাকে (mm-session.js দেখে) */
+    sessionIssue(userId, pin, device) {
+      return rpc('mdr_rel_session_issue', { p_user_id: userId, p_pin: pin, p_device: device || null });
+    },
+    sessionStatus(token) {
+      return rpc('mdr_rel_session_status', { p_token: token });
+    },
+    sessionEnd(token) {
+      return rpc('mdr_rel_session_end', { p_token: token });
+    },
+    adminRevokeUserSessions(pin, userId) {
+      return rpc('mdr_rel_admin_revoke_user_sessions', { p_pin: pin, p_user_id: userId });
     },
     adminChangePin(currentPin, newPin) {
       return rpc('mdr_rel_admin_change_pin', {

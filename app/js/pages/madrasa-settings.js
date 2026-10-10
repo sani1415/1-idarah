@@ -381,9 +381,6 @@
           MMSession.getAdminUserId(),
           p1
         );
-        const s = API.Settings.get();
-        s.admin_pin = p1;
-        API.Settings.save(s);
         document.getElementById('new-admin-pin').value = '';
         document.getElementById('confirm-admin-pin').value = '';
         showToast('অ্যাডমিন পিন পরিবর্তন হয়েছে ✓ (ডাটাবেস)');
@@ -720,6 +717,7 @@
     document.getElementById('t-class').value = t ? (t.class_id || '') : (document.getElementById('t-class').value || '');
     setPinField('t-pin', !!t, '0000');
     document.getElementById('t-active').checked = t ? t.is_active !== false : true;
+    document.getElementById('t-logout-devices').hidden = !(t && IS_MAIN_ADMIN && hasSupabaseAdminSession());
     openModal('add-teacher');
   }
 
@@ -782,7 +780,25 @@
     document.getElementById('st-role').value = user ? (user.role || 'daftar') : 'daftar';
     setPinField('st-pin', !!user, '0000');
     document.getElementById('st-active').checked = user ? user.is_active !== false : true;
+    document.getElementById('st-logout-devices').hidden = !(user && hasSupabaseAdminSession());
     openModal('add-staff');
+  }
+
+  /** ইউজারের লগইন করা সব ফোন/কম্পিউটার থেকে লগআউট (সেশন টোকেন বাতিল) — শুধু মূল জিম্মাদার */
+  async function logoutUserDevices(kind) {
+    const id = kind === 'teacher' ? editingTeacherProfileId : editingStaffId;
+    const user = id ? getManagedUser(id) : null;
+    if (!IS_MAIN_ADMIN || !user) { showToast('এই কাজের অনুমতি নেই'); return; }
+    if (!confirm(user.name + ' — সব ডিভাইস থেকে লগআউট করবেন? পরের বার তাঁকে আবার PIN দিয়ে লগইন করতে হবে।')) return;
+    try {
+      const res = await MMSharedAPI.adminRevokeUserSessions(MMSession.getAdminPin(), id);
+      if (!res || !res.ok) { showToast(userSaveErrorMessage(res && res.error) || 'লগআউট করা যায়নি'); return; }
+      const n = Number(res.revoked) || 0;
+      showToast(n ? API.toBn(n) + 'টি ডিভাইস থেকে লগআউট হয়েছে ✓' : 'কোনো ডিভাইসে লগইন ছিল না');
+    } catch (e) {
+      console.warn('adminRevokeUserSessions', e);
+      showToast('লগআউট করা যায়নি; ইন্টারনেট চেক করুন');
+    }
   }
 
   async function saveStaff() {

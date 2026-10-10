@@ -574,3 +574,20 @@ body.page-daftar #modal-account-entry .modal {
   .acct-split { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .acct-dashboard { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ══ Desktop app (≥ 1024px): হাজিরা তালিকা দুই কলামে, সেভ বাটন নিচে ══ */
+@media (min-width: 1024px) {
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1px; background: rgba(26,18,8,.05); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list > .class-sep { grid-column: 1 / -1; padding: 10px 14px 9px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list > :not(.class-sep):not(.s-row) { grid-column: 1 / -1; background: #fff; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row { background: #fff; padding: 8px 12px; border-bottom: 1px solid rgba(26,18,8,.05); }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row.is-absent { background: #fdf6f2; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row.is-holiday { background: #f6f7fd; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) #att-list .s-row:hover { background: #fffaf0; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .cs-name { font-size: 14px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .cs-pct { font-size: 12px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .s-roll { width: 30px; font-size: 12px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .tog { width: 36px; height: 36px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .save-footer { bottom: 16px; }
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .save-btn { max-width: 520px; margin: 0 auto; padding: 11px 18px; font-size: 14px; }
+}

@@ -12,6 +12,18 @@
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
 <style>
   .mmt-page { max-width:520px; margin:0 auto; padding:12px 16px var(--app-content-pad-bottom); }
+  @media (min-width: 1024px) {
+    html body .mmt-page { max-width: var(--desk-max); padding: 28px var(--desk-gutter) var(--app-content-pad-bottom); }
+    html body .mmt-head { font-size:22px; }
+    html body .mmt-sub { font-size:14px; }
+    html body #mmt-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+    html body #mmt-list .mmt-row { margin-bottom:0; box-shadow:none; border-color:var(--desk-line); }
+    html body #mmt-list .mmt-section { grid-column:1 / -1; margin:10px 0 0; font-size:13px; }
+    html body #mmt-list > div:not(.mmt-row):not(.mmt-section) { grid-column:1 / -1; }
+    html body .dept-tab { display:inline-flex; gap:4px; padding:4px; background:rgba(26,18,8,.05); border-radius:14px; }
+    html body .dept-tab-btn { flex:0 0 auto; min-width:128px; border:0; background:transparent; font-size:14px; }
+    html body .dept-tab-btn.active { background:#fff; color:var(--ink); border-color:transparent; box-shadow:0 1px 2px rgba(26,18,8,.06), 0 4px 12px -4px rgba(26,18,8,.14); }
+  }
   .mmt-head { font-family:'Tiro Bangla',serif; font-size:18px; font-weight:700; color:var(--ink2); margin-bottom:4px; }
   .mmt-sub { font-size:12px; color:var(--ink3); margin-bottom:14px; line-height:1.45; }
   .mmt-row { background:#fff; border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); border:1px solid rgba(26,18,8,.06); transition:background .12s; display:flex; align-items:center; gap:10px; }
@@ -106,6 +118,7 @@
 <script src="../../js/api/api-shared.js"></script>
 <script src="../../js/api/api.js"></script>
 <script src="../../js/core/mm-session.js"></script>
+<script src="../../js/core/mm-shell.js"></script>
 <script src="../../js/madrasa/mdr-supabase-sync.js"></script>
 <script src="../../js/core/mm-hijri.js"></script>
 <script src="../../js/shared/mm-student-modal.js"></script>

@@ -172,8 +172,137 @@
     return 'PIN পরিবর্তন হয়নি';
   }
 
+  // ── সেশন টোকেন ──
+  // লগইনের পর আসল পিনের বদলে server-এর দেওয়া টোকেন (mdrs1.…) একই key-তে রাখা হয়। সব RPC
+  // আগের মতোই p_pin-এ এটা পাঠায়; DB-র private.mdr_pin_ok টোকেন চেনে। আগে লগইন করা ডিভাইসে
+  // (আসল পিন জমা) পরের লোডেই নিজে থেকে টোকেনে বদলে যায় — আবার লগইন লাগে না।
+  var TOKEN_PREFIX = 'mdrs1.';
+  var tokenUpgradeRunning = false;
+  var tokenCheckAt = 0;
+
+  function isSessionToken(v) {
+    return typeof v === 'string' && v.indexOf(TOKEN_PREFIX) === 0;
+  }
+
+  function credentialSlot() {
+    var role = sessionStorage.getItem(K.role);
+    if (!role) return null;
+    if (role === 'admin') return { pinKey: K.adminPin, userId: sessionStorage.getItem(K.adminUserId) };
+    return { pinKey: K.staffPin, userId: sessionStorage.getItem(K.staffUserId) };
+  }
+
+  function sessionDeviceLabel() {
+    try {
+      var ua = navigator.userAgent || '';
+      var os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iPod/i.test(ua) ? 'iOS' :
+        /Windows/i.test(ua) ? 'Windows' : /Mac OS X/i.test(ua) ? 'Mac' : /Linux/i.test(ua) ? 'Linux' : 'ডিভাইস';
+      var br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' :
+        /Safari\//.test(ua) ? 'Safari' : 'ব্রাউজার';
+      return os + ' · ' + br;
+    } catch (e) { return null; }
+  }
+
+  function replacePersistedAdminPin(oldPin, token) {
+    try {
+      var raw = localStorage.getItem(ADMIN_PERSIST_KEY);
+      if (!raw) return;
+      var p = JSON.parse(raw);
+      if (!p || p.adminPin !== oldPin) return;
+      p.adminPin = token;
+      localStorage.setItem(ADMIN_PERSIST_KEY, JSON.stringify(p));
+    } catch (e) {}
+  }
+
+  // পুরনো local prototype অ্যাডমিন পিন localStorage-এর settings-এ plaintext রাখত — মুছে দাও
+  function scrubLegacyLocalPin() {
+    try {
+      if (!global.API || !API.Settings || !API.Settings.get) return;
+      var s = API.Settings.get();
+      if (s && Object.prototype.hasOwnProperty.call(s, 'admin_pin')) {
+        delete s.admin_pin;
+        API.Settings.save(s);
+      }
+    } catch (e) {}
+  }
+
+  async function upgradeToSessionToken() {
+    if (tokenUpgradeRunning) return;
+    var api = global.MMSharedAPI;
+    if (!api || typeof api.sessionIssue !== 'function') return;
+    var slot = credentialSlot();
+    if (!slot || !isUuid(slot.userId)) return;
+    var pin = sessionStorage.getItem(slot.pinKey);
+    if (!pin || isSessionToken(pin)) return;
+    tokenUpgradeRunning = true;
+    try {
+      var res = await api.sessionIssue(slot.userId, pin, sessionDeviceLabel());
+      if (!res || res.ok !== true || !isSessionToken(res.token)) return;
+      // এর মধ্যে logout বা অন্য লগইন হলে নতুন টোকেন বাতিল করে দাও
+      if (sessionStorage.getItem(slot.pinKey) !== pin) {
+        try { await api.sessionEnd(res.token); } catch (e0) {}
+        return;
+      }
+      sessionStorage.setItem(slot.pinKey, res.token);
+      persistAppSession();
+      replacePersistedAdminPin(pin, res.token);
+      scrubLegacyLocalPin();
+    } catch (e) {
+      // migration না থাকলে/নেট না থাকলে আসল পিনেই চলবে, পরের লোডে আবার চেষ্টা
+    } finally {
+      tokenUpgradeRunning = false;
+    }
+  }
+
+  function scheduleTokenUpgrade() {
+    setTimeout(function () {
+      if (global.MMSharedAPI) { upgradeToSessionToken(); return; }
+      // কিছু পেজে api-shared.js পরে লোড হয়
+      global.addEventListener('load', function () { upgradeToSessionToken(); }, { once: true });
+    }, 0);
+  }
+
+  function expiredLoginHref(role) {
+    if (role === 'admin' && isAdminHost()) return '/admin/';
+    if (role === 'dept_head') return '/dept/dept-index.html';
+    return '/index.html';
+  }
+
+  // লগইন পেজে: টোকেন বাতিল/মেয়াদ শেষ হয়ে ফিরে এলে কারণটা দেখাও
+  function showExpiredNoticeIfAny() {
+    try {
+      if (sessionStorage.getItem('mm_session_expired') !== '1') return;
+      var el = document.getElementById('pin-error');
+      if (!el) return;
+      sessionStorage.removeItem('mm_session_expired');
+      el.textContent = 'লগইনের মেয়াদ শেষ হয়েছে বা অন্য ডিভাইস থেকে বাতিল করা হয়েছে — আবার PIN দিন';
+    } catch (e) {}
+  }
+
   var MMSession = {
     K: K,
+
+    isSessionToken: isSessionToken,
+
+    /** টোকেন দিয়ে করা RPC ব্যর্থ হলে (api-shared.js) — টোকেন বাতিল হয়ে থাকলে আবার লগইনে পাঠায় */
+    checkSessionToken: async function () {
+      var now = Date.now();
+      if (now - tokenCheckAt < 60000) return;
+      tokenCheckAt = now;
+      var slot = credentialSlot();
+      var token = slot && sessionStorage.getItem(slot.pinKey);
+      if (!isSessionToken(token) || !global.MMSharedAPI || !MMSharedAPI.sessionStatus) return;
+      try {
+        var res = await MMSharedAPI.sessionStatus(token);
+        if (!res || res.ok !== true || res.valid !== false) return;
+      } catch (e) { return; }
+      if (sessionStorage.getItem(slot.pinKey) !== token) return;
+      var role = sessionStorage.getItem(K.role);
+      this.clearAppSession();
+      clearPersistedAppSession();
+      clearPersistedAdminSession();
+      try { sessionStorage.setItem('mm_session_expired', '1'); } catch (e2) {}
+      location.href = expiredLoginHref(role);
+    },
 
     get: function (key) { return sessionStorage.getItem(key); },
     set: function (key, val) { sessionStorage.setItem(key, val); },
@@ -253,6 +382,7 @@
       sessionStorage.removeItem(K.adminPin);
       sessionStorage.removeItem(K.adminPerms);
       persistAppSession();
+      if (pin && !isSessionToken(pin)) scheduleTokenUpgrade();
     },
     setTeacherId: function (v) { sessionStorage.setItem(K.teacherId, v); persistAppSession(); },
     setAdminSession: function (name, perms, userId, pin) {
@@ -277,6 +407,7 @@
         });
       }
       persistAppSession();
+      if (pin && !isSessionToken(pin)) scheduleTokenUpgrade();
     },
 
     setDeptSession: function (id, name, emoji, userId, pin) {
@@ -296,6 +427,7 @@
       sessionStorage.removeItem(K.teacherId);
       sessionStorage.removeItem(K.teacherProfile);
       persistAppSession();
+      if (pin && !isSessionToken(pin)) scheduleTokenUpgrade();
     },
     changeStaffPin: async function (currentPin, newPin, localChangeFn) {
       var uid = this.getStaffUserId();
@@ -497,6 +629,14 @@
           await Promise.race([
             MMPush.disableForSession(actorId, pin, isAdmin),
             new Promise(function (resolve) { setTimeout(resolve, 1800); })
+          ]);
+        } catch (e) {}
+      }
+      if (isSessionToken(pin) && global.MMSharedAPI && MMSharedAPI.sessionEnd) {
+        try {
+          await Promise.race([
+            MMSharedAPI.sessionEnd(pin),
+            new Promise(function (resolve) { setTimeout(resolve, 1500); })
           ]);
         } catch (e) {}
       }
@@ -976,4 +1116,9 @@
   }
   resumeNavLoadingIfNeeded();
   if (global.API && API.hydrateSessionCache) API.hydrateSessionCache();
+  scheduleTokenUpgrade();
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showExpiredNoticeIfAny);
+    else showExpiredNoticeIfAny();
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -21,7 +21,22 @@
   body.page-admin-accounts #account-details-root { display:flex; flex-direction:column; flex:1; min-height:0; }
   /* ══ Desktop (≥ 960px) ══ */
   @media (min-width: 960px) {
-    html body .content { max-width: 1100px !important; }
+    html body .content { max-width: 1100px; }
+  }
+  /* ══ Desktop app shell (≥ 1024px) ══ */
+  @media (min-width: 1024px) {
+    body.page-admin-accounts .acc-hub-tabs { display:inline-flex; margin-bottom:16px; }
+    body.page-admin-accounts .acc-hub-tab { flex:0 0 auto; min-width:150px; padding:10px 22px; font-size:14px; }
+    body.page-admin-accounts .acc-page-lead { font-size:14px; margin-bottom:16px; }
+    body.page-admin-accounts .kpi-grid { gap:12px; }
+    body.page-admin-accounts .kpi-card { min-height:104px; border:1px solid var(--desk-line); box-shadow:none; }
+    body.page-admin-accounts .kpi-card span { font-size:12px; }
+    body.page-admin-accounts .kpi-card b { font-size:22px; }
+    body.page-admin-accounts .tbl-wrap { max-height:min(64vh, 760px); border-radius:14px; }
+    body.page-admin-accounts .tbl { font-size:14px; }
+    body.page-admin-accounts .tbl th, body.page-admin-accounts .tbl td { padding:10px 12px; }
+    body.page-admin-accounts .tbl th { font-size:12px; }
+    body.page-admin-accounts .tbl tr:hover td { background:#fff6e4; }
   }
   .acc-hub-tabs{display:flex;gap:4px;margin:0 0 12px;padding:4px;background:rgba(255,255,255,.72);border:1px solid rgba(26,18,8,.07);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
   .acc-hub-tab{flex:1;border:none;border-radius:11px;padding:10px 10px;font-family:'Tiro Bangla',serif;font-size:13px;font-weight:700;color:var(--ink3);background:transparent;cursor:pointer;transition:.12s}
@@ -90,7 +105,7 @@
   </div>
 </div>
 
-<div class="content" style="max-width:640px;margin:0 auto;">
+<div class="content content-640">
   <nav class="acc-hub-tabs" role="tablist" aria-label="হিসাব বিভাগ">
     <button type="button" class="acc-hub-tab active" data-acc-hub="madrasa" role="tab" aria-selected="true" aria-controls="acc-panel-madrasa" id="acc-hub-tab-madrasa">মাদ্রাসা হিসাব</button>
     <button type="button" class="acc-hub-tab" data-acc-hub="prog" role="tab" aria-selected="false" aria-controls="acc-panel-kormosuchi" id="acc-hub-tab-prog">কর্মসূচি</button>
@@ -271,7 +286,7 @@
   </div>
 </div>
 <div class="modal-bg" id="modal-confirm">
-  <div class="modal" style="max-width:320px;text-align:center">
+  <div class="modal modal-xs">
     <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px;line-height:1.5" id="confirm-msg">নিশ্চিত করুন</div>
     <div style="display:flex;gap:8px">
       <button type="button" onclick="confirmYes()" style="flex:1;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--red-light);color:var(--red);font-family:'Tiro Bangla',serif;font-weight:700;cursor:pointer">হ্যাঁ</button>
@@ -294,6 +309,7 @@
 <script src="../../supabase-config.js"></script>
 <script src="../../js/api/api-shared.js"></script>
 <script src="../../js/core/mm-session.js"></script>
+<script src="../../js/core/mm-shell.js"></script>
 <script src="../../js/core/mm-hijri.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="../../js/madrasa/madrasa-accounts-api.js?v=20260723-atomic-xlsx"></script>

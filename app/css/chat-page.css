@@ -131,3 +131,31 @@ body.chat-admin #view-inbox { padding-bottom: var(--app-content-pad-bottom); }
   .chat-inp { font-size: 14px; }
   .fab { right: calc(50% - 340px); }
 }
+
+/* ══ Desktop app (≥ 1024px): জিম্মাদারের বার্তা দুই ভাগে — বাঁয়ে তালিকা, ডানে কথোপকথন ══ */
+@media (min-width: 1024px) {
+  html.mm-desk-shell .chat-input-bar { left: var(--sb-w); max-width: none; }
+  html.mm-desk-shell .fab { right: 32px; bottom: 32px; }
+
+  html.mm-desk-shell body.chat-split { flex-direction: row; height: 100dvh; overflow: hidden; }
+  html.mm-desk-shell body.chat-split > #view-inbox {
+    flex: 0 0 400px; width: 400px; min-height: 0; height: 100dvh; overflow-y: auto;
+    border-right: 1px solid var(--desk-line); background: rgba(255, 253, 248, .6);
+    position: relative; padding-bottom: 24px;
+  }
+  html.mm-desk-shell body.chat-split > #view-inbox .content { padding: 14px 16px 90px; }
+  html.mm-desk-shell body.chat-split > #view-inbox .fab { position: absolute; right: 20px; bottom: 20px; }
+  html.mm-desk-shell body.chat-split > #view-chat { flex: 1 1 auto; min-width: 0; height: 100dvh; }
+  html.mm-desk-shell body.chat-split .chat-back { display: none; }
+  html.mm-desk-shell body.chat-split .chat-topbar { padding: 16px 28px; min-height: 72px; }
+  html.mm-desk-shell body.chat-split .chat-msgs { padding: 22px 32px 20px; }
+  html.mm-desk-shell body.chat-split .chat-input-bar { position: static; left: auto; right: auto; bottom: auto; margin: 0; padding: 14px 28px 18px; }
+  html.mm-desk-shell body.chat-split .thread-item { box-shadow: none; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+  html.mm-desk-shell body.chat-split .thread-item:hover { border-color: rgba(201, 149, 42, .3); }
+  html.mm-desk-shell body.chat-split .thread-item.is-active { background: var(--gold-light); border-color: rgba(201, 149, 42, .45); }
+  html.mm-desk-shell body.chat-split:not(.chat-split-open)::after {
+    content: 'বাঁ পাশের তালিকা থেকে একটি কথোপকথন বেছে নিন';
+    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+    color: var(--ink3); font-size: 15px;
+  }
+}

@@ -61,7 +61,11 @@ HTML page
 - লক: ১৫ মিনিটে একই target-এ ৫টা **আলাদা** ভুল পিন এলে ১৫ মিনিট লক (`private.mdr_pin_failures`)। একই ভুল পিন বারবার এলে একবারই গোনা হয়, যাতে পুরনো পিন নিয়ে পড়ে থাকা ফোন মালিককে লক না করে। লক থাকলে `pin_locked` exception ওঠে, আর `api-shared.js`-এর `rpc()` সেটাকে `{ok:false, error:'pin_locked'}` বানায়।
 - পিন কোনো RPC ফেরত দেয় না (`has_pin` দেয়)। ইউজার এডিটে পিন খালি পাঠালে আগের পিন থাকে।
 - লক ছাড়াতে বা পিন রিসেট করতে: `20261001120000_mdr_pin_hash_lockout.sql`-এর header দেখুন।
-- লগইনের পর পিন `sessionStorage`/`localStorage`-এ থাকে (`mm-session.js`), কারণ প্রতিটা RPC পিন চায়। এটা বদলাতে হলে session-token ব্যবস্থা লাগবে।
+- **সেশন টোকেন** (`20261010120000_mdr_session_tokens.sql`): লগইনের পর `mm-session.js` `mdr_rel_session_issue` দিয়ে টোকেন (`mdrs1.…`) নেয় আর আসল পিনের জায়গায় সেটা রাখে। RPC-র `p_pin`-এ টোকেনই যায়; `private.mdr_pin_ok` টোকেন চেনে, তাই RPC signature বদলায়নি। আসল পিনও এখনো চলে (পুরনো ডিভাইস পরের লোডে নিজে টোকেনে বদলায়)।
+  - টোকেনের শুধু sha256 থাকে `private.mdr_sessions`-এ। পিন বদলালে (hash fingerprint মেলে না), logout-এ (`mdr_rel_session_end`), জিম্মাদারের «সব ডিভাইস থেকে লগআউট»-এ (`mdr_rel_admin_revoke_user_sessions`) বা ১৮০ দিন অব্যবহারে টোকেন বাতিল।
+  - টোকেনে ভুল-পিন লক গোনা হয় না। দরস কিয়স্কের (`dars:` target) টোকেন নেই।
+  - টোকেন দিয়ে করা RPC `ok:false` দিলে `api-shared.js` → `MMSession.checkSessionToken()` `mdr_rel_session_status` দেখে; বাতিল হলে লগইন পেজে পাঠায়।
+  - নতুন কোডে পিন localStorage-এ লিখবেন না; সবসময় `MMSession.getPin()` / `getAdminPin()` থেকে যা আছে সেটাই RPC-তে পাঠান।
 - Frontend-এ শুধু publishable/anon key থাকে। service-role key থাকে শুধু Edge Function/Vercel env-এ।
 
 ### Migrations
@@ -99,4 +103,5 @@ HTML page
 - User-facing text বাংলায়। তারিখ DB-তে ISO (খ্রিস্টাব্দ), UI-তে হিজরী আগে দেখায় (`mm-hijri.js`, `hijri-utils.js`)।
 - User data render করার সময় escape করতে হবে (`API.esc` / page-এর `esc` helper)।
 - Mobile-first layout: বেশিরভাগ দায়িত্বশীল ফোন থেকে ব্যবহার করেন।
+- Desktop (≥1024px): নেভ থাকা পেজে `js/core/mm-shell.js` `html.mm-desk-shell` দেয়; তখন নিচের নেভ বাঁ পাশের sidebar হয় আর কনটেন্ট `--desk-max` পর্যন্ত চওড়া হয়। পেজভেদে ডেস্কটপ layout সেই পেজের CSS-এ `@media (min-width: 1024px)`-এ লিখুন। কনটেন্টের প্রস্থ inline style-এ না দিয়ে `.content-520/640/760` class ব্যবহার করুন, আর ছোট dialog-এ `.modal-md/sm/xs`।
 - Admin পেজে navigation link absolute path হবে। কারণ ও path বদলানোর নিয়ম: [code-map.md](code-map.md#path-বা-নাম-বদলানোর-আগে)।
