@@ -89,8 +89,66 @@
     }
   }
 
+  /*
+   * মেনু বদল দ্রুত করা — ব্যবহারকারী লিংকে আঙুল/মাউস রাখলেই পরের পেজের HTML আগেভাগে আনা
+   * (Speculation Rules prefetch)। JS/CSS আগে থেকেই cache-এ থাকে, তাই ক্লিকে শুধু HTML-এর
+   * অপেক্ষা থাকে — সেটাও এখানে আগেই চলে আসে। শুধু prefetch (prerender নয়), তাই পরের পেজের
+   * কোনো JS/RPC আগে চলে না। যে ব্রাউজার সমর্থন করে না সেখানে কিছুই হয় না।
+   */
+  var NAV_HREF_RE = /location\.(?:href\s*=|replace\(|assign\()\s*['"]([^'"]+\.html(?:[?#][^'"]*)?)['"]/;
+  var prefetched = {};
+
+  function canSpeculate() {
+    return !!(window.HTMLScriptElement && HTMLScriptElement.supports &&
+      HTMLScriptElement.supports('speculationrules'));
+  }
+
+  function addRules(rules) {
+    var s = document.createElement('script');
+    s.type = 'speculationrules';
+    s.textContent = JSON.stringify(rules);
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  // <div onclick="location.href='x.html'"> ধরনের নেভ আইটেম — document rule এগুলো চেনে না
+  function prefetchFromElement(target) {
+    var el = target && target.closest && target.closest('[onclick]');
+    if (!el) return;
+    var m = NAV_HREF_RE.exec(el.getAttribute('onclick') || '');
+    if (!m) return;
+    var url;
+    try { url = new URL(m[1], location.href); } catch (e) { return; }
+    if (url.origin !== location.origin || url.pathname === location.pathname) return;
+    var key = url.pathname + url.search;
+    if (prefetched[key]) return;
+    prefetched[key] = true;
+    addRules({ prefetch: [{ source: 'list', urls: [key] }] });
+  }
+
+  function initPrefetch() {
+    if (!canSpeculate()) return;
+    addRules({
+      prefetch: [{
+        source: 'document',
+        where: { and: [
+          { href_matches: '/*.html' },
+          { not: { selector_matches: '[download], [target="_blank"], [data-no-prefetch]' } }
+        ] },
+        eagerness: 'moderate'
+      }]
+    });
+    var onIntent = function (e) { prefetchFromElement(e.target); };
+    document.addEventListener('pointerdown', onIntent, { passive: true, capture: true });
+    document.addEventListener('mouseover', function (e) {
+      var t = e.target;
+      clearTimeout(onIntent.t);
+      onIntent.t = setTimeout(function () { prefetchFromElement(t); }, 120);
+    }, { passive: true });
+  }
+
   // নেভের পরে sync লোড হলে প্রথম paint-এর আগেই layout ঠিক হয়ে যায়
   if (document.body) update();
+  try { initPrefetch(); } catch (ePrefetch) {}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

@@ -981,7 +981,10 @@
       'html.mm-app-boot:not(.mm-app-ready) body>:not(#mm-app-load-screen){visibility:hidden!important}' +
       '.mm-app-load-screen{position:fixed;inset:0;z-index:2147483000;background:var(--cream,#faf6ef);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}' +
       '.mm-app-load-screen.is-hidden{display:none!important}' +
-      '.mm-app-load-inner{text-align:center;max-width:340px}' +
+      /* দ্রুত লোডে spinner/লেখা ঝলক না দিক — ৩৫০ms পরে আলতো করে আসে */
+      '.mm-app-load-inner{text-align:center;max-width:340px;animation:mmAppLoadIn .3s ease-out .35s both}' +
+      '@keyframes mmAppLoadIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}' +
+      '@media (prefers-reduced-motion:reduce){.mm-app-load-inner{animation-duration:.01ms}}' +
       '.mm-app-load-spinner{width:42px;height:42px;margin:0 auto;border:3px solid rgba(201,149,42,.22);border-top-color:var(--gold,#c9952a);border-radius:50%;animation:mmAppLoadSpin .85s linear infinite}' +
       '@keyframes mmAppLoadSpin{to{transform:rotate(360deg)}}' +
       '.mm-app-load-text{font-family:"Tiro Bangla",serif;font-size:15px;line-height:1.65;color:var(--ink2);margin:18px 0 0}';
@@ -1015,8 +1018,14 @@
       root.classList.add('mm-app-boot');
       root.classList.remove('mm-app-ready');
     } else {
+      var wasCovered = root.classList.contains('mm-app-boot');
       root.classList.add('mm-app-ready');
       root.classList.remove('mm-app-boot');
+      // cover সরলে কনটেন্ট হঠাৎ না এসে আলতো fade-এ আসে (style.css → mm-app-reveal)
+      if (wasCovered) {
+        root.classList.add('mm-app-reveal');
+        setTimeout(function () { root.classList.remove('mm-app-reveal'); }, 400);
+      }
     }
   }
 

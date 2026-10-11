@@ -1557,6 +1557,12 @@ body {
 
 .panel.active { animation: mm-fade .24s ease-out both; }
 
+/* পেজ বদল: নতুন পেজ ক্রিম পটভূমি থেকে আলতো ফুটে ওঠে (শুধু opacity — fixed নেভ/মডাল নড়ে না)।
+   loading cover সরার মুহূর্তেও একই fade (mm-session.js → mm-app-reveal)। */
+@keyframes mm-page-in { from { opacity: 0.25; } to { opacity: 1; } }
+body { animation: mm-page-in .2s ease-out backwards; }
+html.mm-app-reveal body { animation: mm-fade .22s ease-out backwards; }
+
 @media (hover: hover) and (pointer: fine) {
   .card:hover,
   .list-item:hover,
