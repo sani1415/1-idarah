@@ -869,6 +869,21 @@
     return year.replace(/[0-9]/g, function (d) { return '\u09e6\u09e7\u09e8\u09e9\u09ea\u09eb\u09ec\u09ed\u09ee\u09ef'[d]; });
   }
 
+  /*
+   * উপরের বার: বাঁ কোণে শিক্ষাবর্ষ, মাঝে ভূমিকা (.topbar-role-এর লেখা), পেজের শিরোনাম (.topbar-name) যেমন আছে।
+   * .topbar-role লুকিয়ে রাখা হয় কিন্তু মুছে না — পেজের কোড পরে সেখানে নাম/ভূমিকা লিখলে মাঝের লেবেলেও আসে।
+   * যে topbar-এ .topbar-role নেই (চ্যাট ইত্যাদি) সেখানে আগের মতো মাঝে শিক্ষাবর্ষ।
+   */
+  var topbarRoleObserver = null;
+
+  function syncTopbarRoleLabel(topbar) {
+    var role = topbar.querySelector('.topbar-left .topbar-role:not(.mm-topbar-year)');
+    var label = topbar.querySelector('.mm-monitor-topbar-label');
+    if (!role || !label) return;
+    var text = (role.textContent || '').trim();
+    if (label.textContent !== text) label.textContent = text;
+  }
+
   function renderCurrentAcademicYear() {
     if (typeof document === 'undefined') return;
     var topbars = document.querySelectorAll('.topbar, .inbox-topbar, .chat-topbar');
@@ -876,16 +891,13 @@
     var year = readCurrentAcademicYear();
     var yearText = year ? year + ' \u09b9\u09bf\u099c\u09b0\u09bf' : '';
     topbars.forEach(function (topbar) {
-      // পেজ নিজে শিক্ষাবর্ষের জায়গা ঠিক করলে (data-mm-academic-year) সেখানেই বসাই, মাঝের লেবেল ছুঁই না
-      var slot = topbar.querySelector('[data-mm-academic-year]');
-      if (slot) {
-        slot.textContent = yearText || '\u09b6\u09bf\u0995\u09cd\u09b7\u09be\u09ac\u09b0\u09cd\u09b7';
-        return;
-      }
       var label = topbar.querySelector('.mm-monitor-topbar-label');
+      var role = topbar.querySelector('.topbar-left .topbar-role:not(.mm-topbar-year)');
+      var yearEl = topbar.querySelector('.mm-topbar-year');
       if (!year) {
         if (label) label.remove();
-        topbar.classList.remove('mm-monitor-topbar');
+        if (yearEl) yearEl.remove();
+        topbar.classList.remove('mm-monitor-topbar', 'mm-topbar-swapped');
         return;
       }
       topbar.classList.add('mm-monitor-topbar');
@@ -894,7 +906,34 @@
         label.className = 'mm-monitor-topbar-label';
         topbar.appendChild(label);
       }
-      label.textContent = year + ' \u09b9\u09bf\u099c\u09b0\u09bf';
+      if (!role) {
+        label.textContent = yearText;
+        return;
+      }
+      if (!yearEl) {
+        yearEl = document.createElement('div');
+        role.parentNode.insertBefore(yearEl, role);
+      }
+      // শিরোনাম না থাকলে (যেমন admin/madrasa.html) শিক্ষাবর্ষই বড় লেখা
+      var hasTitle = !!topbar.querySelector('.topbar-left .topbar-name');
+      yearEl.className = 'mm-topbar-year ' + (hasTitle ? 'topbar-role' : 'topbar-name');
+      if (yearEl.textContent !== yearText) yearEl.textContent = yearText;
+      topbar.classList.add('mm-topbar-swapped');
+      label.classList.add('topbar-center-role');
+      syncTopbarRoleLabel(topbar);
+      if (global.MutationObserver && !role.getAttribute('data-mm-role-watch')) {
+        role.setAttribute('data-mm-role-watch', '1');
+        if (!topbarRoleObserver) {
+          topbarRoleObserver = new MutationObserver(function (records) {
+            records.forEach(function (r) {
+              var tb = r.target && (r.target.nodeType === 1 ? r.target : r.target.parentNode);
+              tb = tb && tb.closest && tb.closest('.topbar');
+              if (tb) syncTopbarRoleLabel(tb);
+            });
+          });
+        }
+        topbarRoleObserver.observe(role, { childList: true, characterData: true, subtree: true });
+      }
     });
   }
 
