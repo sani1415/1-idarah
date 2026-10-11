@@ -978,7 +978,7 @@
     style.textContent =
       'html.mm-app-boot:not(.mm-app-ready){background:var(--cream,#faf6ef)}' +
       'html.mm-app-boot:not(.mm-app-ready) body{overflow:hidden}' +
-      'html.mm-app-boot:not(.mm-app-ready) body>:not(#mm-app-load-screen){visibility:hidden!important}' +
+      'html.mm-app-boot:not(.mm-app-ready) body>:not(#mm-app-load-screen):not(.main-nav):not(.bottom-nav){visibility:hidden!important}' +
       '.mm-app-load-screen{position:fixed;inset:0;z-index:2147483000;background:var(--cream,#faf6ef);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}' +
       '.mm-app-load-screen.is-hidden{display:none!important}' +
       /* দ্রুত লোডে spinner/লেখা ঝলক না দিক — ৩৫০ms পরে আলতো করে আসে */

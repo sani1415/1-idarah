@@ -125,7 +125,7 @@
   left: 0;
   top: 0;
   border-radius: 14px;
-  background: rgba(232, 184, 75, 0.22);
+  background: var(--sel-bg, rgba(232, 184, 75, 0.22));
   pointer-events: none;
   z-index: 0;
   will-change: transform, width, height;

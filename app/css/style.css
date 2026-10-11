@@ -1564,7 +1564,7 @@ body {
 body > :where(:not(.main-nav, .bottom-nav, #mm-app-load-screen)) {
   animation: mm-page-in .28s cubic-bezier(.4, 0, .2, 1) backwards;
 }
-html.mm-app-reveal body { animation: mm-fade .22s ease-out backwards; }
+html.mm-app-reveal body > :where(:not(.main-nav, .bottom-nav, #mm-app-load-screen)) { animation: mm-fade .22s ease-out backwards; }
 /* মেনুতে ক্লিক: বর্তমান কনটেন্ট আস্তে মিলিয়ে যায়, তারপর পরের পেজ (mm-shell.js → MMNav.go) */
 body > :where(:not(.main-nav, .bottom-nav, #mm-app-load-screen)) {
   transition: opacity .18s ease-in;

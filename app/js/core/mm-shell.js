@@ -113,8 +113,35 @@
     document.documentElement.classList.remove('mm-leaving');
   }
 
+  // যে নেভ আইটেমে সর্বশেষ ক্লিক হয়েছে — go() চললে (gate পার হলে) সেটিকেই সাথে সাথে active দেখাই,
+  // যাতে কনটেন্ট মিলিয়ে যাওয়ার সময় মেনুর হাইলাইট পুরনো জায়গায় আটকে না থাকে
+  var lastNavTap = null;
+  var lastNavTapAt = 0;
+  document.addEventListener('click', function (e) {
+    var item = e.target.closest && e.target.closest('.bottom-nav .nav-item, .main-nav .nav-item');
+    if (!item) return;
+    lastNavTap = item;
+    lastNavTapAt = Date.now();
+  }, true);
+
+  function markNavActive() {
+    var item = lastNavTap;
+    if (!item || Date.now() - lastNavTapAt > 1500 || !item.isConnected) return;
+    lastNavTap = null;
+    var nav = item.closest('.bottom-nav, .main-nav');
+    if (!nav) return;
+    var olds = nav.querySelectorAll('.nav-item.active, .nav-item[aria-current]');
+    for (var i = 0; i < olds.length; i++) {
+      olds[i].classList.remove('active');
+      olds[i].removeAttribute('aria-current');
+    }
+    item.classList.add('active');
+    item.setAttribute('aria-current', 'page');
+  }
+
   function go(href, opts) {
     if (!href) return;
+    markNavActive();
     var replace = !!(opts && opts.replace);
     var nav = function () {
       if (replace) location.replace(href); else location.href = href;
