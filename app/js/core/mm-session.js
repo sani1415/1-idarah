@@ -869,35 +869,48 @@
     return year.replace(/[0-9]/g, function (d) { return '\u09e6\u09e7\u09e8\u09e9\u09ea\u09eb\u09ec\u09ed\u09ee\u09ef'[d]; });
   }
 
-  /*
-   * উপরের বার: বাঁ কোণে শিক্ষাবর্ষ, মাঝে ভূমিকা (.topbar-role-এর লেখা), পেজের শিরোনাম (.topbar-name) যেমন আছে।
-   * .topbar-role লুকিয়ে রাখা হয় কিন্তু মুছে না — পেজের কোড পরে সেখানে নাম/ভূমিকা লিখলে মাঝের লেবেলেও আসে।
-   * যে topbar-এ .topbar-role নেই (চ্যাট ইত্যাদি) সেখানে আগের মতো মাঝে শিক্ষাবর্ষ।
-   */
-  var topbarRoleObserver = null;
+  function mmTopbarYearCss(yearText) {
+    // শিক্ষাবর্ষ বাঁ কোণে (ছোট), .topbar-role মাঝখানে (বড়) — CSS দিয়েই, তাই প্রথম paint থেকে একই রকম।
+    // .topbar-role যেখানে নেই (চ্যাট ইত্যাদি), সেখানে mm-session.js আগের মতো মাঝে শিক্ষাবর্ষ বসায়।
+    if (!yearText) return '';
+    var q = '"' + String(yearText).replace(/["\\]/g, '') + '"';
+    var tb = '.topbar:has(> .topbar-left .topbar-role)';
+    return tb + ' > .topbar-left::before{content:' + q + ';display:block;font-size:11px;font-weight:700;' +
+      'color:var(--gold-deep,#8a6512);letter-spacing:.02em;line-height:1.3;margin-bottom:1px}' +
+      tb + ' > .topbar-left .topbar-role{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+      'margin:0;font-size:15px;font-weight:700;color:var(--ink2,#43361f);letter-spacing:0;white-space:nowrap;' +
+      'max-width:36vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-align:center}' +
+      '@media (min-width:960px){' + tb + ' > .topbar-left::before{font-size:12px}' +
+      tb + ' > .topbar-left .topbar-role{font-size:18px;max-width:30vw}}';
+  }
 
-  function syncTopbarRoleLabel(topbar) {
-    var role = topbar.querySelector('.topbar-left .topbar-role:not(.mm-topbar-year)');
-    var label = topbar.querySelector('.mm-monitor-topbar-label');
-    if (!role || !label) return;
-    var text = (role.textContent || '').trim();
-    if (label.textContent !== text) label.textContent = text;
+  // mm-boot.js প্রথম paint-এর আগে এই style বসায়; শিক্ষাবর্ষ বদলালে এখানে হালনাগাদ হয়
+  function applyTopbarYearCss(yearText) {
+    var css = mmTopbarYearCss(yearText);
+    var el = document.getElementById('mm-topbar-year-css');
+    if (!css) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'mm-topbar-year-css';
+      (document.head || document.documentElement).appendChild(el);
+    }
+    if (el.textContent !== css) el.textContent = css;
   }
 
   function renderCurrentAcademicYear() {
     if (typeof document === 'undefined') return;
-    var topbars = document.querySelectorAll('.topbar, .inbox-topbar, .chat-topbar');
-    if (!topbars || !topbars.length) return;
     var year = readCurrentAcademicYear();
     var yearText = year ? year + ' \u09b9\u09bf\u099c\u09b0\u09bf' : '';
+    applyTopbarYearCss(yearText);
+    var topbars = document.querySelectorAll('.topbar, .inbox-topbar, .chat-topbar');
+    if (!topbars || !topbars.length) return;
     topbars.forEach(function (topbar) {
       var label = topbar.querySelector('.mm-monitor-topbar-label');
-      var role = topbar.querySelector('.topbar-left .topbar-role:not(.mm-topbar-year)');
-      var yearEl = topbar.querySelector('.mm-topbar-year');
-      if (!year) {
+      // ভূমিকা-লাইন থাকলে শিক্ষাবর্ষ CSS-এ বাঁয়ে — মাঝের লেবেল লাগে না
+      var hasRole = !!topbar.querySelector('.topbar-left .topbar-role');
+      if (!year || hasRole) {
         if (label) label.remove();
-        if (yearEl) yearEl.remove();
-        topbar.classList.remove('mm-monitor-topbar', 'mm-topbar-swapped');
+        topbar.classList.remove('mm-monitor-topbar');
         return;
       }
       topbar.classList.add('mm-monitor-topbar');
@@ -906,34 +919,7 @@
         label.className = 'mm-monitor-topbar-label';
         topbar.appendChild(label);
       }
-      if (!role) {
-        label.textContent = yearText;
-        return;
-      }
-      if (!yearEl) {
-        yearEl = document.createElement('div');
-        role.parentNode.insertBefore(yearEl, role);
-      }
-      // শিরোনাম না থাকলে (যেমন admin/madrasa.html) শিক্ষাবর্ষই বড় লেখা
-      var hasTitle = !!topbar.querySelector('.topbar-left .topbar-name');
-      yearEl.className = 'mm-topbar-year ' + (hasTitle ? 'topbar-role' : 'topbar-name');
-      if (yearEl.textContent !== yearText) yearEl.textContent = yearText;
-      topbar.classList.add('mm-topbar-swapped');
-      label.classList.add('topbar-center-role');
-      syncTopbarRoleLabel(topbar);
-      if (global.MutationObserver && !role.getAttribute('data-mm-role-watch')) {
-        role.setAttribute('data-mm-role-watch', '1');
-        if (!topbarRoleObserver) {
-          topbarRoleObserver = new MutationObserver(function (records) {
-            records.forEach(function (r) {
-              var tb = r.target && (r.target.nodeType === 1 ? r.target : r.target.parentNode);
-              tb = tb && tb.closest && tb.closest('.topbar');
-              if (tb) syncTopbarRoleLabel(tb);
-            });
-          });
-        }
-        topbarRoleObserver.observe(role, { childList: true, characterData: true, subtree: true });
-      }
+      if (label.textContent !== yearText) label.textContent = yearText;
     });
   }
 

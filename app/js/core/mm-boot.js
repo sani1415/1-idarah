@@ -83,6 +83,34 @@
   // জিম্মাদার কিনা — chat.html-এর মতো পেজ প্রথম paint থেকেই সঠিক নেভ/লেআউট দেখাতে পারে
   try { if (readSessionKey('mm_role') === 'admin') g.document.documentElement.classList.add('mm-role-admin'); } catch (eRole) {}
 
+  function mmTopbarYearCss(yearText) {
+    // শিক্ষাবর্ষ বাঁ কোণে (ছোট), .topbar-role মাঝখানে (বড়) — CSS দিয়েই, তাই প্রথম paint থেকে একই রকম।
+    // .topbar-role যেখানে নেই (চ্যাট ইত্যাদি), সেখানে mm-session.js আগের মতো মাঝে শিক্ষাবর্ষ বসায়।
+    if (!yearText) return '';
+    var q = '"' + String(yearText).replace(/["\\]/g, '') + '"';
+    var tb = '.topbar:has(> .topbar-left .topbar-role)';
+    return tb + ' > .topbar-left::before{content:' + q + ';display:block;font-size:11px;font-weight:700;' +
+      'color:var(--gold-deep,#8a6512);letter-spacing:.02em;line-height:1.3;margin-bottom:1px}' +
+      tb + ' > .topbar-left .topbar-role{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+      'margin:0;font-size:15px;font-weight:700;color:var(--ink2,#43361f);letter-spacing:0;white-space:nowrap;' +
+      'max-width:36vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-align:center}' +
+      '@media (min-width:960px){' + tb + ' > .topbar-left::before{font-size:12px}' +
+      tb + ' > .topbar-left .topbar-role{font-size:18px;max-width:30vw}}';
+  }
+
+  // localStorage-এ শেষ জানা শিক্ষাবর্ষ (mm-session.js একই key থেকে পড়ে ও পরে হালনাগাদ করে)
+  try {
+    var st = JSON.parse(g.localStorage.getItem('mm_settings') || 'null');
+    var y = st && st.hijri_year != null ? String(st.hijri_year).trim() : '';
+    if (y && y !== '-' && y !== '\u2014') {
+      y = y.replace(/[0-9]/g, function (d) { return '\u09e6\u09e7\u09e8\u09e9\u09ea\u09eb\u09ec\u09ed\u09ee\u09ef'[d]; });
+      var yst = g.document.createElement('style');
+      yst.id = 'mm-topbar-year-css';
+      yst.textContent = mmTopbarYearCss(y + ' \u09b9\u09bf\u099c\u09b0\u09bf');
+      (g.document.head || g.document.documentElement).appendChild(yst);
+    }
+  } catch (eYear) {}
+
   var path = (g.location.pathname || '').replace(/\\/g, '/');
   var daftarShell = /(?:^|\/)(madrasa-home|madrasa-daftar|madrasa-yearend|madrasa-kormosuchi)\.html$/i.test(path);
   // অ্যাডমিন শেল পেজ — login/nav-এর পর dashboard ফ্ল্যাশ এড়াতে cold লোডে cover।
