@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var NAVIGATION_COMMIT_DELAY = 72;
+  var NAVIGATION_COMMIT_DELAY = 72;  // MMNav না থাকলে পুরনো ছোট বিরতি
 
   function init() {
     var nav = document.querySelector('.main-nav');
@@ -57,6 +57,8 @@
         try { sessionStorage.setItem('mm_admin_nav_enter', '1'); } catch (e2) {}
         requestAnimationFrame(function () {
           prepareNavCover();
+          // কনটেন্ট আলতো মিলিয়ে তারপর পরের পেজ (mm-shell.js → MMNav)
+          if (window.MMNav && MMNav.go) { MMNav.go(href, { replace: true }); return; }
           setTimeout(function () {
             location.replace(href);
           }, prefersReducedMotion() ? 0 : NAVIGATION_COMMIT_DELAY);

@@ -95,7 +95,59 @@
    * অপেক্ষা থাকে — সেটাও এখানে আগেই চলে আসে। শুধু prefetch (prerender নয়), তাই পরের পেজের
    * কোনো JS/RPC আগে চলে না। যে ব্রাউজার সমর্থন করে না সেখানে কিছুই হয় না।
    */
-  var NAV_HREF_RE = /location\.(?:href\s*=|replace\(|assign\()\s*['"]([^'"]+\.html(?:[?#][^'"]*)?)['"]/;
+  var NAV_HREF_RE = /(?:location\.(?:href\s*=|replace\(|assign\()|\.go\()\s*['"]([^'"]+\.html(?:[?#][^'"]*)?)['"]/;
+
+  /*
+   * মেনু বদলে আলতো fade: বর্তমান পেজের কনটেন্ট (নেভ বাদে) আস্তে মিলিয়ে যায়, তারপর পরের পেজে
+   * যাওয়া হয়; নতুন পেজ style.css-এর mm-page-in-এ ফুটে ওঠে। পেজের কোড MMNav.go(href) ডাকবে।
+   */
+  var LEAVE_MS = 180;
+  var leaving = false;
+
+  function reducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function clearLeaving() {
+    leaving = false;
+    document.documentElement.classList.remove('mm-leaving');
+  }
+
+  function go(href, opts) {
+    if (!href) return;
+    var replace = !!(opts && opts.replace);
+    var nav = function () {
+      if (replace) location.replace(href); else location.href = href;
+    };
+    // loading পর্দা দেখা গেলে (cold) fade-এর অপেক্ষা নয় — সরাসরি যাওয়া
+    var cover = document.getElementById('mm-app-load-screen');
+    var covered = cover && !cover.classList.contains('is-hidden');
+    if (leaving || covered || reducedMotion()) { nav(); return; }
+    leaving = true;
+    document.documentElement.classList.add('mm-leaving');
+    setTimeout(nav, LEAVE_MS);
+    // কোনো কারণে পেজ না বদলালে (download, ব্লক) কনটেন্ট যেন অদৃশ্য না থাকে
+    setTimeout(clearLeaving, 2500);
+  }
+
+  // Back বোতামে bfcache থেকে ফিরলে মিলিয়ে যাওয়া অবস্থায় যেন না থাকে
+  window.addEventListener('pageshow', clearLeaving);
+
+  // নেভের ভেতরের সাধারণ <a href="…html"> — অন্য handler আটকায়নি (gate/admin-nav) এমন হলে
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a || !a.closest('.bottom-nav, .main-nav')) return;
+    if (a.target === '_blank' || a.hasAttribute('download') || a.hasAttribute('data-no-fade')) return;
+    var url;
+    try { url = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
+    if (url.origin !== location.origin || !/\.html$/i.test(url.pathname)) return;
+    if (url.pathname === location.pathname && url.search === location.search) return;
+    e.preventDefault();
+    go(url.href);
+  });
+
+  window.MMNav = { go: go, LEAVE_MS: LEAVE_MS };
   var prefetched = {};
 
   function canSpeculate() {

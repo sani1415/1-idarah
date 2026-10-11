@@ -102,7 +102,8 @@
     if (global.MDRDaftarAttendanceGate && MDRDaftarAttendanceGate.blockNavigation &&
         MDRDaftarAttendanceGate.blockNavigation(href)) return;
     if (!isNavDataWarm()) showNavLoading();
-    location.href = href;
+    if (global.MMNav && MMNav.go) MMNav.go(href);
+    else location.href = href;
   }
 
   /**
