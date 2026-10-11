@@ -222,6 +222,9 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 
 <!-- BOTTOM NAV (শেয়ার্ড: js/shared/daftar-bottom-nav.js) -->
 <nav class="bottom-nav" id="daftar-nav-root" aria-label="নিচের নেভিগেশন"></nav>
+<!-- নেভ এখানেই বসানো (পেজের শেষে নয়) — নইলে প্রথম মুহূর্তে খালি sidebar/পিল দেখা যায়, পরে আইটেম লাফিয়ে আসে -->
+<script src="../js/shared/daftar-bottom-nav.js"></script>
+<script>MMDaftarBottomNav.mount(document.getElementById('daftar-nav-root'), { active: 'madrasa', pathPrefix: '' });</script>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
@@ -237,14 +240,11 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/core/monitor-mode.js"></script>
-<script src="../js/shared/daftar-bottom-nav.js"></script>
 <script src="../js/madrasa/mdr-home-panels.js?v=20260723-absent-streak2"></script>
 <script src="../js/madrasa/mdr-dastarkhan.js"></script>
 <script src="../js/madrasa/mdr-daftar-notes.js"></script>
 <script>
   if (!MMSession.requireStaffRoleOrAdminPerm('daftar', 'daftar', '/admin/madrasa.html')) { throw new Error('daftar permission denied'); }
-  var dn = document.getElementById('daftar-nav-root');
-  if (window.MMDaftarBottomNav && dn) MMDaftarBottomNav.mount(dn, { active: 'madrasa', pathPrefix: '' });
   mmInsertMonitorBanner();
   MMSession.configureTopbarHubAndLockout();
   function showToast(msg) {

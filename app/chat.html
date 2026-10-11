@@ -13,6 +13,10 @@
 <link rel="stylesheet" href="css/chat-page.css">
 </head>
 <body>
+<script>
+  /* জিম্মাদারের লেআউট প্রথম paint-এর আগেই — নইলে বার্তা sync শেষে sidebar এসে পুরো পেজ সরে যায় */
+  if (document.documentElement.classList.contains('mm-role-admin')) document.body.classList.add('chat-page', 'chat-has-bottom-nav', 'chat-admin', 'chat-split');
+</script>
 
 <!-- ADMIN INBOX -->
 <div id="view-inbox" style="display:none;">
@@ -135,7 +139,11 @@
   function setupStaffChatNav() {
     const nav = document.getElementById('chat-page-staff-nav');
     if (!nav || !window.MMChatStaffNav) return;
-    nav.innerHTML = MMChatStaffNav.getInnerHtml(myRole, myDeptRole);
+    // একবারই আঁকা — আবার innerHTML দিলে ডেস্কটপ sidebar-এর brand মুছে আবার বসে, তাই কাঁপে
+    if (!nav.getAttribute('data-ready')) {
+      nav.innerHTML = MMChatStaffNav.getInnerHtml(myRole, myDeptRole);
+      nav.setAttribute('data-ready', '1');
+    }
     nav.style.display = 'flex';
     if (typeof MMRefreshChatBadges === 'function') MMRefreshChatBadges();
   }
@@ -316,6 +324,11 @@
   async function initChatPage() {
     initVisualViewportKeyboard();
     setupChatRealtime();
+    // স্টাফের নেভ ডেটা লোডের অপেক্ষা না করে এখনই — নইলে পরে এসে লেআউট সরায়
+    if (!isAdmin && myThread) {
+      document.body.classList.add('chat-page', 'chat-has-bottom-nav', 'chat-staff');
+      setupStaffChatNav();
+    }
 
     if (myRole === 'daftar' && MMSession.ensureDaftarDataReady) {
       try {

@@ -1044,7 +1044,18 @@
     var navRoot = document.getElementById('daftar-nav-root');
     if (window.MMDaftarBottomNav && navRoot) {
       var acc0 = wantsAccounts ? 'accounts' : 'daftar';
-      MMDaftarBottomNav.mount(navRoot, { active: acc0, spaDaftar: true, pathPrefix: '' });
+      if (navRoot.querySelector('#nav-madrasa')) {
+        // নেভ HTML-এই বসানো — পুরোটা আবার আঁকলে sidebar কাঁপে, তাই শুধু active বদলাই
+        var onId = acc0 === 'accounts' ? 'nav-fees' : 'nav-madrasa';
+        ['nav-madrasa', 'nav-fees'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('active', id === onId);
+          if (id === onId) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+        });
+      } else {
+        MMDaftarBottomNav.mount(navRoot, { active: acc0, spaDaftar: true, pathPrefix: '' });
+      }
     }
     if (window.MDRDaftarAttendanceGate) MDRDaftarAttendanceGate.refresh();
     if (wantsAccounts) switchPanel('fees');

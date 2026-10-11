@@ -118,6 +118,10 @@
 #chat-page-hub-nav {
   display: none;
 }
+/* জিম্মাদার: বার্তা sync-এর অপেক্ষা না করে প্রথম paint থেকেই sidebar (mm-boot.js → mm-role-admin) */
+html.mm-role-admin #chat-page-hub-nav {
+  display: flex;
+}
 
 /* ── স্লাইডিং পিল ইন্ডিকেটর ── */
 .main-nav-pill {

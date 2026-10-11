@@ -80,6 +80,8 @@
     if (head) head.appendChild(st);
   }
   try { injectRestrictedAdminCss(); } catch (eRestrict) {}
+  // জিম্মাদার কিনা — chat.html-এর মতো পেজ প্রথম paint থেকেই সঠিক নেভ/লেআউট দেখাতে পারে
+  try { if (readSessionKey('mm_role') === 'admin') g.document.documentElement.classList.add('mm-role-admin'); } catch (eRole) {}
 
   var path = (g.location.pathname || '').replace(/\\/g, '/');
   var daftarShell = /(?:^|\/)(madrasa-home|madrasa-daftar|madrasa-yearend|madrasa-kormosuchi)\.html$/i.test(path);

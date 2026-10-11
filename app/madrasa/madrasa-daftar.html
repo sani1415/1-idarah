@@ -277,6 +277,9 @@
 
 <!-- BOTTOM NAV (শেয়ার্ড: js/shared/daftar-bottom-nav.js) -->
 <nav class="bottom-nav" id="daftar-nav-root" aria-label="নিচের নেভিগেশন"></nav>
+<!-- নেভ এখানেই বসানো (পেজের শেষে নয়) — নইলে প্রথম মুহূর্তে খালি sidebar/পিল দেখা যায়, পরে আইটেম লাফিয়ে আসে -->
+<script src="../js/shared/daftar-bottom-nav.js"></script>
+<script>MMDaftarBottomNav.mount(document.getElementById('daftar-nav-root'), { active: /^#(fees|accounts|reports)$/.test(location.hash) ? 'accounts' : 'daftar', spaDaftar: true, pathPrefix: '' });</script>
 
 <!-- FEES MODAL -->
 <div class="modal-bg" id="modal-add-fees">
@@ -420,7 +423,6 @@
 <script src="../js/core/mm-session.js?v=20260723-daftar-absent"></script>
 <script src="../js/core/mm-shell.js"></script>
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
-<script src="../js/shared/daftar-bottom-nav.js"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script src="../js/pages/madrasa-daftar.js"></script>
 
