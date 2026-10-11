@@ -874,7 +874,14 @@
     var topbars = document.querySelectorAll('.topbar, .inbox-topbar, .chat-topbar');
     if (!topbars || !topbars.length) return;
     var year = readCurrentAcademicYear();
+    var yearText = year ? year + ' \u09b9\u09bf\u099c\u09b0\u09bf' : '';
     topbars.forEach(function (topbar) {
+      // পেজ নিজে শিক্ষাবর্ষের জায়গা ঠিক করলে (data-mm-academic-year) সেখানেই বসাই, মাঝের লেবেল ছুঁই না
+      var slot = topbar.querySelector('[data-mm-academic-year]');
+      if (slot) {
+        slot.textContent = yearText || '\u09b6\u09bf\u0995\u09cd\u09b7\u09be\u09ac\u09b0\u09cd\u09b7';
+        return;
+      }
       var label = topbar.querySelector('.mm-monitor-topbar-label');
       if (!year) {
         if (label) label.remove();

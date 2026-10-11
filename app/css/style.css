@@ -681,6 +681,15 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* পেজ যখন মাঝে ভূমিকা দেখায় (যেমন admin/madrasa.html: "জিম্মাদার") — শিক্ষাবর্ষ তখন বাঁয়ে */
+.mm-monitor-topbar-label.topbar-center-role {
+  font-size: 13px;
+  color: var(--ink2);
+  letter-spacing: 0;
+}
+@media (min-width: 960px) {
+  .mm-monitor-topbar-label.topbar-center-role { font-size: 15px; }
+}
 .mm-monitor-banner--fallback {
   background: var(--blue-light);
   color: var(--blue);
