@@ -981,6 +981,8 @@
       'html.mm-app-boot:not(.mm-app-ready) body>:not(#mm-app-load-screen):not(.main-nav):not(.bottom-nav){visibility:hidden!important}' +
       '.mm-app-load-screen{position:fixed;inset:0;z-index:2147483000;background:var(--cream,#faf6ef);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}' +
       '.mm-app-load-screen.is-hidden{display:none!important}' +
+      /* লোডিং পর্দার সময়ও নেভ উপরে থাকে — নইলে নেভ কিছুক্ষণ দেখা গিয়ে হঠাৎ ঢাকা পড়ে, পরে আবার আসে */
+      'html.mm-app-boot:not(.mm-app-ready) body>:is(.main-nav,.bottom-nav){z-index:2147483001}' +
       /* দ্রুত লোডে spinner/লেখা ঝলক না দিক — ৩৫০ms পরে আলতো করে আসে */
       '.mm-app-load-inner{text-align:center;max-width:340px;animation:mmAppLoadIn .3s ease-out .35s both}' +
       '@keyframes mmAppLoadIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}' +

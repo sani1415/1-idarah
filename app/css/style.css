@@ -1531,6 +1531,9 @@ body {
     align-items: center;
   }
 
+  /* ── লোডিং পর্দা: sidebar উপরে থাকে (mm-session.js), তাই spinner কনটেন্ট কলামের মাঝে ── */
+  :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .mm-app-load-screen { padding-left: calc(var(--sb-w) + 24px); }
+
   /* ── Toast: কনটেন্ট কলামের মাঝে ── */
   :is(html.mm-desk-shell, html:has(> body > :is(.main-nav, .bottom-nav):not([id^="chat-page-"]))) .toast { left: calc(50% + var(--sb-w) / 2); }
 }
