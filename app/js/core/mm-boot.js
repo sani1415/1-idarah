@@ -24,6 +24,63 @@
     injectBootCriticalCss();
   }
 
+  /*
+   * সহকারী (restricted admin): যে মেনু/লিংক তাঁর অনুমতির বাইরে, সেগুলো প্রথম paint-এর আগেই CSS দিয়ে
+   * লুকানো — নইলে DOMContentLoaded-এ mm-session.js-এর applyAdminNavRestrictions() চলার আগে চোখের
+   * পলকে দেখা যেত। নিয়ম হুবহু applyAdminNavRestrictions()/canAdmin()-এর মতো; ওখানে বদলালে এখানেও।
+   * (শুধু দেখানো-লুকানো; আসল অনুমতি backend RPC-তে যাচাই হয়।)
+   */
+  function readSessionKey(key, persistKey) {
+    try {
+      var v = g.sessionStorage.getItem(key);
+      if (v != null) return v;
+    } catch (e) {}
+    // mm-session.js পরে localStorage থেকে session ফিরিয়ে আনে — সেই একই উৎস
+    try {
+      var app = JSON.parse(g.localStorage.getItem('mm_app_persist_v1') || 'null');
+      if (app && app.mm_role && app[key] != null) return String(app[key]);
+    } catch (e2) {}
+    try {
+      if (/^admin\./i.test(g.location.hostname)) {
+        var adm = JSON.parse(g.localStorage.getItem('mm_admin_persist_v1') || 'null');
+        if (adm && adm.adminPin) {
+          if (key === 'mm_role') return 'admin';
+          if (persistKey && adm[persistKey] != null) return String(adm[persistKey]);
+        }
+      }
+    } catch (e3) {}
+    return null;
+  }
+
+  function injectRestrictedAdminCss() {
+    if (readSessionKey('mm_role') !== 'admin') return;
+    var perms = null;
+    try { perms = JSON.parse(readSessionKey('mm_admin_perms', 'adminPerms') || 'null'); } catch (e) { perms = null; }
+    if (!perms || perms.super_admin === true) return;
+    var granted = perms.permissions || {};
+    function can(key) {
+      if (key === 'dashboard') return true;
+      if (Object.prototype.hasOwnProperty.call(granted, key)) return !!granted[key];
+      return key === 'messages' || key === 'recent';
+    }
+    var hide = ['a[href*="/admin/dept.html"]', 'a[href*="/admin/khedmat.html"]', '[data-admin-hub="dept"]'];
+    var allowed = ['dashboard'];
+    Object.keys(granted).forEach(function (k) { if (granted[k]) allowed.push(k); });
+    if (can('messages')) allowed.push('messages');
+    if (can('recent')) allowed.push('recent');
+    hide.push('[data-admin-perm]' + allowed.map(function (k) {
+      return ':not([data-admin-perm="' + String(k).replace(/["\\]/g, '') + '"])';
+    }).join(''));
+    if (!can('messages')) hide.push('a[href*="chat.html"]');
+    if (!can('recent')) hide.push('a[href*="/admin/recent.html"]');
+    var st = g.document.createElement('style');
+    st.id = 'mm-admin-restrict';
+    st.textContent = hide.join(',') + '{display:none!important}';
+    var head = g.document.head || g.document.getElementsByTagName('head')[0];
+    if (head) head.appendChild(st);
+  }
+  try { injectRestrictedAdminCss(); } catch (eRestrict) {}
+
   var path = (g.location.pathname || '').replace(/\\/g, '/');
   var daftarShell = /(?:^|\/)(madrasa-home|madrasa-daftar|madrasa-yearend|madrasa-kormosuchi)\.html$/i.test(path);
   // অ্যাডমিন শেল পেজ — login/nav-এর পর dashboard ফ্ল্যাশ এড়াতে cold লোডে cover।
