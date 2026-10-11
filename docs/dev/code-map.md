@@ -20,6 +20,7 @@
 | খাদিমিন, দফতর হোম প্যানেল | `madrasa-home.html` | `mdr-home-panels.js`, `mdr-khadimin-supabase.js`, `mdr-daftar-notes.js` |
 | দস্তরখান | `madrasa-home.html` | `mdr-dastarkhan.js` |
 | বর্ষ ড্যাশবোর্ড + বাকি-দায়িত্ব lock | `madrasa-class.html` | `app/js/pages/madrasa-class.js`, `mdr-class-duty-gate.js`, `mdr-class-duty-alerts.js` |
+| বাকি-দায়িত্ব lock-এর মেয়াদি বিরতি (জিম্মাদার) | `madrasa-settings.html` → সাধারণ | `app/js/pages/madrasa-settings.js` (`loadDutyPauses`), `mdr-class-duty-gate.js` (`loadPause`); DB: `mdr_duty_lock_pauses`, RPC `mdr_rel_admin_duty_pause_*`, `mdr_rel_teacher_duty_pause_status` |
 | নিজাম (রুটিন) | `madrasa-class.html`, `madrasa/admin/schedule.html` | `mdr-class-routine.js` |
 | শিক্ষক হাজিরা (দরস কিয়স্ক) | `madrasa-teacher-hazira.html` (কিয়স্ক), `madrasa/admin/teacher-hazira.html`; হোম কার্ড `#hz-home-card` আছে `madrasa-class.html`-এ; CSS `app/css/teacher-hazira.css` | `mdr-teacher-hazira-{core,kiosk,card,admin}.js`; RPC `mdr_rel_dars_*` → `20260930120000_mdr_teacher_hazira.sql` |
 | পরীক্ষা | `madrasa-class-exams.html`, `madrasa-exams.html`, `madrasa/admin/exams.html` | `mdr-exams-supabase.js`, `madrasa-exams-analytics.js` |

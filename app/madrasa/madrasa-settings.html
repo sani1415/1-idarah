@@ -65,6 +65,26 @@
       </div>
       <button class="submit-btn" onclick="saveGeneral()">সংরক্ষণ করুন</button>
     </div>
+    <div class="settings-section" id="duty-pause-section" hidden>
+      <div class="settings-title">🔓 বর্ষ দায়িত্বের লক</div>
+      <div class="duty-pause-help">
+        বর্ষ দায়িত্বশীলের কিতাব/খুলুক/লগ বাকি থাকলে অ্যাপ অন্য মেনু বন্ধ রাখে। জরুরি প্রয়োজনে কিছু দিনের জন্য এই লক বন্ধ রাখুন — মেয়াদ শেষে নিজে থেকেই আবার চালু হবে। «দায়িত্ব বাকি» লেখা তখনও দেখাবে।
+      </div>
+      <div id="duty-pause-list" class="duty-pause-list"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="duty-pause-class">কার জন্য</label>
+          <select class="form-input form-select" id="duty-pause-class">
+            <option value="">সব বর্ষ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="duty-pause-days">কত দিন (আজসহ)</label>
+          <input class="form-input" id="duty-pause-days" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="যেমন: ৩">
+        </div>
+      </div>
+      <button class="submit-btn" id="duty-pause-save" onclick="saveDutyPause()">লক বন্ধ রাখুন</button>
+    </div>
     <div class="settings-section">
       <div class="settings-title">💾 ডাটাবেজ ব্যাকআপ</div>
       <div style="font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:10px;">

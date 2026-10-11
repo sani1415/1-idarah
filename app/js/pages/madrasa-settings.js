@@ -187,7 +187,7 @@
       document.getElementById('tab-'+t).style.display   = t===tab?'block':'none';
       document.getElementById('pill-'+t).classList.toggle('active',t===tab);
     });
-    if (tab==='general')  loadGeneral();
+    if (tab==='general')  { loadGeneral(); loadDutyPauses(); }
     if (tab==='admins')   renderAdmins();
     if (tab==='classes')  renderClasses();
     if (tab==='teachers') renderTeachers();
@@ -268,6 +268,86 @@
       console.warn('settings load skipped', err);
     }
   }
+  /* ── বর্ষ দায়িত্বের লক — মেয়াদি বিরতি (শুধু মূল জিম্মাদার; সার্ভারেও যাচাই) ── */
+  function dutyPauseErr(code) {
+    return ({
+      not_allowed: 'শুধু মূল জিম্মাদার এটা করতে পারবেন',
+      invalid_days: '১ থেকে ৯০ দিনের মধ্যে দিন',
+      class_not_found: 'বর্ষ পাওয়া যায়নি',
+      pin_locked: 'অনেকবার ভুল পিন — ১৫ মিনিট পরে চেষ্টা করুন',
+    })[code] || 'সংরক্ষণ করা যায়নি';
+  }
+
+  function dutyPauseDay(iso) {
+    const p = String(iso || '').slice(0, 10).split('-');
+    return p.length === 3 ? API.toBn(p[2] + '/' + p[1] + '/' + p[0]) : '—';
+  }
+
+  async function loadDutyPauses() {
+    const section = document.getElementById('duty-pause-section');
+    if (!section) return;
+    if (!IS_MAIN_ADMIN || !window.MMSharedAPI || !MMSharedAPI.adminDutyPauseList || !MMSession.getAdminPin()) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    const list = document.getElementById('duty-pause-list');
+    let res;
+    try {
+      res = await MMSharedAPI.adminDutyPauseList(settingsActorId(), MMSession.getAdminPin());
+    } catch (e) {
+      list.innerHTML = '<div class="duty-pause-empty">তথ্য আনা যায়নি — ইন্টারনেট দেখে আবার খুলুন</div>';
+      return;
+    }
+    if (!res || res.ok !== true) {
+      list.innerHTML = '<div class="duty-pause-empty">' + API.esc(dutyPauseErr(res && res.error)) + '</div>';
+      return;
+    }
+    const sel = document.getElementById('duty-pause-class');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">সব বর্ষ</option>' + (res.classes || []).map(c =>
+      '<option value="' + API.esc(c.id) + '">' + API.esc(c.name) + '</option>').join('');
+    sel.value = keep;
+    const pauses = res.pauses || [];
+    list.innerHTML = pauses.map(p =>
+      '<div class="duty-pause-row"><span><strong>' + API.esc(p.class_id ? (p.class_name || 'বর্ষ') : 'সব বর্ষ') +
+      '</strong> — লক বন্ধ ' + dutyPauseDay(p.paused_until) + ' পর্যন্ত</span>' +
+      '<button type="button" class="duty-pause-end" onclick="clearDutyPause(\'' + API.esc(p.id) + '\')">এখনই চালু করুন</button></div>'
+    ).join('');
+  }
+
+  async function saveDutyPause() {
+    if (!IS_MAIN_ADMIN) { showToast('শুধু মূল জিম্মাদার এটা করতে পারবেন'); return; }
+    const days = parseInt(toEnDigits(document.getElementById('duty-pause-days').value).trim(), 10);
+    if (!days || days < 1 || days > 90) { showToast('১ থেকে ৯০ দিনের মধ্যে দিন'); return; }
+    const classId = document.getElementById('duty-pause-class').value || null;
+    const btn = document.getElementById('duty-pause-save');
+    btn.disabled = true;
+    try {
+      const res = await MMSharedAPI.adminDutyPauseSet(settingsActorId(), MMSession.getAdminPin(), classId, days);
+      if (!res || res.ok !== true) { showToast(dutyPauseErr(res && res.error)); return; }
+      document.getElementById('duty-pause-days').value = '';
+      showToast(dutyPauseDay(res.paused_until) + ' পর্যন্ত লক বন্ধ');
+      await loadDutyPauses();
+    } catch (e) {
+      showToast('সংরক্ষণ করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function clearDutyPause(id) {
+    if (!IS_MAIN_ADMIN || !id) return;
+    try {
+      const res = await MMSharedAPI.adminDutyPauseClear(settingsActorId(), MMSession.getAdminPin(), id);
+      if (!res || res.ok !== true) { showToast(dutyPauseErr(res && res.error)); return; }
+      showToast('লক আবার চালু হয়েছে');
+      await loadDutyPauses();
+    } catch (e) {
+      showToast('সংরক্ষণ করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন');
+    }
+  }
+
   async function saveGeneral() {
     const s = API.Settings.get();
     s.institution = document.getElementById('inst-name').value.trim()||s.institution;
@@ -965,7 +1045,7 @@
       document.getElementById('tab-'+t).style.display   = t===tab?'block':'none';
       document.getElementById('pill-'+t).classList.toggle('active',t===tab);
     });
-    if (tab==='general')  loadGeneral();
+    if (tab==='general')  { loadGeneral(); loadDutyPauses(); }
     if (tab==='admins')   renderAdmins();
     if (tab==='classes')  renderClasses();
     if (tab==='teachers') renderTeachers();

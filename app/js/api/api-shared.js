@@ -96,6 +96,24 @@ const MMSharedAPI = (() => {
     adminRevokeUserSessions(pin, userId) {
       return rpc('mdr_rel_admin_revoke_user_sessions', { p_pin: pin, p_user_id: userId });
     },
+    /* বর্ষ দায়িত্বের লক — মেয়াদি বিরতি (শুধু মূল জিম্মাদার; classId null = সব বর্ষ) */
+    adminDutyPauseList(actorId, pin) {
+      return rpc('mdr_rel_admin_duty_pause_list', { p_actor_id: actorId || null, p_pin: pin });
+    },
+    adminDutyPauseSet(actorId, pin, classId, days) {
+      return rpc('mdr_rel_admin_duty_pause_set', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_class_id: classId || null,
+        p_days: days,
+      });
+    },
+    adminDutyPauseClear(actorId, pin, id) {
+      return rpc('mdr_rel_admin_duty_pause_clear', { p_actor_id: actorId || null, p_pin: pin, p_id: id });
+    },
+    teacherDutyPauseStatus(actorId, pin) {
+      return rpc('mdr_rel_teacher_duty_pause_status', { p_actor_id: actorId, p_pin: pin });
+    },
     adminChangePin(currentPin, newPin) {
       return rpc('mdr_rel_admin_change_pin', {
         p_current_pin: currentPin || '',
