@@ -1021,11 +1021,9 @@
       var wasCovered = root.classList.contains('mm-app-boot');
       root.classList.add('mm-app-ready');
       root.classList.remove('mm-app-boot');
-      // cover সরলে কনটেন্ট হঠাৎ না এসে আলতো fade-এ আসে (style.css → mm-app-reveal)
-      if (wasCovered) {
-        root.classList.add('mm-app-reveal');
-        setTimeout(function () { root.classList.remove('mm-app-reveal'); }, 400);
-      }
+      // cover সরলে কনটেন্ট হঠাৎ না এসে আলতো fade-এ আসে (style.css → mm-app-reveal)।
+      // class আর সরানো হয় না: সরালে body-র animation নাম বদলে fade আবার চলে → পেজ কাঁপে।
+      if (wasCovered) root.classList.add('mm-app-reveal');
     }
   }
 

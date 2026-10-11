@@ -1555,10 +1555,10 @@ body {
   to { opacity: 1; transform: none; }
 }
 
-.panel.active { animation: mm-fade .24s ease-out both; }
-
 /* পেজ বদল: নতুন পেজ ক্রিম পটভূমি থেকে আলতো ফুটে ওঠে (শুধু opacity — fixed নেভ/মডাল নড়ে না)।
-   loading cover সরার মুহূর্তেও একই fade (mm-session.js → mm-app-reveal)। */
+   loading cover সরার মুহূর্তেও একই fade (mm-session.js → mm-app-reveal; class একবার বসে, আর সরে না)।
+   সতর্কতা: যে element বারবার আবার render হয় (তালিকা, চ্যাট, panel) সেখানে entry animation দেবেন না —
+   প্রতিবার render-এ আবার চলে আর স্ক্রিন কাঁপে। */
 @keyframes mm-page-in { from { opacity: 0.25; } to { opacity: 1; } }
 body { animation: mm-page-in .2s ease-out backwards; }
 html.mm-app-reveal body { animation: mm-fade .22s ease-out backwards; }
