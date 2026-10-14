@@ -256,7 +256,7 @@
       /* বিভাগ স্টাফ: আগের জিম্মাদার/মাদ্রাসা সেশন থাকলে সরিয়ে শুধু বিভাগ সেশন */
       MMSession.clearAppSession();
       MMSession.setDeptSession(selectedDept.id, deptDisplayName(selectedDept.name), selectedDept.emoji, remoteUser.id, pinVal);
-      location.href = 'dept-staff.html';
+      location.replace('dept-staff.html');
     } else { showError(loginError); }
   }
 

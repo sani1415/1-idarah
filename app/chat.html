@@ -1125,6 +1125,19 @@
   }
   window.onEnableNotif = onEnableNotif;
 
+  /* অ্যাপের Back বোতাম (mm-back.js): খোঁজা/রিপ্লাই বন্ধ, তারপর ফোনে খোলা কথোপকথন থেকে তালিকায় */
+  window.MMBackHandler = function () {
+    const searchBar = document.getElementById('chat-search-bar');
+    if (searchBar && searchBar.style.display !== 'none') { closeChatSearch(); return true; }
+    if (replyingTo) { cancelReply(); return true; }
+    if (isAdmin && !isDeskSplit() && document.getElementById('view-chat').style.display !== 'none') {
+      activeThread = null;
+      showInbox();
+      return true;
+    }
+    return false;
+  };
+
   MMLoading.run(initChatPage);
 </script>
 <script src="js/shared/admin-nav.js"></script>

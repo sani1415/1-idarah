@@ -168,7 +168,7 @@
       // সেট করি যাতে dashboard প্রথম পেইন্ট থেকেই কভার করা থাকে।
       try { sessionStorage.setItem('mm_nav_loading', '1'); } catch (e) {}
       if (window.MMLoading && MMLoading.show) MMLoading.show();
-      window.location.href = redirect;
+      window.location.replace(redirect);
     } else {
       showError(loginError === 'pin_locked' ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন।' : 'পিন ভুল হয়েছে।');
       pinVal = '';

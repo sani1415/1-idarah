@@ -542,7 +542,8 @@
     }
 
     if (ok) {
-      window.location.href = redirect;
+      // replace: লগইন পেজ history-তে না থাকুক — হোম থেকে Back চাপলে অ্যাপ বন্ধ হয়
+      window.location.replace(redirect);
     } else {
       document.getElementById('pin-error').textContent = lastLoginError === 'pin_locked'
         ? 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন।'

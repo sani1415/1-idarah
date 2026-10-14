@@ -103,6 +103,13 @@ function injectInstallPrompt(html, relativeRoot, version) {
   return `${html}\n${tag}\n`;
 }
 
+function injectBackButton(html, relativeRoot, version) {
+  if (!/mm-session\.js/i.test(html) || html.includes('js/core/mm-back.js')) return html;
+  const tag = `<script src="${relativeRoot}js/core/mm-back.js?v=${encodeURIComponent(version)}" defer></script>`;
+  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${tag}\n</body>`);
+  return `${html}\n${tag}\n`;
+}
+
 function injectBootScript(html, relativeRoot, version) {
   if (!/mm-session\.js/i.test(html) || /mm-boot\.js/i.test(html)) return html;
   const tag = `<script src="${relativeRoot}js/core/mm-boot.js?v=${encodeURIComponent(version)}"></script>`;
@@ -133,6 +140,7 @@ function transformHtml(html, relativeRoot, version) {
   next = injectBootScript(next, relativeRoot, version);
   next = injectPushScript(next, relativeRoot, version);
   next = injectAppUpdate(next, relativeRoot, version);
+  next = injectBackButton(next, relativeRoot, version);
   return injectInstallPrompt(next, relativeRoot, version);
 }
 

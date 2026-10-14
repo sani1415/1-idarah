@@ -93,7 +93,7 @@ HTML page
 
 ## Build ও deploy
 
-- `build.js`: `app/` থেকে `['css','js','madrasa','dept','khedmat','admin','icons']` আর root HTML কপি করে `public/`-এ রাখে, `?v=` cache-bust যোগ করে, আর প্রতিটা HTML-এ depth অনুযায়ী boot script inject করে। `supabase-config.js` তৈরি হয় env থেকে।
+- `build.js`: `app/` থেকে `['css','js','madrasa','dept','khedmat','admin','icons']` আর root HTML কপি করে `public/`-এ রাখে, `?v=` cache-bust যোগ করে, আর প্রতিটা HTML-এ depth অনুযায়ী boot script inject করে (`mm-boot`, `mm-push`, `app-update`, `mm-install`, `mm-back`)। `supabase-config.js` তৈরি হয় env থেকে।
 - `vercel.json`: output `public/`, admin subdomain redirect, পুরনো `main-admin-*` / `mdr-admin-*` URL-এর redirect, আর HTML-এ no-cache header।
 - `api/admin-assistant.js`: Vercel serverless function (AI সহকারী)। Gemini API ব্যবহার করে এবং শুধু read-only RPC (`mdr_admin_ai_*`) দিয়ে DB পড়ে।
 - `app/prototype/` gitignored, deploy হয় না।
