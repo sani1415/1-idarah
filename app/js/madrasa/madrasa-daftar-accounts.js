@@ -2809,15 +2809,19 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
       return v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0') + '-' + String(v.getDate()).padStart(2, '0');
     }
-    if (typeof v === 'number' && v > 20000 && v < 80000 && typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
-      var p = XLSX.SSF.parse_date_code(v);
-      if (p && p.y) return p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
-    }
     return String(v).trim();
   }
 
   function impParseDate(raw) {
-    var t = impEnDigits(impCellStr(raw));
+    /* তারিখ-ঘরে Excel-এর তারিখ-সংখ্যা (যেমন 46102) এলে তারিখে রূপান্তর। আগে এটা impCellStr-এ সব
+       ঘরে হতো, ফলে ২০,০০০–৮০,০০০ টাকার অঙ্কও তারিখ হয়ে কোটি টাকার ভুল অঙ্ক হয়ে যেত। */
+    var t0 = impCellStr(raw);
+    var serial = /^\d{5}(\.\d+)?$/.test(t0) ? parseFloat(t0) : NaN;
+    if (serial > 20000 && serial < 80000 && typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
+      var sp = XLSX.SSF.parse_date_code(serial);
+      if (sp && sp.y) t0 = sp.y + '-' + String(sp.m).padStart(2, '0') + '-' + String(sp.d).padStart(2, '0');
+    }
+    var t = impEnDigits(t0);
     if (!t) return { err: 'empty' };
     var p = t.split(/[-/.\s]+/).map(function (x) { return parseInt(x, 10); });
     if (p.length !== 3 || p.some(function (n) { return isNaN(n); })) return { err: 'format' };
@@ -3001,7 +3005,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return impFpExpense(row.data);
   }
 
-  /** অ্যাপে আগের এন্ট্রি + ফাইলের ভিতরের ডুপ্লিকেট স্কিপ */
+  /** ফাইলের ভিতরের ডুপ্লিকেট স্কিপ (অ্যাপে আগে থেকে থাকা এন্ট্রি এখানে মেলানো হয় না — id একই হলে সার্ভারে upsert) */
   function impApplyDupGuard(parsed) {
     if (!parsed) return parsed;
     var seen = Object.create(null);
