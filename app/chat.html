@@ -45,7 +45,16 @@
       <div class="chat-peer-name" id="peer-name">—</div>
       <div class="chat-peer-role" id="peer-role">—</div>
     </div>
+    <button type="button" class="chat-search-btn" onclick="toggleChatSearch()" aria-label="কথোপকথনে খুঁজুন" title="কথোপকথনে খুঁজুন">🔍</button>
     <button type="button" class="topbar-btn" id="staff-notif-enable-btn" style="display:none;flex-shrink:0;" onclick="onEnableNotif()">🔔 চালু</button>
+  </div>
+  <div class="chat-search-bar" id="chat-search-bar" style="display:none;">
+    <input type="search" class="chat-search-inp" id="chat-search-inp" placeholder="এই কথোপকথনে খুঁজুন…" autocomplete="off"
+      oninput="onChatSearch(this.value)" onkeydown="onChatSearchKey(event)">
+    <span class="chat-search-count" id="chat-search-count"></span>
+    <button type="button" class="chat-search-nav" onclick="chatSearchNav(-1)" aria-label="আগের মিল">↑</button>
+    <button type="button" class="chat-search-nav" onclick="chatSearchNav(1)" aria-label="পরের মিল">↓</button>
+    <button type="button" class="chat-search-nav" onclick="closeChatSearch()" aria-label="খোঁজা বন্ধ">✕</button>
   </div>
   <div class="chat-staff-notice" id="chat-staff-notice" style="display:none;">
     এই বার্তা শুধু জিম্মাদারের কাছে যায়। অন্য স্টাফের সাথে এখানে যোগাযোগ নেই।
@@ -64,6 +73,13 @@
     </div>
   </div>
   <div class="chat-input-bar">
+    <div class="chat-reply-bar" id="chat-reply-bar" style="display:none;">
+      <div class="chat-reply-body">
+        <div class="chat-reply-sender" id="chat-reply-sender"></div>
+        <div class="chat-reply-text" id="chat-reply-text"></div>
+      </div>
+      <button type="button" class="chat-reply-close" onclick="cancelReply()" aria-label="রিপ্লাই বাতিল">✕</button>
+    </div>
     <textarea class="chat-inp" id="chat-inp" placeholder="বার্তা লিখুন..." rows="1"
       onkeydown="onKey(event)" oninput="resize(this)"></textarea>
     <button class="send-btn" onclick="sendMsg()">➤</button>
@@ -127,6 +143,8 @@
 
   const myThread = getMyThread();
   let activeThread = null, activePeerName = '', activePeerIcon = '👤';
+  let replyingTo = null;               // { id, text, senderLabel } — যে বার্তার উত্তর লেখা হচ্ছে
+  let chatSearchQuery = '', chatSearchIdx = -1;
   let remoteStaffUsers = [];
   const CHAT_REALTIME_CHANNEL = 'mm-chat-broadcast';
   const CHAT_FALLBACK_SYNC_MS = 5000;
@@ -453,6 +471,11 @@
 
     if (isAdmin) ChatAPI.markReadAdmin(thread_id);
     else         ChatAPI.markReadStaff(thread_id);
+    cancelReply();
+    closeChatSearch();
+    // বার্তা খুললেই কিবোর্ড নয় — লেখার ঘরে ছুঁলে তবেই আসবে
+    const inpEl = document.getElementById('chat-inp');
+    if (inpEl && document.activeElement === inpEl) inpEl.blur();
     if (isDeskSplit()) renderInbox();
     renderMsgs();
     setTimeout(scrollEnd, 60);
@@ -526,19 +549,230 @@
       return;
     }
     let lastDay = '';
+    const actorId = chatActorId();
     el.innerHTML = msgs.map(m => {
       const fromMe = isAdmin ? m.from_role==='admin' : m.from_role!=='admin';
       const day    = m.ts.split('T')[0];
       const sep    = day!==lastDay ? `<div class="day-sep">── ${fmtDay(day)} ──</div>` : '';
       lastDay = day;
+      const mid = ChatAPI.esc(m.id);
+      const remote = isRemoteMsgId(m.id);
+      const canEdit = remote && ChatAPI.canModifyOwn(m, isAdmin, actorId);
+      const tools = remote
+        ? `<span class="msg-tools">
+            <button type="button" class="msg-tool msg-tool-reply" onclick="event.stopPropagation();startReply('${mid}')" title="রিপ্লাই" aria-label="রিপ্লাই">↩</button>
+            ${canEdit ? `<button type="button" class="msg-tool" onclick="event.stopPropagation();editOwnMsg('${mid}')" title="সম্পাদনা (১৫ মিনিটের মধ্যে)" aria-label="সম্পাদনা">✏️</button>
+            <button type="button" class="msg-tool" onclick="event.stopPropagation();deleteOwnMsg('${mid}')" title="সবার কাছ থেকে মুছুন" aria-label="মুছুন">🗑</button>` : ''}
+          </span>`
+        : '';
       return sep + `
-        <div class="msg-row ${fromMe?'me':'other'}">
+        <div class="msg-row ${fromMe?'me':'other'}" data-mid="${mid}">
           ${!fromMe ? `<div class="msg-sender">${ChatAPI.esc(m.from_name)}</div>` : ''}
-          <div class="msg-bubble">${ChatAPI.esc(m.text).replace(/\n/g, '<br>')}${renderRequestHtml(m)}</div>
-          <div class="msg-time">${fmtTime(m.ts)}${fromMe && (m.from_role === 'admin' ? m.read_staff : m.read_admin) ? ' ✓✓' : fromMe ? ' ✓' : ''}</div>
+          <div class="msg-line">
+            <div class="msg-swipe-ico" aria-hidden="true">↩</div>
+            <div class="msg-bubble">${renderReplyRef(m)}${highlightText(m.text)}${renderRequestHtml(m)}</div>
+          </div>
+          <div class="msg-time">${fmtTime(m.ts)}${m.edited_at ? ' · সম্পাদিত' : ''}${fromMe && (m.from_role === 'admin' ? m.read_staff : m.read_admin) ? ' ✓✓' : fromMe ? ' ✓' : ''}${tools}</div>
         </div>`;
     }).join('');
+    if (chatSearchQuery) refreshChatSearchHits(false);
   }
+
+  /* সার্ভারে সংরক্ষিত বার্তার id (uuid) — শুধু এগুলোতেই রিপ্লাই/সম্পাদনা চলে */
+  function isRemoteMsgId(id) { return /^[0-9a-f-]{36}$/i.test(String(id || '')); }
+
+  function replySenderLabel(fromRole, fromName) {
+    const fromMe = isAdmin ? fromRole === 'admin' : fromRole !== 'admin';
+    if (fromMe) return 'আপনি';
+    return fromRole === 'admin' ? 'জিম্মাদার' : (fromName || 'স্টাফ');
+  }
+
+  function renderReplyRef(m) {
+    const r = m.reply_to;
+    if (!r || !r.id) return '';
+    return `<div class="msg-reply-ref" onclick="event.stopPropagation();scrollToMsg('${ChatAPI.esc(r.id)}')">
+      <div class="rr-sender">${ChatAPI.esc(replySenderLabel(r.from_role, r.from_name))}</div>
+      <div class="rr-text">${ChatAPI.esc(r.text || '')}</div>
+    </div>`;
+  }
+
+  /* লেখা escape করে, খোঁজার শব্দ <mark> দিয়ে চিহ্নিত করে */
+  function highlightText(text) {
+    const raw = String(text || '');
+    const q = chatSearchQuery;
+    const fmt = s => ChatAPI.esc(s).replace(/\n/g, '<br>');
+    if (!q) return fmt(raw);
+    const low = raw.toLowerCase(), needle = q.toLowerCase();
+    let out = '', i = 0, j;
+    while ((j = low.indexOf(needle, i)) >= 0) {
+      out += fmt(raw.slice(i, j)) + '<mark class="chat-hit">' + fmt(raw.slice(j, j + needle.length)) + '</mark>';
+      i = j + needle.length;
+    }
+    return out + fmt(raw.slice(i));
+  }
+
+  function scrollToMsg(mid) {
+    const row = document.querySelector(`#chat-msgs .msg-row[data-mid="${CSS.escape(String(mid))}"]`);
+    if (!row) { notifToast('মূল বার্তাটি আর নেই'); return; }
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.add('msg-flash');
+    setTimeout(() => row.classList.remove('msg-flash'), 1200);
+  }
+
+  /* ── রিপ্লাই ── */
+  function startReply(mid) {
+    const m = ChatAPI.getThread(activeThread).find(x => x.id === mid);
+    if (!m || !isRemoteMsgId(m.id)) return;
+    replyingTo = { id: m.id, text: String(m.text || '').slice(0, 160), senderLabel: replySenderLabel(m.from_role, m.from_name) };
+    document.getElementById('chat-reply-sender').textContent = replyingTo.senderLabel;
+    document.getElementById('chat-reply-text').textContent = replyingTo.text;
+    document.getElementById('chat-reply-bar').style.display = 'flex';
+    document.body.classList.add('chat-replying');
+    document.getElementById('chat-inp').focus();
+  }
+  function cancelReply() {
+    replyingTo = null;
+    const bar = document.getElementById('chat-reply-bar');
+    if (bar) bar.style.display = 'none';
+    document.body.classList.remove('chat-replying');
+  }
+
+  /* ── নিজের বার্তা সম্পাদনা/মোছা (১৫ মিনিটের মধ্যে) ── */
+  function ownMsgError(res) {
+    const err = res && res.error;
+    if (err === 'edit_window_over') return '১৫ মিনিট পেরিয়ে গেছে — আর বদলানো যাবে না।';
+    if (err === 'not_own_message') return 'শুধু নিজের বার্তা বদলানো যায়।';
+    if (err === 'message_not_found') return 'বার্তাটি আর নেই।';
+    return 'কাজটি হয়নি। ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।';
+  }
+  async function editOwnMsg(mid) {
+    const m = ChatAPI.getThread(activeThread).find(x => x.id === mid);
+    if (!m || !ChatAPI.canModifyOwn(m, isAdmin, chatActorId())) { notifToast('১৫ মিনিট পেরিয়ে গেছে — আর বদলানো যাবে না।'); renderMsgs(); return; }
+    const nv = prompt('বার্তা সম্পাদনা করুন:', m.text || '');
+    if (nv === null) return;
+    const text = nv.trim();
+    if (!text) { notifToast('খালি রাখা যাবে না'); return; }
+    if (text === m.text) return;
+    let res = null;
+    try { res = await ChatAPI.editOwnRemote(chatActorId(), chatPin(), mid, text, isAdmin); } catch (e) { console.warn('Chat edit failed', e); }
+    if (!res || !res.ok) { alert(ownMsgError(res)); return; }
+    ChatAPI.updateMessage(mid, x => ({ ...x, text, edited_at: new Date().toISOString() }));
+    renderMsgs();
+    notifToast('সম্পাদিত হয়েছে');
+    await announceChatRealtime('message', activeThread, { message_id: mid });
+  }
+  async function deleteOwnMsg(mid) {
+    const m = ChatAPI.getThread(activeThread).find(x => x.id === mid);
+    if (!m || !ChatAPI.canModifyOwn(m, isAdmin, chatActorId())) { notifToast('১৫ মিনিট পেরিয়ে গেছে — আর মোছা যাবে না।'); renderMsgs(); return; }
+    if (!confirm('এই বার্তা দুই পক্ষের কাছ থেকেই মুছে যাবে। মুছবেন?')) return;
+    let res = null;
+    try { res = await ChatAPI.deleteOwnRemote(chatActorId(), chatPin(), mid, isAdmin); } catch (e) { console.warn('Chat delete failed', e); }
+    if (!res || !res.ok) { alert(ownMsgError(res)); return; }
+    if (replyingTo && replyingTo.id === mid) cancelReply();
+    ChatAPI.removeMessage(mid);
+    renderMsgs();
+    if (isAdmin && isDeskSplit()) renderInbox();
+    notifToast('বার্তা মুছে ফেলা হয়েছে');
+    await announceChatRealtime('message', activeThread, { message_id: mid });
+  }
+
+  /* ── কথোপকথনে খোঁজা ── */
+  function toggleChatSearch() {
+    const bar = document.getElementById('chat-search-bar');
+    if (bar.style.display === 'none') {
+      bar.style.display = 'flex';
+      document.getElementById('chat-search-inp').focus();
+    } else {
+      closeChatSearch();
+    }
+  }
+  function closeChatSearch() {
+    const bar = document.getElementById('chat-search-bar');
+    const inp = document.getElementById('chat-search-inp');
+    if (bar) bar.style.display = 'none';
+    if (inp) inp.value = '';
+    const had = !!chatSearchQuery;
+    chatSearchQuery = '';
+    chatSearchIdx = -1;
+    updateChatSearchCount(0);
+    if (had && activeThread) renderMsgs();
+  }
+  function onChatSearch(v) {
+    chatSearchQuery = String(v || '').trim();
+    chatSearchIdx = -1;
+    renderMsgs();
+    if (!chatSearchQuery) updateChatSearchCount(0);
+  }
+  function onChatSearchKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); chatSearchNav(e.shiftKey ? -1 : 1); }
+    else if (e.key === 'Escape') closeChatSearch();
+  }
+  function chatSearchHits() { return Array.from(document.querySelectorAll('#chat-msgs mark.chat-hit')); }
+  function updateChatSearchCount(total) {
+    const el = document.getElementById('chat-search-count');
+    if (!el) return;
+    if (!chatSearchQuery) { el.textContent = ''; return; }
+    el.textContent = total ? toBn(chatSearchIdx + 1) + '/' + toBn(total) : 'মিল নেই';
+  }
+  /* render-এর পর চিহ্নগুলো আবার ধরে; জাম্প=true হলে বর্তমান মিলে স্ক্রল */
+  function refreshChatSearchHits(jump) {
+    const hits = chatSearchHits();
+    if (!hits.length) { chatSearchIdx = -1; updateChatSearchCount(0); return; }
+    if (chatSearchIdx < 0 || chatSearchIdx >= hits.length) { chatSearchIdx = hits.length - 1; jump = true; }
+    hits.forEach((h, i) => h.classList.toggle('is-current', i === chatSearchIdx));
+    updateChatSearchCount(hits.length);
+    if (jump) hits[chatSearchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function chatSearchNav(dir) {
+    const hits = chatSearchHits();
+    if (!hits.length) return;
+    chatSearchIdx = (chatSearchIdx + dir + hits.length) % hits.length;
+    refreshChatSearchHits(true);
+  }
+
+  /* ── মোবাইলে বার্তা পাশে টেনে রিপ্লাই (অন্যের বার্তা ডানে, নিজের বার্তা বাঁয়ে) ── */
+  (function initSwipeReply() {
+    const THRESH = 60;
+    let st = null;
+    const box = () => document.getElementById('chat-msgs');
+    document.addEventListener('touchstart', e => {
+      const row = e.target.closest && e.target.closest('#chat-msgs .msg-row[data-mid]');
+      if (!row || e.target.closest('button, a, .msg-reply-ref')) { st = null; return; }
+      st = { row, sx: e.touches[0].clientX, sy: e.touches[0].clientY, dx: 0, locked: false };
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!st) return;
+      const dx = e.touches[0].clientX - st.sx, dy = e.touches[0].clientY - st.sy;
+      if (!st.locked) {
+        if (Math.abs(dy) > Math.abs(dx) + 6) { st = null; return; }
+        if (Math.abs(dx) < 8) return;
+        st.locked = true;
+      }
+      const isMe = st.row.classList.contains('me');
+      let c = 0;
+      if (!isMe && dx > 0) c = Math.min(dx, THRESH + 20);
+      else if (isMe && dx < 0) c = Math.max(dx, -(THRESH + 20));
+      else { resetSwipe(st.row); st = null; return; }
+      st.dx = c;
+      const b = st.row.querySelector('.msg-bubble');
+      if (b) b.style.transform = `translateX(${c}px)`;
+      const ic = st.row.querySelector('.msg-swipe-ico');
+      if (ic) ic.style.opacity = Math.min(Math.abs(c) / THRESH, 1);
+    }, { passive: true });
+    function resetSwipe(row) {
+      const b = row.querySelector('.msg-bubble');
+      if (b) { b.style.transition = 'transform .2s ease'; b.style.transform = ''; setTimeout(() => { b.style.transition = ''; }, 200); }
+      const ic = row.querySelector('.msg-swipe-ico');
+      if (ic) ic.style.opacity = '0';
+    }
+    document.addEventListener('touchend', () => {
+      if (!st) return;
+      const { row, dx } = st;
+      st = null;
+      resetSwipe(row);
+      if (Math.abs(dx) >= THRESH && box() && box().contains(row)) startReply(row.dataset.mid);
+    });
+  })();
 
   async function decideAccountRequest(messageId, decision) {
     if (!isAdmin) return;
@@ -704,12 +938,18 @@
     const fromRole = isAdmin ? 'admin' : (myRole || myDeptRole || 'staff');
     const fromName = isAdmin ? 'জিম্মাদার' : myName;
     const tagRequest = buildStudentTagRequest();
+    const reply = replyingTo ? { ...replyingTo } : null;
     let remoteId = '';
+    let replySnap = null;
     if (ChatAPI.sendRemote) {
       try {
-        const res = await ChatAPI.sendRemote(chatActorId(), chatPin(), activeThread, text, isAdmin, tagRequest ? { request: tagRequest } : null);
+        const sendExtra = (tagRequest || reply)
+          ? Object.assign({}, tagRequest ? { request: tagRequest } : null, reply ? { replyToId: reply.id } : null)
+          : null;
+        const res = await ChatAPI.sendRemote(chatActorId(), chatPin(), activeThread, text, isAdmin, sendExtra);
         if (!res || !res.ok) throw new Error((res && res.error) || 'chat_send_failed');
         remoteId = res.id ? String(res.id) : '';
+        replySnap = res.reply_to || null;
       } catch (e) {
         console.warn('Chat Supabase send failed', e);
         alert('বার্তা পাঠানো যায়নি। ইন্টারনেট সংযোগ/ডাটাবেজ সংযোগ চেক করুন।');
@@ -719,12 +959,14 @@
       alert('ডাটাবেজ সংযোগ নেই। সংযোগ না থাকলে বার্তা পাঠানো যাবে না।');
       return;
     }
-    const localExtra = (remoteId || tagRequest)
-      ? Object.assign({}, remoteId ? { id: remoteId } : null, tagRequest ? { request: tagRequest } : null)
+    const localExtra = (remoteId || tagRequest || replySnap)
+      ? Object.assign({}, remoteId ? { id: remoteId, from_user_id: String(chatActorId() || '') } : null,
+          tagRequest ? { request: tagRequest } : null, replySnap ? { reply_to: replySnap } : null)
       : null;
     ChatAPI.send(activeThread, fromRole, fromName, text, localExtra);
     await announceChatRealtime('message', activeThread, { message_id: remoteId });
     resetChatTagPicker();
+    cancelReply();
     inp.value = '';
     resize(inp);
     renderMsgs();

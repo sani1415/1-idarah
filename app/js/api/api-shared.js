@@ -412,7 +412,7 @@ const MMSharedAPI = (() => {
         p_is_admin: !!isAdmin,
       });
     },
-    async chatSend(actorId, pin, threadId, text, isAdmin, request) {
+    async chatSend(actorId, pin, threadId, text, isAdmin, request, replyToId) {
       const params = {
         p_actor_id: actorId || null,
         p_pin: pin,
@@ -421,7 +421,26 @@ const MMSharedAPI = (() => {
         p_is_admin: !!isAdmin,
         p_request: request || null,
       };
+      // রিপ্লাই থাকলে নতুন RPC; সাধারণ বার্তা আগের মতোই mdr_rel_chat_send দিয়ে যায়।
+      if (replyToId) return rpc('mdr_rel_chat_post', { ...params, p_reply_to_id: replyToId });
       return rpc('mdr_rel_chat_send', params);
+    },
+    chatEditOwn(actorId, pin, messageId, text, isAdmin) {
+      return rpc('mdr_rel_chat_edit_own', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_message_id: messageId,
+        p_text: text,
+        p_is_admin: !!isAdmin,
+      });
+    },
+    chatDeleteOwn(actorId, pin, messageId, isAdmin) {
+      return rpc('mdr_rel_chat_delete_own', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_message_id: messageId,
+        p_is_admin: !!isAdmin,
+      });
     },
     chatUpdateRequest(actorId, pin, messageId, status) {
       return rpc('mdr_rel_chat_update_request', {
