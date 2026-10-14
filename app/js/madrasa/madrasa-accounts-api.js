@@ -445,6 +445,8 @@ const MdrAccAPI = (() => {
     getAll()   { return load(DUE_KEY).map((d) => (typeof d.supplier === 'string' ? { ...d, supplier: normText(d.supplier) } : { ...d })); },
     withDue()  { return load(DUE_KEY).filter(x => num(x.due) !== 0); },
     totalDue() { return load(DUE_KEY).reduce((s,x) => s + Math.max(0, num(x.due)), 0); },
+    /* সরবরাহকারী পরিশোধের সারি (Excel আপলোডের আগে মিলিয়ে দেখতে) */
+    payments() { return load(DUE_PAY_KEY).map((p) => norm(p)); },
     async recordPayment(id, amt) {
       const arr = load(DUE_KEY);
       const d = arr.find(x => x.id === id);
