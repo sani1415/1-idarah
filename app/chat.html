@@ -586,10 +586,13 @@
     };
     if (ChatAPI.updateRequestRemote) {
       try {
-        await ChatAPI.updateRequestRemote(chatActorId(), chatPin(), messageId, decision);
+        const res = await ChatAPI.updateRequestRemote(chatActorId(), chatPin(), messageId, decision);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'request_update_failed');
         await announceChatRealtime('request', activeThread, { message_id: messageId, status: decision });
       } catch (e) {
         console.warn('Chat request remote update failed', e);
+        alert('অনুরোধের অবস্থা সংরক্ষণ করা যায়নি। পাতা রিফ্রেশ করে আবার চেষ্টা করুন।');
+        return;
       }
     }
     ChatAPI.updateMessage(messageId, (m) => ({
