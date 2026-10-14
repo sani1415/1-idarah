@@ -3103,12 +3103,46 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   /* অন্য উৎসের (হাতে লেখা/পুরনো ফাইল) একই এন্ট্রি চেনা: একই বিভাগ + একই হিজরী মাস + একই টাকা + একই
      বিবরণ। দিন ও খাতের নাম ধরা হয় না — পুরনো ফাইলে দিন/খাত অন্যভাবে লেখা ছিল (বাস্তব ডেটায় যাচাই করা) */
   function impLooseKey(kind, d) {
+    /* পরিশোধে তারিখ ধরা হয় না — আসল তারিখ জানা না থাকলে অনেক সময় একটা তারিখ বসানো থাকে */
+    if (kind === 'payment') return [d.account || '', impAmtKey(d.amount), impCmpTxt(d.supplier)].join('#');
     var month = A.dateKey(d.hijriYear, d.month, 1).slice(0, 7);
     var core;
-    if (kind === 'payment') core = impCmpTxt(d.supplier);
-    else if (kind === 'income' || kind === 'qardReturn') core = impCmpTxt(d.note);
+    if (kind === 'income' || kind === 'qardReturn') core = impCmpTxt(d.note);
     else core = impCmpTxt(d.description) || impCmpTxt(d.category);
     return [d.account || '', month, impAmtKey(d.amount), core].join('#');
+  }
+
+  /* সার্ভারের মতো করেই বাকি হিসাব: পরিশোধ কোনো সরবরাহকারীর বাকির বেশি হলে আগেই «সমস্যা» দেখানো,
+     নইলে সংরক্ষণের সময় পুরো ফাইল আটকে যায় */
+  function impCheckDues(all) {
+    var dueKey = function (acc, sup) { return (acc || '') + '|' + impCmpTxt(sup); };
+    var isDuePurchase = function (d) { return d && d.paymentMethod === 'due' && String(d.supplier || '').trim() && d.account !== 'qard'; };
+    var due = Object.create(null);
+    (A.Dues && A.Dues.getAll ? A.Dues.getAll() : []).forEach(function (d) {
+      var k = dueKey(d.account, d.supplier);
+      due[k] = (due[k] || 0) + Number(d.due || 0);
+    });
+    var saving = function (r) { return r.data && (r.status === 'ok' || r.status === 'upd'); };
+    all.forEach(function (r) {
+      if (!saving(r) || impTableOf(r.kind) !== 'expense') return;
+      if (r.prev && isDuePurchase(r.prev)) { var ko = dueKey(r.prev.account, r.prev.supplier); due[ko] = (due[ko] || 0) - Number(r.prev.amount || 0); }
+      if (isDuePurchase(r.data)) { var kn = dueKey(r.data.account, r.data.supplier); due[kn] = (due[kn] || 0) + Number(r.data.amount || 0); }
+    });
+    all.forEach(function (r) {
+      if (!saving(r) || r.kind !== 'payment') return;
+      var k = dueKey(r.data.account, r.data.supplier);
+      if (r.prev) due[k] = (due[k] || 0) + Number(r.prev.amount || 0);
+      var amt = Number(r.data.amount || 0);
+      if (!(k in due)) {
+        r.status = 'err';
+        r.msg = 'এই খাতে «' + r.data.supplier + '»-এর কোনো বাকি নেই';
+      } else if (amt > due[k] + 0.009) {
+        r.status = 'err';
+        r.msg = 'বাকির চেয়ে বেশি পরিশোধ — এই সারি পর্যন্ত বাকি ৳' + fa(Math.max(0, due[k]));
+      } else {
+        due[k] -= amt;
+      }
+    });
   }
 
   function impCompareWithApp(parsed) {
@@ -3162,9 +3196,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       if (pool[fp] > 0) {
         pool[fp]--;
         row.status = 'exists';
-        row.msg = 'অ্যাপে একই মাসে একই বিবরণ ও টাকার এন্ট্রি আগে থেকেই আছে';
+        row.msg = t === 'payment' ? 'অ্যাপে একই সরবরাহকারীর একই টাকার পরিশোধ আগে থেকেই আছে'
+          : 'অ্যাপে একই মাসে একই বিবরণ ও টাকার এন্ট্রি আগে থেকেই আছে';
       }
     });
+
+    impCheckDues(all);
 
     /* ৩) এই ফাইল থেকেই আগে আসা, এখন ফাইলে নেই */
     var wbId = parsed.workbookId && parsed.workbookId !== 'legacy-content-id' ? parsed.workbookId : '';
@@ -3747,7 +3784,10 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     } catch (err) {
       console.warn('[Accounts] excel import failed', err);
       _impBusy = false;
-      showToast('কোনো সারি সংরক্ষিত হয়নি — সমস্যাটি ঠিক করে আবার চেষ্টা করুন');
+      var em = String((err && (err.message || err.details)) || err || '');
+      var mm = em.match(/payment_exceeds_due:\s*(.+)/) || em.match(/payment_due_not_found:\s*(.+)/);
+      showToast(mm ? 'কোনো সারি সংরক্ষিত হয়নি — «' + mm[1].trim() + '»-এর পরিশোধ বাকির চেয়ে বেশি বা বাকি পাওয়া যায়নি'
+        : 'কোনো সারি সংরক্ষিত হয়নি — সমস্যাটি ঠিক করে আবার চেষ্টা করুন');
       refreshAccountsViews();
       renderAccImport();
     }
