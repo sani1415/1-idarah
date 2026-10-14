@@ -7,7 +7,8 @@
 --   PostgREST overload অস্পষ্টতা না হয় আর পুরনো খোলা ট্যাব mdr_rel_chat_send দিয়ে চলতে থাকে।
 -- * mdr_rel_chat_edit_own / mdr_rel_chat_delete_own: শুধু নিজের সাধারণ বার্তা (request নেই),
 --   পাঠানোর ১৫ মিনিটের মধ্যে — সময়সীমা সার্ভারে যাচাই হয়।
--- * মোছা = soft delete (deleted_at): দুই পক্ষের কাছেই লুকানো, সারি থাকে বলে দরকারে ফেরানো যায়।
+-- * মোছা = স্থায়ীভাবে মুছে ফেলা (বার্তা ও তার notification)। deleted_at column-টা পুরনো soft-delete
+--   সংস্করণ থেকে থেকে গেছে; bootstrap এখনো deleted_at থাকা সারি বাদ দেয়।
 
 alter table public.mdr_shared_messages add column if not exists reply_to jsonb;
 alter table public.mdr_shared_messages add column if not exists edited_at timestamptz;
@@ -182,10 +183,8 @@ begin
   v_err := private.mdr_chat_own_editable(v_msg, v_actor, p_is_admin);
   if v_err is not null then return jsonb_build_object('ok', false, 'error', v_err); end if;
 
-  -- দুই পক্ষের কাছ থেকে লুকানো; সারি থাকে (দরকারে ফেরানো যায়)। অপঠিত গণনা থেকেও বাদ।
-  update public.mdr_shared_messages
-  set deleted_at = now(), read_admin = true, read_staff = true
-  where id = p_message_id;
+  delete from public.mdr_shared_notifications where source_type = 'message' and source_id = p_message_id;
+  delete from public.mdr_shared_messages where id = p_message_id;
 
   return jsonb_build_object('ok', true, 'id', p_message_id, 'thread_id', v_msg.thread_id);
 end;
