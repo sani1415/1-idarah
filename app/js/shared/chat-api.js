@@ -134,6 +134,9 @@ const ChatAPI = (() => {
       read_admin: !!m.read_admin,
       read_staff: !!m.read_staff,
       request: m.request || null,
+      reply_to: m.reply_to || null,
+      edited_at: m.edited_at || null,
+      from_user_id: m.from_user_id ? String(m.from_user_id) : '',
     }));
     save(remoteMsgs);
     return { ok: true, count: remoteMsgs.length };
@@ -141,7 +144,36 @@ const ChatAPI = (() => {
 
   async function sendRemote(actorId, pin, threadId, text, isAdmin, extra) {
     if (!globalThis.MMSharedAPI || !pin) return null;
-    return MMSharedAPI.chatSend(actorId || null, pin, threadId, text, !!isAdmin, extra && extra.request ? extra.request : null);
+    return MMSharedAPI.chatSend(actorId || null, pin, threadId, text, !!isAdmin,
+      extra && extra.request ? extra.request : null,
+      extra && extra.replyToId ? extra.replyToId : null);
+  }
+
+  /* নিজের সাধারণ বার্তা পাঠানোর ১৫ মিনিটের মধ্যে সম্পাদনা/মোছা যায় — সার্ভারও একই সীমা যাচাই করে */
+  const OWN_EDIT_WINDOW_MS = 15 * 60 * 1000;
+  function canModifyOwn(m, isAdmin, actorId) {
+    if (!m || m.request) return false;
+    const own = isAdmin ? m.from_role === 'admin' : m.from_role !== 'admin';
+    if (!own) return false;
+    // জিম্মাদার ও সহকারী জিম্মাদার দুজনেই 'admin' হিসেবে লেখেন — শুধু নিজের লেখা বদলানো যায়
+    if (actorId && m.from_user_id && String(m.from_user_id) !== String(actorId)) return false;
+    const sent = Date.parse(m.ts || '');
+    if (!sent) return false;
+    return Date.now() - sent <= OWN_EDIT_WINDOW_MS;
+  }
+
+  async function editOwnRemote(actorId, pin, messageId, text, isAdmin) {
+    if (!globalThis.MMSharedAPI || !pin || !messageId) return null;
+    return MMSharedAPI.chatEditOwn(actorId || null, pin, messageId, text, !!isAdmin);
+  }
+
+  async function deleteOwnRemote(actorId, pin, messageId, isAdmin) {
+    if (!globalThis.MMSharedAPI || !pin || !messageId) return null;
+    return MMSharedAPI.chatDeleteOwn(actorId || null, pin, messageId, !!isAdmin);
+  }
+
+  function removeMessage(id) {
+    save(messages.filter(m => m.id !== id));
   }
 
   async function updateRequestRemote(actorId, pin, messageId, status) {
@@ -161,6 +193,7 @@ const ChatAPI = (() => {
     send, updateMessage, markReadAdmin, markReadStaff,
     countUnreadStaff, countUnreadAdmin, getLabel, esc,
     syncRemote, sendRemote, updateRequestRemote, markReadRemote,
+    canModifyOwn, editOwnRemote, deleteOwnRemote, removeMessage,
   };
 
 })();
