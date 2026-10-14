@@ -14,6 +14,8 @@
   .withdrawn-card { background:#fff; border-radius:var(--radius-sm); padding:13px 14px; box-shadow:var(--shadow); margin-bottom:8px; border-left:3px solid var(--red); }
   .wd-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
   .wd-name { font-size:14px; font-weight:700; color:var(--ink); }
+  .wd-name .s-name-btn { min-height:44px; text-align:left; }
+  .wd-name .s-name-btn:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:6px; }
   .wd-id { font-size:11px; color:var(--ink3); margin-top:2px; }
   .wd-meta { display:flex; flex-wrap:wrap; gap:8px; font-size:11px; color:var(--ink3); }
   .wd-meta span { background:var(--cream2); border-radius:6px; padding:2px 8px; }
@@ -180,12 +182,61 @@
   }
 
   function withdrawalMatchesDept(w) {
-    if (!wDept) return true;
-    const cids = new Set(API.Classes.getByDept(wDept).map(c => c.id));
-    if (w.last_class_id && cids.has(w.last_class_id)) return true;
-    const s = API.Students.getById(w.student_id);
-    return !!(s && cids.has(s.class_id));
+    const allowed = MMSession.getAllowedMadrasaDepts();
+    const dept = withdrawalDept(w);
+    if (dept && !allowed.includes(dept)) return false;
+    if (!wDept) return !!dept || allowed.length > 1;
+    return dept === wDept;
   }
+
+  function withdrawalStudent(w) {
+    const sid = String(w.student_id || '');
+    return API.Students.getAll().find(s => String(s.id) === sid ||
+      (s.supabase_id && String(s.supabase_id) === sid) ||
+      (w.permanent_id && String(s.permanent_id || '') === String(w.permanent_id)));
+  }
+
+  function withdrawalDept(w) {
+    if (w.division_code === 'kitab' || w.division_code === 'maktab') return w.division_code;
+    const student = withdrawalStudent(w);
+    const cls = API.Classes.getById(w.last_class_id || (student && student.class_id));
+    if (cls) return cls.dept;
+    const code = String(w.last_class_id || '');
+    if (/^(cls_k|kitab)/.test(code)) return 'kitab';
+    if (/^(cls_m|maktab)/.test(code)) return 'maktab';
+    return '';
+  }
+
+  function openWithdrawnStudent(sid) {
+    const withdrawal = API.persistLoadArr(WD_KEY).find(w =>
+      String(w.student_id || '') === String(sid) && withdrawalMatchesDept(w));
+    if (!withdrawal) return;
+    const existing = withdrawalStudent(withdrawal);
+    const archived = (API.persistLoadArr('mm_alumni') || []).find(a =>
+      String(a.student_id || '') === String(sid)) || {};
+    const student = {
+      ...(existing || {}),
+      id: existing ? existing.id : String(sid),
+      supabase_id: existing ? (existing.supabase_id || existing.id) : String(sid),
+      name: (existing && existing.name) || withdrawal.student_name || archived.name || '—',
+      permanent_id: (existing && existing.permanent_id) || withdrawal.permanent_id || archived.permanent_id || '',
+      class_id: withdrawal.last_class_id || (existing && existing.class_id) || '',
+      roll: (existing && existing.roll) || withdrawal.last_roll || '',
+      phone: (existing && existing.phone) || archived.phone || '',
+      active: false,
+      status: archived.left_type === 'completed' || (existing && existing.status === 'alumni') ? 'alumni' : 'dropped',
+      left_date: withdrawal.date || '',
+      left_reason: withdrawal.reason || '',
+    };
+    const students = API.Students.getAll().filter(s => s.id !== student.id);
+    API.persistSaveArr('mm_students', students.concat(student));
+    MMStudentModal.open(student.id);
+  }
+
+  document.getElementById('wd-list').addEventListener('click', function (event) {
+    const button = event.target.closest('[data-withdrawn-student]');
+    if (button) openWithdrawnStudent(button.dataset.withdrawnStudent);
+  });
 
   function setFilter(f, btn) {
     currentFilter = f;
@@ -209,14 +260,15 @@
 
     const el = document.getElementById('wd-list');
     el.innerHTML = filtered.map(w => {
-      const s = API.Students.getById(w.student_id);
-      const cls = s ? API.Classes.getById(s.class_id) : null;
-      const deptText = !wDept && cls?.dept ? `<span>${deptLabel(cls.dept)}</span>` : '';
+      const s = withdrawalStudent(w);
+      const cls = API.Classes.getById(w.last_class_id || (s && s.class_id));
+      const dept = withdrawalDept(w);
+      const deptText = !wDept && dept ? `<span>${deptLabel(dept)}</span>` : '';
       return `<div class="withdrawn-card">
         <div class="wd-top">
           <div>
-            <div class="wd-name">${s ? `<button type="button" class="s-name-btn" style="font-size:15px;font-weight:600;font-family:'Tiro Bangla',serif;color:var(--ink2);" onclick="MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button>` : API.esc(w.student_name || '—')}</div>
-            <div class="wd-id">${s ? API.escBn(s.permanent_id) : '—'}</div>
+            <div class="wd-name">${w.student_id ? `<button type="button" class="s-name-btn" style="font-size:15px;font-weight:600;font-family:'Tiro Bangla',serif;color:var(--ink2);" data-withdrawn-student="${API.esc(w.student_id)}">${API.esc((s && s.name) || w.student_name || '—')}</button>` : API.esc(w.student_name || '—')}</div>
+            <div class="wd-id">${API.escBn((s && s.permanent_id) || w.permanent_id || '—')}</div>
           </div>
           <span class="list-badge badge-red">${API.esc(w.date)}</span>
         </div>

@@ -172,11 +172,9 @@
     const iso = API.today();
     const depts = getScopeDepts();
     const classes = getClassesForScope(currentDept);
-    const att = depts.reduce((sum, dept) => {
-      const part = API.Attendance.getDateSummaryForDept(iso, dept);
-      return { present: sum.present + part.present, absent: sum.absent + part.absent };
-    }, { present: 0, absent: 0 });
-    const total = depts.reduce((sum, dept) => sum + API.Students.countActiveByDept(dept), 0);
+    const current = getCurrentAttendanceStats(classes, iso);
+    const att = current.att;
+    const total = current.total;
     const missingClasses = classes.filter(cls => {
       const activeStudents = API.Students.getByClass(cls.id).filter(s => s.active !== false);
       const recs = API.Attendance.getByClassDate(cls.id, iso);
@@ -192,11 +190,40 @@
     return { iso, depts, classes, total, att, missingClasses, bands, khAvg, special, anyAbsent, alham, attendancePct, watchLoad };
   }
 
+  function getCurrentAttendanceStats(classes, iso) {
+    const withdrawnIds = new Set();
+    const withdrawnPermanentIds = new Set();
+    (API.persistLoadArr('mm_withdrawals') || []).forEach(w => {
+      if (w.student_id) withdrawnIds.add(String(w.student_id));
+      if (w.permanent_id) withdrawnPermanentIds.add(String(w.permanent_id));
+    });
+    const classIds = new Set(classes.map(cls => cls.id));
+    const students = API.Students.getAll().filter(s => s.active &&
+      s.status !== 'dropped' && s.status !== 'alumni' && classIds.has(s.class_id) &&
+      !withdrawnIds.has(String(s.id)) && !withdrawnIds.has(String(s.supabase_id || '')) &&
+      !withdrawnPermanentIds.has(String(s.permanent_id || '')));
+    const byId = new Map();
+    students.forEach(s => {
+      byId.set(String(s.id), s);
+      if (s.supabase_id) byId.set(String(s.supabase_id), s);
+    });
+    const seen = new Set();
+    const att = { present: 0, absent: 0 };
+    classes.forEach(cls => API.Attendance.getByClassDate(cls.id, iso).forEach(rec => {
+      const student = byId.get(String(rec.student_id || ''));
+      if (!student || seen.has(student.id)) return;
+      seen.add(student.id);
+      const status = API.Attendance.statusOf(rec);
+      if (status === 'present' || status === 'absent') att[status]++;
+    }));
+    return { total: students.length, att };
+  }
+
   function ccCard(label, value, meta, state, action) {
     return `<button type="button" class="cc-health-card ${state || ''}" onclick="${action || ''}">
       <span class="cc-health-val">${value}</span>
       <span class="cc-health-label">${API.esc(label)}</span>
-      <span class="cc-health-meta">${API.esc(meta || '')}</span>
+      ${meta ? `<span class="cc-health-meta">${API.esc(meta)}</span>` : ''}
     </button>`;
   }
 
@@ -596,17 +623,17 @@
       const khState = data.khAvg == null ? 'is-warn' : data.khAvg >= 80 ? 'is-good' : data.khAvg >= 60 ? 'is-warn' : 'is-danger';
       const cards = [
         ccCard('আজ উপস্থিতি', toBn(data.attendancePct) + '%', toBn(data.att.present) + '/' + toBn(data.total) + ' উপস্থিত', attendanceState, ''),
-        ccCard('অনুপস্থিত তালিকা', toBn(data.anyAbsent), data.anyAbsent ? 'তালিকা দেখুন' : 'কোনো রেকর্ড নেই', data.anyAbsent ? 'is-danger' : 'is-good', 'goAbsentList()'),
-        ccCard('নজর দরকার', toBn(data.watchLoad), 'অনুপস্থিত + পর্যবেক্ষণ + কম খুলুক', data.watchLoad ? 'is-warn' : 'is-good', "openWatchPanel('absent')"),
-        ccCard('খুলুক গড়', data.khAvg !== null ? toBn(data.khAvg) : '—', toBn(data.bands.none.length) + ' জনের রেকর্ড নেই', khState, 'openKhulukPanel()'),
-        ccCard('মোট ছাত্র', toBn(data.total), scope, '', "openDeptRoute('/madrasa/admin/students.html')"),
+        ccCard('অনুপস্থিত তালিকা', toBn(data.anyAbsent), '', data.anyAbsent ? 'is-danger' : 'is-good', "goAbsentList('total')"),
+        ccCard('নজর দরকার', toBn(data.watchLoad), '', data.watchLoad ? 'is-warn' : 'is-good', "openWatchPanel('absent')"),
+        ccCard('খুলুক গড়', data.khAvg !== null ? toBn(data.khAvg) : '—', '', khState, 'openKhulukPanel()'),
+        ccCard('মোট ছাত্র', toBn(data.total), '', '', "openDeptRoute('/madrasa/admin/students.html')"),
       ];
       if (MMSession.canAdmin('withdrawn')) {
-        cards.push(ccCard('বিদায় ছাত্র', toBn(countWithdrawalsByDept(currentDept)), 'বিদায় তালিকা', 'is-warn', "openDeptRoute('/madrasa/admin/withdrawn.html')"));
+        cards.push(ccCard('বিদায় ছাত্র', toBn(countWithdrawalsByDept(currentDept)), '', 'is-warn', "openDeptRoute('/madrasa/admin/withdrawn.html')"));
       }
       cards.push(
-        ccCard('বিশেষ পর্যবেক্ষণ', toBn(data.special), data.special ? 'ফলোআপ দরকার' : 'কেউ নেই', data.special ? 'is-warn' : 'is-good', "openWatchPanel('special')"),
-        ccCard('আলহামদুলিল্লাহ', toBn(data.alham), data.alham ? 'চিহ্নিত ছাত্র' : 'কেউ নেই', data.alham ? 'is-good' : '', 'goAlhamdulillah()')
+        ccCard('বিশেষ পর্যবেক্ষণ', toBn(data.special), '', data.special ? 'is-warn' : 'is-good', "openWatchPanel('special')"),
+        ccCard('আলহামদুলিল্লাহ', toBn(data.alham), '', data.alham ? 'is-good' : '', 'goAlhamdulillah()')
       );
       healthEl.innerHTML = cards.join('');
     }
@@ -659,12 +686,9 @@
 
   function renderStats() {
     const iso = API.today();
-    const depts = getScopeDepts();
-    const att = depts.reduce((sum, dept) => {
-      const part = API.Attendance.getDateSummaryForDept(iso, dept);
-      return { present: sum.present + part.present, absent: sum.absent + part.absent };
-    }, { present: 0, absent: 0 });
-    const total = depts.reduce((sum, dept) => sum + API.Students.countActiveByDept(dept), 0);
+    const current = getCurrentAttendanceStats(getClassesForScope(currentDept), iso);
+    const att = current.att;
+    const total = current.total;
     const totalEl = document.getElementById('s-total');
     if (totalEl) totalEl.textContent = toBn(total);
     const presentEl = document.getElementById('s-present');
@@ -876,9 +900,9 @@
     document.body.style.overflow = '';
   }
 
-  function goAbsentList() {
+  function goAbsentList(tab) {
     if (window.MDRHomePanels && MDRHomePanels.openAbsent) {
-      MDRHomePanels.openAbsent({ depts: getScopeDepts() });
+      MDRHomePanels.openAbsent({ depts: getScopeDepts(), tab: tab === 'total' ? 'total' : 'today' });
       return;
     }
     openDeptRoute('../madrasa/madrasa-absent-students.html');
@@ -1015,8 +1039,8 @@
         MDRSupabaseSync.isAdminMadrasaExtrasWarm();
       if (!warm) {
         await syncMadrasaSettings();
-        await MDRSupabaseSync.ensureAdminBootstrap({ force: true });
       }
+      await MDRSupabaseSync.ensureAdminBootstrap({ force: !warm });
       await hydrateCommandDeckSources();
       syncDeptTabUI();
       renderCommandCenter();

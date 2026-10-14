@@ -375,12 +375,15 @@
       .abs-days-sub.is-present{color:var(--green)}
       .abs-tabs{display:flex;gap:4px;margin:0 0 10px;padding:4px;background:rgba(255,255,255,.72);border:1px solid rgba(26,18,8,.07);border-radius:12px;flex-shrink:0}
       .abs-tab{flex:1;border:none;border-radius:9px;background:transparent;padding:9px 8px;font-family:'Tiro Bangla',serif;font-size:13px;font-weight:700;color:var(--ink3);cursor:pointer}
-      .abs-tab.active{color:#fff;background:linear-gradient(135deg,var(--gold),#9a6a21);font-weight:800;box-shadow:0 5px 12px rgba(154,106,33,.22)}
-      .abs-section-title{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 8px}
-      .abs-section-title:first-child{margin-top:0}
-      .abs-section-sub{font-size:11px;color:var(--ink3);margin:-4px 0 8px;line-height:1.45}
+      .abs-tab.active{color:var(--ink2);background:var(--gold-light);font-weight:800;box-shadow:inset 0 0 0 1px var(--gold)}
+      .abs-depts{display:flex;gap:8px;margin:0 0 10px;flex-shrink:0}
+      .abs-dept{flex:1;min-height:44px;border:1px solid var(--cream3);border-radius:12px;background:var(--cream);color:var(--ink2);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background 160ms ease-out,color 160ms ease-out}
+      .abs-dept[aria-pressed="true"]{background:var(--gold-light);border-color:var(--gold);color:var(--ink2)}
+      .abs-dept:focus-visible,.abs-tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+      #modal-absent-home .abs-tab{min-height:44px}
+      @media(prefers-reduced-motion:reduce){.abs-dept{transition:none}}
       .abs-section-empty{font-size:12px;color:var(--ink3);padding:10px 0 4px}
-      #modal-absent-home .modal-title,#modal-absent-home .kh-meta{flex-shrink:0}
+      #modal-absent-home .modal-title{flex-shrink:0}
       #modal-absent-home #abs-home-list{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;padding-right:2px}
       @media(max-width:520px){.kh-grid{grid-template-columns:1fr}#kh-list{grid-template-columns:1fr}}
       .kh-list-empty{grid-column:1/-1}
@@ -449,8 +452,8 @@
     abs.id = 'modal-absent-home';
     abs.innerHTML = `<div class="modal">
       <div class="modal-title">অনুপস্থিত তালিকা <button class="modal-close" onclick="MDRHomePanels.closeAbsent()">✕</button></div>
-      <div class="kh-meta" style="margin-bottom:10px">আজকের অনুপস্থিত ও সর্বমোট অনুপস্থিতির রেকর্ড — আলাদা ট্যাবে।</div>
-      <div class="abs-tabs" id="abs-home-tabs"></div>
+      <div class="abs-tabs" id="abs-home-tabs" role="group" aria-label="অনুপস্থিতির সময়কাল"></div>
+      <div class="abs-depts" id="abs-home-depts" role="group" aria-label="বিভাগ"></div>
       <div id="abs-home-list"></div>
     </div>`;
     document.body.appendChild(abs);
@@ -716,6 +719,7 @@
   }
 
   var _absentDeptScope = null;
+  var _absDept = null;
 
   function scopeDepts() {
     if (global.MMSession && MMSession.getAllowedMadrasaDepts) {
@@ -725,25 +729,31 @@
     return ['kitab', 'maktab'];
   }
 
+  function getAbsentScopeDepts() {
+    const allowed = scopeDepts();
+    if (_absentDeptScope && _absentDeptScope.length) return allowed.filter((dept) => _absentDeptScope.includes(dept));
+    return allowed;
+  }
+
   function getAbsentDepts() {
-    if (_absentDeptScope && _absentDeptScope.length) return _absentDeptScope;
-    return scopeDepts();
+    return getAbsentScopeDepts().filter((dept) => dept === _absDept);
   }
 
-  function absentScopeLabel(depts) {
-    const deptName = (d) => (d === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ');
-    if (!depts || !depts.length) return '';
-    if (depts.length > 1) return 'সামগ্রিক';
-    return deptName(depts[0]);
+  function setAbsentDept(dept) {
+    if (!getAbsentScopeDepts().includes(dept)) return;
+    _absDept = dept;
+    renderAbsent();
+    const list = document.getElementById('abs-home-list');
+    if (list) list.scrollTop = 0;
   }
 
-  function absentRows() {
-    const depts = getAbsentDepts();
+  function absentRows(depts) {
+    depts = depts || getAbsentDepts();
+    if (!depts.length) return [];
     if (global.API && API.loadDaftarAbsentSummaryRaw) {
       const raw = API.loadDaftarAbsentSummaryRaw();
       if (raw && Array.isArray(raw.rows)) {
-        const allowed = depts.length ? depts : ['kitab', 'maktab'];
-        return raw.rows.filter((x) => allowed.indexOf(x.dept) >= 0);
+        return raw.rows.filter((x) => depts.indexOf(x.dept) >= 0);
       }
     }
     if (global.API && API.loadDaftarAbsentSummaryRows) {
@@ -756,8 +766,8 @@
       .sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
   }
 
-  function todayAbsentRows() {
-    const depts = getAbsentDepts();
+  function todayAbsentRows(depts) {
+    depts = depts || getAbsentDepts();
     if (!global.API || !API.Attendance || !API.Students || !API.Classes) return [];
     const iso = API.today ? API.today() : new Date().toISOString().slice(0, 10);
     const out = [];
@@ -829,16 +839,18 @@
     const depts = getAbsentDepts();
     const todayRows = todayAbsentRows();
     const totalRows = absentRows();
-    const meta = document.querySelector('#modal-absent-home .kh-meta');
-    if (meta) {
-      const label = absentScopeLabel(depts);
-      meta.textContent = (label ? label + ' — ' : '') + 'আজ = আজকের অনুপস্থিত; সর্বমোট = রেকর্ড অনুযায়ী সমগ্র তালিকা (বেশি দিন থেকে কম)।';
+    const deptEl = document.getElementById('abs-home-depts');
+    if (deptEl) {
+      deptEl.innerHTML = getAbsentScopeDepts().map((dept) =>
+        '<button type="button" class="abs-dept" aria-pressed="' + (dept === _absDept) + '" onclick="MDRHomePanels.setAbsentDept(\'' + dept + '\')">' +
+        (dept === 'maktab' ? 'মক্তব' : 'কিতাব বিভাগ') + '</button>'
+      ).join('');
     }
     const tabsEl = document.getElementById('abs-home-tabs');
     if (tabsEl) {
       tabsEl.innerHTML =
-        '<button type="button" class="abs-tab' + (_absTab === 'today' ? ' active' : '') + '" onclick="MDRHomePanels.setAbsentTab(\'today\')">আজ (' + helpers.toBn(todayRows.length) + ')</button>' +
-        '<button type="button" class="abs-tab' + (_absTab === 'total' ? ' active' : '') + '" onclick="MDRHomePanels.setAbsentTab(\'total\')">সর্বমোট (' + helpers.toBn(totalRows.length) + ')</button>';
+        '<button type="button" class="abs-tab' + (_absTab === 'today' ? ' active' : '') + '" aria-pressed="' + (_absTab === 'today') + '" onclick="MDRHomePanels.setAbsentTab(\'today\')">আজ (' + helpers.toBn(todayRows.length) + ')</button>' +
+        '<button type="button" class="abs-tab' + (_absTab === 'total' ? ' active' : '') + '" aria-pressed="' + (_absTab === 'total') + '" onclick="MDRHomePanels.setAbsentTab(\'total\')">সর্বমোট (' + helpers.toBn(totalRows.length) + ')</button>';
     }
     const el = document.getElementById('abs-home-list');
     if (!el) return;
@@ -859,7 +871,6 @@
     });
     const parts = [];
     if (_absTab === 'today') {
-      parts.push('<div class="abs-section-sub">' + helpers.toBn(todayRows.length) + ' জন আজ অনুপস্থিত · মোট = বর্ষ শুরু থেকে · টানা = আজসহ ধারাবাহিক · বেশি থেকে কম</div>');
       if (todayRows.length) {
         const totalOf = (x) => totalDaysById[String(x.student.id)] || totalDaysById[String(x.student.supabase_id || '')] ||
           (API.getSessionAbsentDays ? API.getSessionAbsentDays(x.student) : 1) || 1;
@@ -884,7 +895,6 @@
       }
     } else {
       const presentIds = todayPresentIdSet();
-      parts.push('<div class="abs-section-sub">' + helpers.toBn(totalRows.length) + ' জন · বেশি দিন থেকে কম</div>');
       if (totalRows.length) {
         parts.push(totalRows.map((x, i) => {
           const isPresentToday = !!(presentIds[String(x.student.id)] || presentIds[String(x.student.supabase_id || '')]);
@@ -901,7 +911,7 @@
     const kh = document.getElementById('m-khadimin');
     const ab = document.getElementById('m-absent-list');
     if (kh) kh.textContent = helpers.toBn(getKhadimin().filter((k) => k.status !== 'inactive').length);
-    if (ab && global.API && API.Attendance) ab.textContent = helpers.toBn(absentRows().length);
+    if (ab && global.API && API.Attendance) ab.textContent = helpers.toBn(absentRows(scopeDepts()).length);
   }
 
   function openKhadimin() {
@@ -927,7 +937,8 @@
   function openAbsent(opts) {
     injectOnce();
     _absentDeptScope = (opts && Array.isArray(opts.depts) && opts.depts.length) ? opts.depts.slice() : null;
-    _absTab = 'today';
+    _absDept = getAbsentScopeDepts()[0] || null;
+    _absTab = opts && opts.tab === 'total' ? 'total' : 'today';
     function show() {
       renderAbsent();
       document.getElementById('modal-absent-home').classList.add('open');
@@ -968,6 +979,7 @@
   function closeAbsent() {
     document.getElementById('modal-absent-home').classList.remove('open');
     _absentDeptScope = null;
+    _absDept = null;
   }
 
   function init(opts) {
@@ -987,6 +999,7 @@
   global.MDRHomePanels = {
     init,
     setAbsentTab,
+    setAbsentDept,
     updateCards,
     openKhadimin,
     closeKhadimin,
