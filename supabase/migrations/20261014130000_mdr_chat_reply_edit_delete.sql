@@ -7,9 +7,11 @@
 --   PostgREST overload অস্পষ্টতা না হয় আর পুরনো খোলা ট্যাব mdr_rel_chat_send দিয়ে চলতে থাকে।
 -- * mdr_rel_chat_edit_own / mdr_rel_chat_delete_own: শুধু নিজের সাধারণ বার্তা (request নেই),
 --   পাঠানোর ১৫ মিনিটের মধ্যে — সময়সীমা সার্ভারে যাচাই হয়।
+-- * মোছা = soft delete (deleted_at): দুই পক্ষের কাছেই লুকানো, সারি থাকে বলে দরকারে ফেরানো যায়।
 
 alter table public.mdr_shared_messages add column if not exists reply_to jsonb;
 alter table public.mdr_shared_messages add column if not exists edited_at timestamptz;
+alter table public.mdr_shared_messages add column if not exists deleted_at timestamptz;
 
 -- জিম্মাদার/সহকারী জিম্মাদার বা স্টাফ — পিন যাচাই করে actor ফেরত দেয়।
 create or replace function private.mdr_chat_actor(p_actor_id uuid, p_pin text, p_is_admin boolean)
@@ -83,7 +85,7 @@ begin
            )
     into v_reply
     from public.mdr_shared_messages m
-    where m.id = p_reply_to_id and m.thread_id = v_thread;
+    where m.id = p_reply_to_id and m.thread_id = v_thread and m.deleted_at is null;
     if v_reply is null then return jsonb_build_object('ok', false, 'error', 'reply_not_found'); end if;
   end if;
 
@@ -112,7 +114,7 @@ language plpgsql
 stable
 as $$
 begin
-  if v_msg.id is null then return 'message_not_found'; end if;
+  if v_msg.id is null or v_msg.deleted_at is not null then return 'message_not_found'; end if;
   if v_msg.from_user_id is distinct from v_actor.id then return 'not_own_message'; end if;
   if coalesce(p_is_admin, false) <> (v_msg.from_role = 'admin') then return 'not_own_message'; end if;
   if v_msg.request is not null then return 'request_message'; end if;
@@ -180,14 +182,16 @@ begin
   v_err := private.mdr_chat_own_editable(v_msg, v_actor, p_is_admin);
   if v_err is not null then return jsonb_build_object('ok', false, 'error', v_err); end if;
 
-  delete from public.mdr_shared_notifications where source_type = 'message' and source_id = p_message_id;
-  delete from public.mdr_shared_messages where id = p_message_id;
+  -- দুই পক্ষের কাছ থেকে লুকানো; সারি থাকে (দরকারে ফেরানো যায়)। অপঠিত গণনা থেকেও বাদ।
+  update public.mdr_shared_messages
+  set deleted_at = now(), read_admin = true, read_staff = true
+  where id = p_message_id;
 
   return jsonb_build_object('ok', true, 'id', p_message_id, 'thread_id', v_msg.thread_id);
 end;
 $$;
 
--- bootstrap: reply_to আর edited_at-ও ফেরত দেয়।
+-- bootstrap: reply_to আর edited_at-ও ফেরত দেয়; মুছে ফেলা বার্তা বাদ।
 create or replace function public.mdr_rel_chat_bootstrap(p_actor_id uuid, p_pin text, p_is_admin boolean default false)
 returns jsonb
 language plpgsql
@@ -229,13 +233,13 @@ begin
         'edited_at', m.edited_at
       ) order by m.created_at), '[]'::jsonb)
       from public.mdr_shared_messages m
-      where v_admin or m.thread_id = v_thread
+      where (v_admin or m.thread_id = v_thread) and m.deleted_at is null
     ),
     'unread_admin', (
-      select count(*) from public.mdr_shared_messages m where v_admin and m.from_role <> 'admin' and m.read_admin = false
+      select count(*) from public.mdr_shared_messages m where v_admin and m.from_role <> 'admin' and m.read_admin = false and m.deleted_at is null
     ),
     'unread_staff', (
-      select count(*) from public.mdr_shared_messages m where (not v_admin) and m.thread_id = v_thread and m.from_role = 'admin' and m.read_staff = false
+      select count(*) from public.mdr_shared_messages m where (not v_admin) and m.thread_id = v_thread and m.from_role = 'admin' and m.read_staff = false and m.deleted_at is null
     )
   );
 end;
