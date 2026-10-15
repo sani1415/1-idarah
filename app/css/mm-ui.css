@@ -166,6 +166,30 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .ui-skin .dept-tab-btn.active, .ui-skin .dept-tab-btn[aria-selected="true"], .ui-skin .dars-tab.active, .ui-skin .sched-tab.active,
 .ui-skin .dept-settings-tab.active, .ui-skin .cls-ov-tab.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
 
+/* ── ছাত্রের বিবরণ উইন্ডো (mm-student-modal.js; উইন্ডো নিজেই এই ফাইল জুড়ে নেয়) ── */
+.modal--student .st-modal-hd { background: linear-gradient(135deg, var(--ui-bad-bg), var(--ui-card) 65%); border-bottom-color: var(--ui-bd); padding: 18px 18px 14px; }
+.modal--student .st-modal-hd h2, .modal--student #st-modal-title { font-family: var(--font-bn); font-size: 22px; }
+.modal--student .st-modal-sub { font-size: 13px; }
+.modal--student .st-avatar { border-radius: 18px; }
+.modal--student .st-sum { margin: 12px 16px 2px; gap: 8px; }
+.modal--student .st-sum .ui-stat { padding: 8px 10px; }
+.modal--student .st-sum .ui-stat-val { font-size: 19px; }
+.modal--student .st-sum .ui-stat-sub { white-space: normal; overflow: visible; text-overflow: clip; }
+.modal--student .st-tabs { margin: 8px 16px 0; padding: 4px; gap: 4px; background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 14px; box-shadow: var(--ui-shadow); }
+.modal--student .st-tab { font-size: 13.5px; border-radius: 10px; border-bottom: none; margin: 0; padding: 7px 6px; color: var(--ink2); }
+.modal--student .st-tab.st-tab--on { background: var(--ui-accent); color: #fff; border-radius: 10px; box-shadow: 0 4px 12px -6px rgba(181,87,58,.7); }
+.modal--student .st-kv-grid { gap: 0; border: 1px solid var(--ui-bd); border-radius: 14px; overflow: hidden; background: #fff; }
+.modal--student .st-kv-item { padding: 9px 14px; border-bottom: 1px solid var(--cream2); }
+.modal--student .st-kv-grid .st-kv-item:nth-child(odd) { border-right: 1px solid var(--cream2); }
+.modal--student .st-kv-lbl { font-size: 11.5px; }
+.modal--student .st-kv-val { font-size: 14.5px; font-weight: 600; }
+@media (max-width: 640px) {
+  .modal--student .st-sum { margin: 10px 12px 2px; }
+  .modal--student .st-tabs { margin: 8px 12px 0; }
+  .modal--student .st-tab { font-size: 12px; padding: 7px 4px; }
+  .modal--student .st-kv-grid .st-kv-item:nth-child(odd) { border-right: none; }
+}
+
 /* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */
 .ui-cq { container-type: inline-size; }
 .ui-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }

@@ -188,8 +188,28 @@
 
   var _current = null;
 
+  // ছাত্রের বিবরণের উপরের ঘর: এখন পর্যন্ত বকেয়া কত টাকা, কয় মাস (একই ক্যাশ)
+  async function summary(studentId) {
+    if (!canSee()) return null;
+    var hit = _cache[studentId];
+    var res = hit && Date.now() - hit.at < CACHE_MS ? hit.res : null;
+    if (!res) {
+      var a = actor();
+      if (!a || !global.MMSharedAPI || !global.MMSharedAPI.studentFeeHistory) return { ok: false };
+      res = await global.MMSharedAPI.studentFeeHistory(a.id, a.pin, studentId);
+      if (res && res.ok) _cache[studentId] = { at: Date.now(), res: res };
+    }
+    if (!res || !res.ok) return { ok: false, error: res && res.error };
+    var now = nowHijri(), due = 0, dueMonths = 0;
+    (res.months || []).forEach(function (m) {
+      if (!m.paid && !isFuture(m, now)) { due += m.amount; dueMonths++; }
+    });
+    return { ok: true, due: due, dueMonths: dueMonths, text: taka(due) };
+  }
+
   global.MMStudentFee = {
     canSee: canSee,
+    summary: summary,
     onTabOpen: function (studentId) { _current = studentId; load(studentId, false); },
     reload: function () { if (_current) load(_current, true); },
     invalidate: function () { _current = null; _seq++; },

@@ -855,6 +855,77 @@
   }
 
   /* ওজিফা (মাসিক ফি): শুধু জিম্মাদার ও দফতর (সার্ভারও আলাদা করে যাচাই করে) */
+  /* ── উপরের সারাংশ-ঘর (mm-ui নকশা; পাতায় mm-ui.css না থাকলে নিজেই জুড়ে নেয়) ── */
+  var SUM_IC = {
+    check: '<path d="M5 12.5l4.2 4.2L19 7"/>',
+    user: '<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/>',
+    wallet: '<path d="M4 7.5h14.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18V7.5z"/><path d="M4 7.5 15.5 4.2v3.3"/><circle cx="16" cy="13.5" r="1"/>',
+    star: '<path d="M12 4l2.5 5.2 5.5.8-4 3.9 1 5.6-5-2.7-5 2.7 1-5.6-4-3.9 5.5-.8z"/>',
+  };
+  function ensureUiCss() {
+    if (document.querySelector('link[href*="mm-ui.css"]')) return;
+    var base = document.querySelector('link[href*="css/style.css"]');
+    if (!base) return;
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = base.getAttribute('href').replace(/style\.css.*$/, 'mm-ui.css');
+    document.head.appendChild(l);
+  }
+  function sumCard(id, tone, ic, label, value, sub, onclick) {
+    var tag = onclick ? 'button' : 'div';
+    return '<' + tag + (onclick ? ' type="button" onclick="' + onclick + '"' : '') + ' id="' + id + '" class="ui-stat is-' + tone + '">' +
+      '<span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + SUM_IC[ic] + '</svg></span>' +
+      '<span class="ui-stat-txt"><span class="ui-stat-lbl">' + label + '</span><span class="ui-stat-val">' + value + '</span>' +
+      (sub ? '<span class="ui-stat-sub">' + sub + '</span>' : '') + '</span></' + tag + '>';
+  }
+  function attSummaryCard(API, sid) {
+    var rows = attTimelineFor(API, sid);
+    var c = { p: 0, a: 0, h: 0, m: 0 };
+    rows.forEach(function (r) { c[attStatusMeta(API, r).key] += 1; });
+    var n = c.p + c.a + c.m;
+    var pct = n ? Math.round(c.p * 100 / n) : null;
+    var tone = pct == null ? 'info' : pct >= 90 ? 'ok' : pct >= 75 ? 'warn' : 'bad';
+    return sumCard('st-sum-att', tone, 'check', 'উপস্থিতি', pct == null ? '—' : toBn(pct) + '%',
+      n ? toBn(c.p) + '/' + toBn(n) + ' দিন' + (c.a ? ' · অনুপস্থিত ' + toBn(c.a) : '') : 'রেকর্ড নেই', escTabFn() + "('att')");
+  }
+  function escTabFn() {
+    return global.MMStudentModal && global.MMStudentModal.switchTab ? 'MMStudentModal.switchTab' : 'switchStudentTab';
+  }
+  function buildSummary(API, sid, khList, resList, examMap) {
+    ensureUiCss();
+    var kh = khList.slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); })[0];
+    var khScore = kh && kh.score != null ? Number(kh.score) : null;
+    var res = resList.slice().sort(function (a, b) {
+      var ea = examMap.get(a.exam_id) || {}, eb = examMap.get(b.exam_id) || {};
+      return String(eb.date || b.date || '').localeCompare(String(ea.date || a.date || ''));
+    })[0];
+    var resPct = res && res.percentage != null ? Number(res.percentage) : null;
+    var resName = res ? ((examMap.get(res.exam_id) || {}).name || 'পরীক্ষা') : '';
+    var fee = feeTabAllowed();
+    return '<div class="ui-stats st-sum' + (fee ? '' : ' is-3') + '">' +
+      attSummaryCard(API, sid) +
+      sumCard('st-sum-kh', khScore == null ? 'info' : khScore >= 81 ? 'ok' : khScore >= 60 ? 'info' : 'bad', 'user', 'হুসনুল খুলুক',
+        khScore == null ? '—' : toBn(khScore), kh ? API.esc(toBn(kh.date || '')) : 'রেকর্ড নেই', escTabFn() + "('more')") +
+      (fee ? sumCard('st-sum-fee', 'warn', 'wallet', 'ওজিফা', '…', 'আনা হচ্ছে', escTabFn() + "('fee')") : '') +
+      sumCard('st-sum-exam', resPct == null ? 'info' : resPct >= 70 ? 'ok' : resPct >= 60 ? 'warn' : 'bad', 'star', 'শেষ পরীক্ষা',
+        resPct == null ? '—' : toBn(resPct) + '%', resPct == null ? 'ফল নেই' : API.esc(resName), escTabFn() + "('more')") +
+      '</div>';
+  }
+  function fillFeeSummary(sid) {
+    if (!feeTabAllowed()) return;
+    loadSiblingScript('mm-student-fee.js', function () { return !!global.MMStudentFee; }, function () {
+      if (!global.MMStudentFee || !global.MMStudentFee.summary) return;
+      global.MMStudentFee.summary(sid).then(function (r) {
+        var el = document.getElementById('st-sum-fee');
+        if (!el || _openSid !== sid) return;
+        var val = el.querySelector('.ui-stat-val'), sub = el.querySelector('.ui-stat-sub');
+        if (!r || !r.ok) { val.textContent = '—'; sub.textContent = 'আনা যায়নি'; el.className = 'ui-stat is-info'; return; }
+        if (r.due > 0) { val.textContent = r.text; sub.textContent = toBn(r.dueMonths) + ' মাস বকেয়া'; el.className = 'ui-stat is-bad'; }
+        else { val.textContent = 'বকেয়া নেই'; sub.textContent = 'সব পরিশোধিত'; el.className = 'ui-stat is-ok'; }
+      }).catch(function () { /* ঘর «…» থাকে */ });
+    });
+  }
+
   function feeTabAllowed() {
     var S = global.MMSession;
     return !!(S && ((S.isAdmin && S.isAdmin()) || (S.getRole && S.getRole() === 'daftar')));
@@ -1206,6 +1277,7 @@
     var tabs = document.getElementById('st-tabs-wrap');
     if (tabs) {
       tabs.innerHTML =
+        buildSummary(API, sid, khList, resList, examMap) +
         '<div class="st-tabs" role="tablist">' +
         '<button type="button" class="st-tab st-tab--on" data-tab="info" role="tab" aria-selected="true" onclick="' +
         escTab +
@@ -1242,6 +1314,7 @@
 
     var modal = document.getElementById(MODAL_ID);
     if (modal) modal.classList.add('open');
+    fillFeeSummary(sid);
 
     /* পূর্ণ হাজিরা ইতিহাস ব্যাকগ্রাউন্ডে আনা: প্যানেল আগে লোকাল ক্যাশ (~৩০ দিন) দিয়ে
        সাথে সাথে আঁকা হয়, ইতিহাস এলে নীরবে পুরো বর্ষে বিস্তৃত হয় — গতি কমে না। */
@@ -1255,6 +1328,8 @@
           _attHist = { sid: String(sid), rows: res.attendance || [], classDates: res.class_dates || [] };
           var panel = document.getElementById('st-panel-att');
           if (panel) panel.innerHTML = buildAttendancePanel(API, sid);
+          var attCard = document.getElementById('st-sum-att');
+          if (attCard) attCard.outerHTML = attSummaryCard(API, sid);
         }).catch(function () { /* ব্যর্থ হলে লোকাল ক্যাশের সাম্প্রতিক ডেটাই থাকবে */ });
       }
     }
@@ -1272,6 +1347,15 @@
           return;
         }
         var list = res.akhlaq || [];
+        var khCard = document.getElementById('st-sum-kh');
+        if (khCard && list.length) {
+          var latest = list.slice().sort(function (x, y) { return String(y.date || '').localeCompare(String(x.date || '')); })[0];
+          var sc = Number(latest.score);
+          khCard.className = 'ui-stat is-' + (sc >= 81 ? 'ok' : sc >= 60 ? 'info' : 'bad');
+          khCard.querySelector('.ui-stat-val').textContent = toBn(sc);
+          var khSub = khCard.querySelector('.ui-stat-sub');
+          if (khSub) khSub.textContent = toBn(String(latest.date || ''));
+        }
         if (!list.length) { section.innerHTML = '<div class="st-note" style="color:var(--ink3);font-size:12px;padding:4px 0;">কোনো হুসনুল খুলুক রেকর্ড নেই।</div>'; return; }
         section.innerHTML =
           '<h4>হুসনুল খুলুক</h4>' +
