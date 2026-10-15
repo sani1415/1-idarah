@@ -208,7 +208,8 @@
     [S.year - 1, S.year, S.year + 1].forEach(function (y) { years[y] = 1; });
     A.Expense.getAll().concat(A.Income.getAll()).forEach(function (e) { var y = Number(e.hijriYear); if (y) years[y] = 1; });
     var yOpts = Object.keys(years).sort().map(function (y) { return '<option value="' + y + '"' + (Number(y) === S.year ? ' selected' : '') + '>' + bn(y) + '</option>'; }).join('');
-    var mOpts = (A.HIJRI_MONTHS || []).map(function (m, i) { return '<option value="' + (i + 1) + '"' + (i + 1 === S.monthNo ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('');
+    /* শিক্ষাবর্ষের ক্রমে (শাওয়াল → রমজান) */
+    var mOpts = (A.MONTHS || []).map(function (m) { var no = A.monthNo(m); return '<option value="' + no + '"' + (no === S.monthNo ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('');
     var tabs = TAB_ORDER.map(function (t) {
       var n = S.rows[t].filter(function (r) { return r.orig || !isEmpty(r, t); }).length;
       var d = S.rows[t].filter(function (r) { return isChanged(r, t); }).length;

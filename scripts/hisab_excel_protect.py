@@ -13,6 +13,7 @@ make-hisab-excel-template.py টেমপ্লেট বানানোর প�
 - শীট: সারি/কলাম ঢোকানো-মোছা, sort ও ফিল্টার বন্ধ (ফিল্টারের ড্রপডাউন দিয়ে sort হয়ে যায়);
   কলাম/সারির মাপ বদলানো চালু। খুঁজতে Ctrl+F।
 - বই: শীটের নাম বদল/মোছা/সরানো বন্ধ।
+- ড্যাশবোর্ডের মাসিক টেবিল শিক্ষাবর্ষ (শাওয়াল–রমজান) ধরে; B21 = শিক্ষাবর্ষ শুরুর হিজরী বছর।
 - ব্যয়ের সূত্র-কলাম (G একক মূল্য, L/M হিজরী বছর/মাস), ড্রপডাউন এবং বকেয়া/ড্যাশবোর্ডের
   সূত্রের সারি-সীমা ২০০০০ পর্যন্ত — তালা দেওয়ার পর দফতর নিজে এগুলো নিচে টানতে পারে না।
 """
@@ -232,6 +233,76 @@ def fill_expense_formulas(x):
 
 
 
+HIJRI_MONTHS = ['মুহাররম', 'সফর', 'রবিউল আউয়াল', 'রবিউস সানি', 'জুমাদাল উলা', 'জুমাদাল উখরা',
+                'রজব', 'শাবান', 'রমজান', 'শাওয়াল', 'জিলকদ', 'জিলহজ']
+ACAD_ORDER = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # শিক্ষাবর্ষ: শাওয়াল → পরের রমজান
+
+
+def _xe(t):
+    return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+
+def _set_cell(x, ref, inner, t_attr=None):
+    """ঘরের style রেখে ভেতরটা বদলানো (শুধু আগে থেকে থাকা ঘর)"""
+    m = re.search(r'<c r="%s"([^>]*?)(/>|>.*?</c>)' % ref, x, re.S)
+    assert m, ('cell missing', ref)
+    attrs = re.sub(r'\st="[^"]*"', '', m.group(1))
+    if t_attr:
+        attrs += ' t="%s"' % t_attr
+    return x[:m.start()] + '<c r="%s"%s>%s</c>' % (ref, attrs, inner) + x[m.end():]
+
+
+def current_academic_start(today=None):
+    """আজকের শিক্ষাবর্ষ শুরুর হিজরী বছর (টেবুলার হিজরী ক্যালেন্ডার — ±১–২ দিন, বছর বাছাইয়ে যথেষ্ট)"""
+    import datetime
+    import math
+    t = today or datetime.date.today()
+    a = (14 - t.month) // 12
+    y2, m2 = t.year + 4800 - a, t.month + 12 * a - 3
+    jd = t.day + (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4 - y2 // 100 + y2 // 400 - 32045
+
+    def isl_jd(y, m, d):
+        return d + math.ceil(29.5 * (m - 1)) + (y - 1) * 354 + (3 + 11 * y) // 30 + 1948439
+
+    hy = (30 * (jd - 1948440) + 10646) // 10631
+    hm = min(12, math.ceil((jd - (29 + isl_jd(hy, 1, 1))) / 29.5) + 1)
+    return hy if hm >= 10 else hy - 1
+
+
+def academic_dashboard(x):
+    """ড্যাশবোর্ডের মাসিক টেবিল হিজরী ক্যালেন্ডার বছর (মুহাররম–জিলহজ) থেকে শিক্ষাবর্ষে (শাওয়াল–রমজান)।
+    B21 = শিক্ষাবর্ষ শুরুর হিজরী বছর (যেমন 1447 → শাওয়াল ১৪৪৭ … রমজান ১৪৪৮)।"""
+    if 'শিক্ষাবর্ষ' in unescape(x):
+        return x, False
+    for i, m in enumerate(ACAD_ORDER):
+        r = 3 + i
+        yexpr = '$B$21' if m >= 10 else '($B$21+1)'
+        x = _set_cell(x, 'D%d' % r, '<f>%s</f>' % _xe('"%s "&%s' % (HIJRI_MONTHS[m - 1], yexpr)), 'str')
+        for col in 'EFGH':
+            cm = re.search(r'<c r="%s%d"[^>]*>(<f>)(.*?)(</f>)' % (col, r), x, re.S)
+            assert cm, ('dashboard formula missing', col, r)
+            f = cm.group(2)
+            f2 = re.sub(r'(\$L\$2:\$L\$\d+,)\$B\$21(,)', lambda mm: mm.group(1) + yexpr + mm.group(2), f)
+            f2 = re.sub(r'(\$M\$2:\$M\$\d+,)\d+(,)', lambda mm: mm.group(1) + str(m) + mm.group(2), f2)
+            assert f2 != f, ('pattern not found', col, r)
+            x = x[:cm.start(2)] + f2 + x[cm.end(2):]
+    title = '"শিক্ষাবর্ষ "&$B$21&"–"&($B$21+1)&" (শাওয়াল–রমজান) — মাসভিত্তিক বিভাগীয় ব্যয়"'
+    x = _set_cell(x, 'D1', '<f>%s</f>' % _xe(title), 'str')
+    x = _set_cell(x, 'A21', '<is><t>%s</t></is>' % 'শিক্ষাবর্ষ শুরু (হিজরী)', 'inlineStr')
+    x = _set_cell(x, 'D15', '<is><t>%s</t></is>' % 'শিক্ষাবর্ষের মোট', 'inlineStr')
+    x = _set_cell(x, 'B21', '<v>%d</v>' % current_academic_start(), 'n')
+    # খাতভিত্তিক (নির্বাচিত মাস): মাস শাওয়াল–জিলহজ হলে শুরুর বছর, নইলে পরের বছর
+    x = re.sub(r'(<f>[^<]*\$L\$2:\$L\$\d+,)\$B\$21(,[^<]*\$J\$21)',
+               lambda mm: mm.group(1) + 'IF($J$21&gt;=10,$B$21,$B$21+1)' + mm.group(2), x)
+    # মাসের ড্রপডাউন শিক্ষাবর্ষের ক্রমে
+    months = ','.join(HIJRI_MONTHS[m - 1] for m in ACAD_ORDER)
+    x = re.sub(r'(<dataValidation\b[^>]*sqref="D21"[^>]*><formula1>)[^<]*(</formula1>)',
+               lambda mm: mm.group(1) + '"%s"' % months + mm.group(2), x)
+    # পুরনো (ক্যালেন্ডার-বছরের) জমা ফল মুছে দেওয়া — খোলার সময় নতুন করে হিসাব হবে
+    x = re.sub(r'(<c\b[^>]*>)(<f\b[^>]*(?:/>|>[^<]*</f>))<v>[^<]*</v>', lambda mm: mm.group(1) + mm.group(2), x)
+    return x, True
+
+
 def protect_file(src, dst=None):
     dst = dst or src
     with zipfile.ZipFile(src) as zin:
@@ -271,6 +342,7 @@ def protect_file(src, dst=None):
 
     x = parts[sheets['ড্যাশবোর্ড']].decode('utf-8')
     x = fix_ranges(x)
+    x, dash_changed = academic_dashboard(x)
     dash = ['B21', 'D21'] + ['A%d' % r for r in range(25, 40)]
     for ref in dash:
         col, row = re.match(r'([A-Z]+)(\d+)', ref).groups()
@@ -283,6 +355,8 @@ def protect_file(src, dst=None):
 
     parts['xl/styles.xml'] = st.dump().encode('utf-8')
 
+    if dash_changed and '<calcPr' in wb and 'fullCalcOnLoad' not in re.search(r'<calcPr\b[^>]*>', wb).group(0):
+        wb = re.sub(r'<calcPr\b', '<calcPr fullCalcOnLoad="1"', wb, count=1)  # বদলানো সূত্র খোলার সময় নতুন করে হিসাব
     wb = re.sub(r'<workbookProtection\b[^>]*/>', '', wb)
     wb = wb.replace('<bookViews>', '<workbookProtection lockStructure="1"/><bookViews>', 1)
     wb = re.sub(r'(<definedName name="_xlnm\._FilterDatabase"[^>]*>[^<]*!\$A\$1:\$)([A-Z]+)\$\d+',

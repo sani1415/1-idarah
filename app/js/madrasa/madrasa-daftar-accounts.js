@@ -98,15 +98,19 @@ var _qardGiveInlineOpen = false; /* করজ বিস্তারিত মড
     _monFs = _monFs.map(function (m) { return A.monthKey(m); });
   }
 
+  /* বছর-ফিল্টার = শিক্ষাবর্ষ (শাওয়াল–রমজান); মান = শুরুর হিজরী বছর, যেমন "1447" → «১৪৪৭–৪৮» */
+  function rowAcadYear(r) {
+    return String(A.academicYearOf(r.hijriYear, r.month));
+  }
   function getAllYears() {
     var years = new Set();
-    A.Income.getAll().forEach(function (r) { if (r.hijriYear) years.add(String(r.hijriYear)); });
-    A.Expense.getAll().forEach(function (r) { if (r.hijriYear) years.add(String(r.hijriYear)); });
-    return Array.from(years).sort();
+    A.Income.getAll().forEach(function (r) { if (r.month) years.add(rowAcadYear(r)); });
+    A.Expense.getAll().forEach(function (r) { if (r.month) years.add(rowAcadYear(r)); });
+    return Array.from(years).filter(function (y) { return Number(y) > 0; }).sort();
   }
   function yearOptions(selected) {
-    return '<option value="all">সব বছর</option>' + getAllYears().map(function (y) {
-      return '<option value="' + y + '"' + (selected === y ? ' selected' : '') + '>' + A.bn(y) + '</option>';
+    return '<option value="all">সব শিক্ষাবর্ষ</option>' + getAllYears().map(function (y) {
+      return '<option value="' + y + '"' + (selected === y ? ' selected' : '') + '>' + A.academicLabel(y) + '</option>';
     }).join('');
   }
 
@@ -925,8 +929,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     }
     var dayOpts = '<option value="all">সব দিন</option>' + Array.from({ length: 30 }, function (_, i) { var d = String(i + 1); return '<option value="' + d + '"' + (String(_dayF) === d ? ' selected' : '') + '>' + bn(d) + ' তারিখ</option>'; }).join('') +
       '<option value="__none"' + (_dayF === '__none' ? ' selected' : '') + '>দিন নেই</option>';
-    var yrs = years.map(function (y) { return [y, A.bn ? A.bn(y) : y]; });
-    var yearSection = years.length ? _ddGroup('বছর (হিজরী)', yrs, _yearFs, 'toggleAccYear', 'toggleAllAccYears') : '';
+    var yrs = years.map(function (y) { return [y, A.academicLabel(y)]; });
+    var yearSection = years.length ? _ddGroup('শিক্ষাবর্ষ (শাওয়াল–রমজান)', yrs, _yearFs, 'toggleAccYear', 'toggleAllAccYears') : '';
     var monthSection = _ddGroup('মাস', A.MONTHS, _monFs, 'toggleAccMonth', 'toggleAllAccMonths');
     var accSection = isIncome ? '' : _ddGroup('হিসাব বিভাগ', expenseBookEntries(), _accFs, 'toggleAccAccount', 'toggleAllAccAccounts');
     var cats = isIncome ? [] : (A.Categories ? A.Categories.getAll() : []);
@@ -2242,7 +2246,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   function buildIncomeList() {
     normalizeMonthFilters();
     var rows = A.Income.getAll().filter(function (r) { return r.account !== 'qard_return'; });
-    if (_yearFs.length) rows = rows.filter(function (r) { return _yearFs.indexOf(String(r.hijriYear)) >= 0; });
+    if (_yearFs.length) rows = rows.filter(function (r) { return _yearFs.indexOf(rowAcadYear(r)) >= 0; });
     if (_monFs.length) rows = rows.filter(function (r) { return _monFs.indexOf(A.monthKey(r.month)) >= 0; });
     /* column filters */
     _colFltVals['date'] = _buildColVals(rows, function (r) { return A.dateLabel(r); });
@@ -2315,7 +2319,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   function buildExpenseList() {
     normalizeMonthFilters();
     var rows = A.Expense.getAll().filter(function (r) { return r.account !== 'qard'; });
-    if (_yearFs.length) rows = rows.filter(function (r) { return _yearFs.indexOf(String(r.hijriYear)) >= 0; });
+    if (_yearFs.length) rows = rows.filter(function (r) { return _yearFs.indexOf(rowAcadYear(r)) >= 0; });
     if (_monFs.length) rows = rows.filter(function (r) { return _monFs.indexOf(A.monthKey(r.month)) >= 0; });
     if (_accFs.length) rows = rows.filter(function (r) { return _accFs.indexOf(r.account) >= 0; });
     if (_catFs.length) rows = rows.filter(function (r) { return _catFs.indexOf(A.clean(r.category, '') || '') >= 0; });
@@ -2726,7 +2730,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   /* রিপোর্টের গ্লোবাল ফিল্টার: ফিল্টার শিটের state-ই (_yearFs/_monFs/_accFs/_catFs/
      _fromKey/_toKey/_dayF) রিপোর্টে খাটে। reports.js প্রতিটি সারিতে এটা ডাকে। */
   window.MdrAccRptRowFilter = function (r, kind) {
-    if (_yearFs.length && _yearFs.indexOf(String(r.hijriYear)) < 0) return false;
+    if (_yearFs.length && _yearFs.indexOf(rowAcadYear(r)) < 0) return false;
     if (_monFs.length && _monFs.indexOf(A.monthKey(r.month)) < 0) return false;
     if ((_fromKey !== 'all' || _toKey !== 'all') && !A.inRange(r, _fromKey, _toKey)) return false;
     if (_dayF !== 'all') {

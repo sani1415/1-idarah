@@ -11,9 +11,9 @@ const MdrAccAPI = (() => {
   const XL_MODE_KEY = 'mdr_acc_excel_mode';
   const CACHE_VERSION = 'accounts-db-v2-20260614';
 
-  /* MONTHS in academic-year order (Ramadan = start) */
-  const MONTHS = ['রমজান','শাওয়াল','জিলকদ','জিলহজ','মুহাররম','সফর',
-    'রবিউল আউয়াল','রবিউস সানি','জুমাদাল উলা','জুমাদাল উখরা','রজব','শাবান'];
+  /* MONTHS in academic-year order — শিক্ষাবর্ষ শাওয়াল থেকে পরের রমজান */
+  const MONTHS = ['শাওয়াল','জিলকদ','জিলহজ','মুহাররম','সফর','রবিউল আউয়াল',
+    'রবিউস সানি','জুমাদাল উলা','জুমাদাল উখরা','রজব','শাবান','রমজান'];
   const HIJRI_MONTHS = ['মুহাররম','সফর','রবিউল আউয়াল','রবিউস সানি','জুমাদাল উলা','জুমাদাল উখরা','রজব','শাবান','রমজান','শাওয়াল','জিলকদ','জিলহজ'];
   const MONTH_ALIAS = {
     'রামাযান':'রমজান',
@@ -138,7 +138,13 @@ const MdrAccAPI = (() => {
     } catch (e) {}
     return todayHijri().year;
   };
-  const dateYear = (year, month) => year ? num(en(year)) : (monthNo(month) <= 8 ? systemHijriYear() + 1 : systemHijriYear());
+  const dateYear = (year, month) => year ? num(en(year)) : (monthNo(month) <= 9 ? systemHijriYear() + 1 : systemHijriYear());
+  /* শিক্ষাবর্ষ (শাওয়াল–রমজান): শুরুর হিজরী বছর — শাওয়াল/জিলকদ/জিলহজ সেই বছরের, মুহাররম–রমজান পরের বছরের */
+  const academicYearOf = (year, month) => {
+    const y = dateYear(year, month);
+    return monthNo(month) >= 10 ? y : y - 1;
+  };
+  const academicLabel = (start) => bn(String(start)) + '–' + bn(String((num(start) + 1) % 100).padStart(2, '0'));
   const dateKey = (year, month, day) => String(dateYear(year, month)).padStart(4,'0') + '-' + String(monthNo(month)).padStart(2,'0') + '-' + String(num(day)).padStart(2,'0');
   /** `tools/generate_accounts_import.py` এর `GREG_HIJRI_RANGES` এর সাথে মিল রেখে: [sy,sm,sd, ey,em,ed, hijri_month, hijri_year] */
   const GREG_HIJRI_RANGES = [
@@ -593,7 +599,7 @@ const MdrAccAPI = (() => {
     }
   }
 
-  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, importBatch, excelMode, setExcelMode, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
+  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, importBatch, excelMode, setExcelMode, academicYearOf, academicLabel, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
 })();
 
 if (typeof window !== 'undefined') {
