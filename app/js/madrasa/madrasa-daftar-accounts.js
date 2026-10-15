@@ -2986,7 +2986,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
-        a.download = 'daftar-hisab-template.xlsx';
+        a.download = 'দফতর হিসাব টেমপ্লেট.xlsx';
         document.body.appendChild(a);
         a.click();
         a.remove();

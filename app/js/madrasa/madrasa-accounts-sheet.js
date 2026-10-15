@@ -223,7 +223,7 @@
     var errs = errRows().length;
     var note = ro
       ? '<div class="accg-note is-ro">' + esc(core().lockMsg ? core().lockMsg() : 'এখানে শুধু দেখা যায়') + ' — শীটে এখন শুধু দেখা যায়।</div>'
-      : '<div class="accg-note">Enter = নিচের ঘর · Tab = ডানের ঘর · ↑↓ = সারি বদল · Ctrl+S = সংরক্ষণ · Excel থেকে কপি করে যেকোনো ঘরে পেস্ট করা যায় · নতুন সারিতে বিভাগ ও দিন উপরের সারি থেকে আসে</div>';
+      : '<div class="accg-note">Enter = নিচের ঘর · Tab = ডানের ঘর · ↑↓ = সারি বদল · Ctrl+S = সংরক্ষণ · Excel থেকে কপি করে যেকোনো ঘরে পেস্ট করা যায় · নতুন সারিতে হিসাব বিভাগ উপরের সারি থেকে আসে, দিন নিজে লিখুন</div>';
     return '<div class="acc-ws accg-ws">' +
       '<div class="acc-ws-top">' +
       '<button type="button" class="acc-ws-back" onclick="closeAccGridSafe()">← হিসাব</button>' +
@@ -297,21 +297,17 @@
     if (select) { try { el.select(); } catch (e) {} }
   }
 
-  /* নতুন সারিতে প্রথম লেখা — উপরের সারি থেকে বিভাগ/দিন (Excel-এর অভ্যাসে প্রতিবার লিখতে না হয়) */
+  /* নতুন সারিতে প্রথম লেখা — উপরের সারি থেকে শুধু বিভাগ (ও করজের ধরন); দিন সবসময় নিজে লিখতে হয় */
   function carryDefaults(i) {
     var list = S.rows[S.tab];
     var row = list[i];
     if (row.orig) return;
     var prev = null;
     for (var k = i - 1; k >= 0; k--) { if (!list[k].del && !isEmpty(list[k])) { prev = list[k]; break; } }
-    var keys = S.tab === 'qard' ? ['kind', 'day'] : (S.tab === 'income' ? ['day'] : ['book', 'day']);
+    var keys = S.tab === 'qard' ? ['kind'] : (S.tab === 'income' ? [] : ['book']);
     keys.forEach(function (key) {
       if (String(row.v[key] || '').trim()) return;
       var val = prev ? prev.v[key] : '';
-      if (!val && key === 'day') {
-        var t = A.todayHijri();
-        if (Number(t.year) === S.year && Number(t.monthNo || A.monthNo(t.month)) === S.monthNo) val = bn(t.day);
-      }
       if (!val && key === 'kind') val = 'দেওয়া';
       if (!val) return;
       row.v[key] = val;
