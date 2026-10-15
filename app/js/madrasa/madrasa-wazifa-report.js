@@ -233,12 +233,18 @@
       '.wz-fill.wz-g{background:var(--wz-ok);}.wz-fill.wz-a{background:#d29a2c;}.wz-fill.wz-r{background:var(--wz-due);}' +
       '.wz-pct{font-weight:800;}' +
       '.wz-scroll{overflow-x:auto;}' +
-      '.wz-side{display:flex;flex-direction:column;gap:12px;min-width:0;container-type:inline-size;}' +
-      '@container (max-width:520px){.wz-hide-nar{display:none;}}' +
+      '.wz-months{container-type:inline-size;}' +
+      '@container (max-width:560px){.wz-hide-nar{display:none;}}' +
       '.wz-warn{background:var(--red-light);color:var(--red);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;}' +
       '@container (min-width:860px){' +
-        '.wz-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}' +
-        '.wz-list{max-height:calc(100vh - 140px);min-height:420px;}' +
+        '.wz-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;}' +
+        '.wz-main>.wz-months{grid-column:1/-1;}' +
+        '.wz-listp{contain:size;min-height:440px;display:flex;flex-direction:column;}' +
+        '.wz-listp .wz-list{flex:1 1 0;min-height:0;}' +
+      '}' +
+      '@container (min-width:1460px){' +
+        '.wz-main{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);}' +
+        '.wz-main>.wz-months{grid-column:auto;}' +
       '}' +
       '@media (max-width:760px){.wz-filters{grid-template-columns:1fr 1fr;}.wz-cards{grid-template-columns:1fr 1fr;gap:10px;}}' +
       '@media (max-width:640px){' +
@@ -417,13 +423,13 @@
     var sortSel = sortable ? '<select aria-label="সাজানো" onchange="MdrWazifaReport.set(\'sort\', this.value)">' + Object.keys(SORTS).map(function (k) {
       return '<option value="' + k + '"' + (S.sort === k ? ' selected' : '') + '>' + SORTS[k] + '</option>';
     }).join('') + '</select>' : '';
-    var panel = '<section class="wz-box wz-panel"><div class="wz-ph"><h3>' + (titles[S.view] || '') + ' (' + bn(cur.length) + ' জন)</h3>' + sortSel + '</div>' +
+    var panel = '<section class="wz-box wz-panel wz-listp"><div class="wz-ph"><h3>' + (titles[S.view] || '') + ' (' + bn(cur.length) + ' জন)</h3>' + sortSel + '</div>' +
       '<div class="wz-list">' + rows + '</div></section>';
 
     root.innerHTML = '<div class="wz-shell">' + head(true) +
       (S.error ? '<div class="wz-warn">' + esc(S.error) + '</div>' : '') +
       filters + cards + notes + tabs +
-      '<div class="wz-main">' + panel + '<div class="wz-side">' + classTable(list, now) + monthTable(list, now) + '</div></div></div>';
+      '<div class="wz-main">' + panel + classTable(list, now) + monthTable(list, now) + '</div></div>';
   }
 
   function pctTone(p) { return p >= 70 ? 'wz-g' : (p >= 50 ? 'wz-a' : 'wz-r'); }
