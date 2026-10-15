@@ -147,8 +147,9 @@
     var st = document.createElement('style');
     st.id = STYLE_ID;
     st.textContent =
-      // পাতার .content সাধারণত ১১০০px-এ বাঁধা — রিপোর্ট খোলা থাকলে পুরো চওড়া (জুম আউটে বেশি কলাম আসে)
-      'html body .content:has(.wz-shell){max-width:none;}' +
+      // পাতার .content ডেস্কটপ শেলে var(--desk-max)/১১০০–১২০০px-এ বাঁধা (বেশি জোরালো selector-এ) —
+      // রিপোর্ট খোলা থাকলে পুরো চওড়া, যেন জুম আউট/বড় মনিটরে তিন কলাম আসে
+      '.content:has(.wz-shell){max-width:none !important;}' +
       '.wz-shell{--wz-ok:#3f7a50;--wz-ok-bg:#e8f2e7;--wz-late:#b07a14;--wz-late-bg:#fbf0d6;--wz-due:#b5573a;--wz-due-bg:#fbe7df;' +
         '--wz-card:#fffdf9;--wz-bd:#ece3d2;padding:4px 0 28px;container-type:inline-size;color:var(--ink);}' +
       '.wz-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}' +
@@ -244,7 +245,7 @@
         '.wz-listp{contain:size;min-height:440px;display:flex;flex-direction:column;}' +
         '.wz-listp .wz-list{flex:1 1 0;min-height:0;}' +
       '}' +
-      '@container (min-width:1460px){' +
+      '@container (min-width:1200px){' +
         '.wz-main{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);}' +
         '.wz-main>.wz-months{grid-column:auto;}' +
       '}' +
