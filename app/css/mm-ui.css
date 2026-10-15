@@ -113,7 +113,7 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .ui-track { display: block; width: 100%; min-width: 60px; height: 8px; border-radius: 4px; background: var(--cream2); overflow: hidden; }
 .ui-fill { display: block; height: 100%; border-radius: 4px; background: #c9973a; transition: width .4s ease; }
 .ui-ok { color: var(--ui-ok); } .ui-warn { color: var(--ui-warn); } .ui-bad { color: var(--ui-bad); }
-.ui-fill.ui-ok { background: var(--ui-ok); } .ui-fill.ui-warn { background: #d29a2c; } .ui-fill.ui-bad { background: var(--ui-bad); }
+.ui-fill.ui-ok { background: var(--ui-ok); } .ui-fill.ui-warn { background: #d29a2c; } .ui-fill.ui-bad { background: var(--ui-bad); } .ui-fill.ui-info { background: var(--ui-info); }
 
 /* ── পরীক্ষা বিশ্লেষণ (madrasa-exams-analytics.js) ── */
 .exa-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -189,6 +189,19 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
   .modal--student .st-tab { font-size: 12px; padding: 7px 4px; }
   .modal--student .st-kv-grid .st-kv-item:nth-child(odd) { border-right: none; }
 }
+
+/* ── ছাত্র-তালিকা পাতা (mm-list-page.js) ── */
+.lp-filters { --ui-cols: 3; }
+.lp-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+.lp-row { align-items: center; }
+.lp-rank { flex-shrink: 0; min-width: 28px; padding: 2px 8px; border-radius: 999px; background: var(--cream2); color: var(--ink2); font-size: 12px; font-weight: 700; text-align: center; }
+.lp-track { margin-top: 6px; height: 6px; }
+@container (min-width: 860px) {
+  .lp-list { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .lp-list .lp-row:nth-child(odd) { border-right: 1px solid var(--cream2); }
+  .lp-list .lp-row:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+}
+@media (max-width: 760px) { .lp-filters .ui-field:last-child { grid-column: 1 / -1; } }
 
 /* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */
 .ui-cq { container-type: inline-size; }

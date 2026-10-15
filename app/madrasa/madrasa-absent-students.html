@@ -9,50 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/mm-ui.css">
-<style>
-  .abs-page {
-    max-width: 520px; margin: 0 auto;
-    padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
-    display: flex; flex-direction: column;
-    min-height: calc(100vh - 56px); box-sizing: border-box;
-  }
-  .abs-head { font-family: 'Tiro Bangla', serif; font-size: 18px; font-weight: 700; color: var(--ink2); margin-bottom: 6px; flex-shrink: 0; }
-  .abs-sub { font-size: 12px; color: var(--ink3); line-height: 1.5; margin-bottom: 12px; flex-shrink: 0; }
-  .abs-scroll {
-    flex: 1; min-height: 0; overflow-y: auto;
-    -webkit-overflow-scrolling: touch; padding-right: 2px;
-  }
-  .abs-row {
-    background: #fff;
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    box-shadow: var(--shadow);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid rgba(26, 18, 8, 0.06);
-  }
-  .abs-rank {
-    font-family: 'Tiro Bangla', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--gold);
-    min-width: 36px;
-    text-align: center;
-  }
-  .abs-info { flex: 1; min-width: 0; }
-  .abs-name { font-size: 14px; font-weight: 600; color: var(--ink); }
-  .abs-meta { font-size: 11px; color: var(--ink3); margin-top: 3px; }
-  .abs-days {
-    font-family: 'Tiro Bangla', serif;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--red);
-    flex-shrink: 0;
-  }
-  .abs-empty { text-align: center; color: var(--ink3); padding: 40px 16px; font-size: 14px; line-height: 1.6; }
-</style>
 </head>
 <body class="ui-skin">
 
@@ -66,12 +22,8 @@
   </div>
 </div>
 
-<div class="abs-page">
-  <div class="abs-head">অনুপস্থিত রেকর্ডযুক্ত ছাত্র</div>
-  <p class="abs-sub" id="abs-sub">যাদের কমপক্ষে এক দিন <strong>অনুপস্থিত</strong> রেকর্ড আছে। বেশি দিন থেকে কম — সাজানো।</p>
-  <div class="abs-scroll" id="abs-scroll">
-    <div id="abs-list"></div>
-  </div>
+<div class="content" style="padding-bottom: var(--app-content-pad-bottom);">
+  <div id="lp-root"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
@@ -81,6 +33,8 @@
 <script src="../js/api/api.js"></script>
 <script src="../js/madrasa/mdr-supabase-sync.js"></script>
 <script src="../js/core/mm-session.js"></script>
+<script src="../js/shared/mm-ui.js"></script>
+<script src="../js/shared/mm-list-page.js"></script>
 <script src="../js/shared/mm-student-modal.js"></script>
 <script>
   if (!MMSession.requireAdminPerm('dashboard', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
@@ -94,8 +48,6 @@
   if (dept === 'all' && allowed.length <= 1) dept = allowed[0] || 'kitab';
   const deptName = (d) => d === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
   const deptLabel = dept === 'all' ? 'সামগ্রিক' : deptName(dept);
-  const sub = document.getElementById('abs-sub');
-  if (sub) sub.textContent = deptLabel + ' — শিক্ষাবর্ষের শুরু থেকে যাদের কমপক্ষে এক দিন অনুপস্থিত আছে। বেশি দিন থেকে কম সাজানো।';
 
   function scopeDepts() {
     if (dept === 'all') return allowed.filter((d) => d === 'kitab' || d === 'maktab');
@@ -104,40 +56,48 @@
 
   function render() {
     const depts = scopeDepts();
-    let rows = null;
-    if (API.loadDaftarAbsentSummaryRows) {
-      rows = API.loadDaftarAbsentSummaryRows(depts);
-    }
+    let rows = API.loadDaftarAbsentSummaryRows ? API.loadDaftarAbsentSummaryRows(depts) : null;
     if (!rows || !rows.length) {
-      rows = depts
-        .flatMap((d) => API.Attendance.getStudentsWithAbsentSortedByDept(d).map((x) => ({ ...x, dept: d })))
-        .sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
-    } else {
-      rows = rows.slice().sort((a, b) => (b.absentDays || 0) - (a.absentDays || 0));
+      rows = depts.flatMap((d) => API.Attendance.getStudentsWithAbsentSortedByDept(d).map((x) => ({ ...x, dept: d })));
     }
-    const el = document.getElementById('abs-list');
-    const scroll = document.getElementById('abs-scroll');
-    if (!el) return;
-    if (scroll) scroll.scrollTop = 0;
-    if (!rows.length) {
-      el.innerHTML = '<div class="abs-empty">কোনো ছাত্রের অনুপস্থিত রেকর্ড নেই। উপস্থিতি স্ক্রিনে অনুপস্থিত চিহ্নিত করলে এখানে দেখা যাবে।</div>';
-      return;
+    const clsOrder = {};
+    depts.forEach((d, di) => API.Classes.getByDept(d).forEach((c, i) => { clsOrder[c.id] = di * 1000 + i; }));
+    const today = API.today();
+    const clsCache = {};
+    function absentToday(s) {
+      const cid = s.class_id;
+      if (!cid) return false;
+      if (!clsCache[cid]) {
+        clsCache[cid] = new Set(API.Attendance.getByClassDate(cid, today)
+          .filter((a) => API.Attendance.statusOf(a) === 'absent').map((a) => String(a.student_id)));
+      }
+      return clsCache[cid].has(String(s.id)) || (s.supabase_id && clsCache[cid].has(String(s.supabase_id)));
     }
-    const showDeptTag = depts.length > 1;
-    el.innerHTML = rows
-      .map((x, i) => {
-        const cls = API.Classes.getById(x.student.class_id);
-        const metaDept = showDeptTag ? ' · ' + deptName(x.dept) : '';
-        return `<div class="abs-row">
-          <div class="abs-rank">${toBn(i + 1)}</div>
-          <div class="abs-info">
-            <div class="abs-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${x.student.id}')">${API.esc(x.student.name)}</button></div>
-            <div class="abs-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · পরিচিতি ${API.escBn(x.student.roll || '—')}</div>
-          </div>
-          <div class="abs-days">${toBn(x.absentDays)} দিন</div>
-        </div>`;
-      })
-      .join('');
+    const max = rows.reduce((m, x) => Math.max(m, x.absentDays || 0), 1);
+    const showDept = depts.length > 1;
+    const items = rows.filter((x) => x.student).map((x) => {
+      const s = x.student;
+      const cls = API.Classes.getById(s.class_id);
+      const v = x.absentDays || 0;
+      const streak = typeof x.absentStreak === 'number' ? x.absentStreak : (API.Attendance.getSessionAbsentStreak ? API.Attendance.getSessionAbsentStreak(s) : 0);
+      const isToday = absentToday(s);
+      const tone = MMListPage.dayTone(v);
+      return {
+        id: s.id, name: s.name, roll: s.roll, clsId: s.class_id, clsName: cls ? cls.name : '—', clsOrder: clsOrder[s.class_id] || 0,
+        deptName: showDept ? deptName(x.dept) : '', value: v,
+        badge: toBn(v) + ' দিন', badgeTone: tone, bar: Math.round(v / max * 100), barTone: tone,
+        note: streak >= 2 ? 'টানা ' + toBn(streak) + ' দিন' : (isToday ? 'আজ অনুপস্থিত' : ''), noteTone: 'bad',
+      };
+    });
+    MMListPage.mount({
+      el: 'lp-root',
+      title: 'অনুপস্থিত তালিকা',
+      sub: deptLabel + ' · শিক্ষাবর্ষ শুরু থেকে · বেশি দিন আগে',
+      items,
+      buckets: MMListPage.dayBuckets('তালিকায়', 'কমপক্ষে ১ দিন অনুপস্থিত'),
+      sorts: [MMListPage.SORT_DAYS, MMListPage.SORT_CLASS, MMListPage.SORT_NAME],
+      empty: 'কোনো ছাত্রের অনুপস্থিত রেকর্ড নেই। উপস্থিতি স্ক্রিনে অনুপস্থিত চিহ্নিত করলে এখানে দেখা যাবে।',
+    });
   }
 
   async function initPage() {

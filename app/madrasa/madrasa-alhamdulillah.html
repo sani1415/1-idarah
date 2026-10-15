@@ -9,58 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/mm-ui.css">
-<style>
-  .sw-page { max-width: 520px; margin: 0 auto; padding: 12px 16px calc(24px + env(safe-area-inset-bottom)); }
-  @media (min-width: 1024px) { .sw-page { max-width: 960px; padding-left: 32px; padding-right: 32px; padding-top: 24px; } }
-  .sw-head { font-family: 'Tiro Bangla', serif; font-size: 18px; font-weight: 700; color: var(--ink2); margin-bottom: 6px; }
-  .sw-sub { font-size: 12px; color: var(--ink3); line-height: 1.5; margin-bottom: 16px; }
-  .sw-row {
-    background: #fff;
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    box-shadow: var(--shadow);
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    border: 1px solid rgba(26, 18, 8, 0.06);
-    overflow: hidden;
-  }
-  .sw-rank {
-    font-family: 'Tiro Bangla', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--gold);
-    min-width: 36px;
-    text-align: center;
-    margin-top: 1px;
-  }
-  .sw-info { flex: 1; min-width: 0; overflow: hidden; }
-  .sw-head-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex-wrap: wrap; }
-  .sw-name { font-size: 14px; font-weight: 600; color: var(--ink); min-width: 0; }
-  .sw-meta { font-size: 11px; color: var(--ink3); white-space: nowrap; }
-  .sw-reason {
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--ink2);
-    line-height: 1.45;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-  .sw-reason.is-missing { color: #b45309; }
-  .sw-badge {
-    font-size: 9px;
-    font-weight: 700;
-    color: #b45309;
-    border: 1px solid rgba(180, 83, 9, 0.45);
-    border-radius: 6px;
-    padding: 4px 8px;
-    flex-shrink: 0;
-    white-space: nowrap;
-    margin-top: 2px;
-  }
-  .sw-empty { text-align: center; color: var(--ink3); padding: 40px 16px; font-size: 14px; line-height: 1.6; }
-</style>
 </head>
 <body class="ui-skin">
 
@@ -74,10 +22,8 @@
   </div>
 </div>
 
-<div class="sw-page">
-  <div class="sw-head">আলহামদুলিল্লাহতে ছাত্র</div>
-  <p class="sw-sub">যে ছাত্রদের তাদের শিক্ষক <strong>আলহামদুলিল্লাহ</strong> হিসেবে চিহ্নিত করেছেন।</p>
-  <div id="ah-list"></div>
+<div class="content" style="padding-bottom: var(--app-content-pad-bottom);">
+  <div id="lp-root"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
@@ -87,6 +33,8 @@
 <script src="../js/api/api.js?v=20260723-ah-reason"></script>
 <script src="../js/madrasa/mdr-supabase-sync.js?v=20260723-ah-reason"></script>
 <script src="../js/core/mm-session.js"></script>
+<script src="../js/shared/mm-ui.js"></script>
+<script src="../js/shared/mm-list-page.js"></script>
 <script src="../js/shared/mm-student-modal.js"></script>
 <script>
   if (!MMSession.requireAdminPerm('dashboard', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
@@ -100,38 +48,33 @@
   if (dept === 'all' && allowed.length <= 1) dept = allowed[0] || 'kitab';
   const deptName = (d) => d === 'maktab' ? 'মক্তব বিভাগ' : 'কিতাব বিভাগ';
   const deptLabel = dept === 'all' ? 'সামগ্রিক' : deptName(dept);
-  const sub = document.querySelector('.sw-sub');
-  if (sub) sub.textContent = deptLabel + ' — যে ছাত্রদের শিক্ষক আলহামদুলিল্লাহ হিসেবে চিহ্নিত করেছেন।';
 
   function render() {
-    const students = (dept === 'all' ? allowed : [dept])
-      .flatMap(d => API.Students.getAlhamdulillahByDeptSorted(d).map(s => ({ ...s, dept: d })));
-    const el = document.getElementById('ah-list');
-    if (!students.length) {
-      el.innerHTML = '<div class="sw-empty">এই বিভাগে কেউ আলহামদুলিল্লাহতে নেই। বর্ষ দায়িত্বশীলের ড্যাশবোর্ডে তারকা চিহ্নিত করলে এখানে দেখা যাবে।</div>';
-      return;
-    }
-    el.innerHTML = students
-      .map((s, i) => {
-        const cls = API.Classes.getById(s.class_id);
-        const metaDept = dept === 'all' ? ` · ${deptName(s.dept)}` : '';
-        const reason = String(s.alhamdulillah_reason || '').trim();
-        const reasonHtml = reason
-          ? `<div class="sw-reason">${API.esc(reason)}</div>`
-          : `<div class="sw-reason is-missing">কারণ লেখা নেই</div>`;
-        return `<div class="sw-row">
-          <div class="sw-rank">${toBn(i + 1)}</div>
-          <div class="sw-info">
-            <div class="sw-head-line">
-              <div class="sw-name"><button type="button" class="s-name-btn" style="font-size:14px;font-weight:600;" onclick="MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button></div>
-              <div class="sw-meta">${API.esc(cls ? cls.name : '—')}${metaDept} · পরিচিতি ${API.escBn(s.roll || '—')}</div>
-            </div>
-            ${reasonHtml}
-          </div>
-          <div class="sw-badge">আলহামদুলিল্লাহ</div>
-        </div>`;
-      })
-      .join('');
+    const DEPTS = dept === 'all' ? allowed : [dept];
+    const clsOrder = {};
+    DEPTS.forEach((d, di) => API.Classes.getByDept(d).forEach((c, i) => { clsOrder[c.id] = di * 1000 + i; }));
+    const students = DEPTS.flatMap((d) => API.Students.getAlhamdulillahByDeptSorted(d).map((s) => ({ ...s, dept: d })));
+    const items = students.map((s) => {
+      const cls = API.Classes.getById(s.class_id);
+      const reason = String(s.alhamdulillah_reason || '').trim();
+      return {
+        id: s.id, name: s.name, roll: s.roll, clsId: s.class_id, clsName: cls ? cls.name : '—', clsOrder: clsOrder[s.class_id] || 0,
+        dept: s.dept, deptName: DEPTS.length > 1 ? deptName(s.dept) : '', note: reason || 'কারণ লেখা নেই', noteTone: reason ? 'ok' : 'warn', hasReason: !!reason, badge: 'আলহামদুলিল্লাহ', badgeTone: 'ok',
+      };
+    });
+    MMListPage.mount({
+      el: 'lp-root',
+      title: 'আলহামদুলিল্লাহ',
+      sub: deptLabel + ' · যাদের শিক্ষক আলহামদুলিল্লাহ হিসেবে চিহ্নিত করেছেন',
+      items,
+      buckets: [
+        { tone: 'ok', icon: 'star', label: 'আলহামদুলিল্লাহ', sub: 'শিক্ষকের চিহ্নিত' },
+        { tone: 'info', icon: 'check', label: 'কারণ লেখা আছে', test: (x) => x.hasReason },
+        { tone: 'warn', icon: 'alert', label: 'কারণ লেখা নেই', test: (x) => !x.hasReason },
+      ],
+      sorts: [{ key: 'def', label: 'বর্ষ অনুযায়ী', cmp: MMListPage.SORT_CLASS.cmp }, MMListPage.SORT_NAME],
+      empty: 'এই বিভাগে কেউ আলহামদুলিল্লাহতে নেই। বর্ষ দায়িত্বশীলের ড্যাশবোর্ডে তারকা চিহ্নিত করলে এখানে দেখা যাবে।',
+    });
   }
   async function initAhPage() {
     if (window.MDRSupabaseSync && window.MMMadrasaAPI) {
