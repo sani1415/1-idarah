@@ -323,3 +323,27 @@
     .log-tabs { gap: 8px; }
     .log-tab { font-size: 13px; padding: 12px 10px; }
   }
+
+  /* ══ হোম — নতুন ধাঁচ (mm-ui.css-এর উপর) ══ */
+  .cls-head { margin: 2px 0 8px; }
+  .cls-of { font-size: 14px; color: var(--ink3); font-weight: 600; }
+  .cls-stats { margin-bottom: 10px; }
+  .cls-stats .ui-stat-sub { white-space: normal; line-height: 1.3; }
+  #panel-std .duty-panel { border-radius: 14px; border-color: var(--ui-bd); box-shadow: var(--ui-shadow); background: var(--ui-card); }
+  #panel-std .duty-panel--warn { border-color: rgba(181,87,58,.35); }
+  .std-search-strip { position: relative; }
+  .std-search-ic { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-muted); pointer-events: none; }
+  #panel-std .std-search-input { height: 40px; padding: 0 12px 0 34px; border: 1px solid var(--ui-bd); border-radius: 12px; font-size: 14px; background: var(--ui-card); }
+  #panel-std .std-search-input:focus { border-color: var(--ui-accent); box-shadow: 0 0 0 3px rgba(181,87,58,.12); }
+  #panel-std #std-list { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 16px; box-shadow: var(--ui-shadow); align-content: start; }
+  #panel-std .std-row { background: transparent; box-shadow: none; border-radius: 0; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--cream2); }
+  #panel-std .std-row:hover { background: var(--cream); }
+  #panel-std .std-meta { margin-top: 3px; }
+  @container (min-width: 760px) {
+    #panel-std #std-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0; }
+    #panel-std .std-row:nth-child(odd) { border-right: 1px solid var(--cream2); }
+  }
+  @media (max-width: 640px) {
+    .cls-head .ui-title { display: none; } /* উপরের বারেই বর্ষের নাম আছে */
+    .cls-stats .ui-stat-lbl { white-space: normal; }
+  }

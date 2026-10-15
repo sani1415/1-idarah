@@ -122,7 +122,7 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 @container (max-width: 1100px) { .ui-stats.is-6 { --ui-cols: 3; } }
 
 @media (max-width: 760px) {
-  .ui-stats, .ui-filters { --ui-cols: 2; }
+  .ui-stats, .ui-stats.is-6, .ui-filters { --ui-cols: 2; }
 }
 @media (max-width: 640px) {
   .ui-title { font-size: 19px; }

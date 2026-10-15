@@ -144,6 +144,17 @@
     renderLog();
   }
 
+  /* আজকের হাজিরার রেকর্ড — getByClassDate তালিকা দেয় (পুরনো রূপে {records}) */
+  function todayAttRecs() {
+    if (!classId || !API.Attendance || !API.Attendance.getByClassDate) return [];
+    const att = API.Attendance.getByClassDate(classId, API.today());
+    return Array.isArray(att) ? att : ((att && att.records) || []);
+  }
+  function recStatus(r) {
+    if (!r) return 'unknown';
+    return API.Attendance.statusOf ? API.Attendance.statusOf(r) : r.status;
+  }
+
   /* ── STATS ── */
   function renderStats() {
     const grid = document.getElementById('stat-grid');
@@ -162,22 +173,30 @@
     const bands = API.Khuluk.getClassKhulukBands(classId);
     const watchCount = students.filter(function (s) { return s.special_watch; }).length;
     const ahCount = students.filter(function (s) { return s.alhamdulillah; }).length;
-    const threeLines =
-      '<div class="kh-line kh-line--gr"><span class="kh-cat">মুস্তাহিদ</span><span class="kh-n">' + toBn(bands.high) + '</span></div>' +
-      '<div class="kh-line kh-line--sky"><span class="kh-cat">মুতাওয়াস্সিত</span><span class="kh-n">' + toBn(bands.mid) + '</span></div>' +
-      '<div class="kh-line kh-line--red"><span class="kh-cat">মুজতাহিদ</span><span class="kh-n">' + toBn(bands.low) + '</span></div>';
 
+    // আজকের হাজিরা (দফতর নেয়) — শিরোনামের পাশে আর প্রথম ঘরে
+    const todayRecs = todayAttRecs();
+    let pNow = 0, aNow = 0;
+    todayRecs.forEach(function (r) { const st = recStatus(r); if (st === 'present') pNow++; else if (st === 'absent') aNow++; });
+    const head = document.getElementById('cls-head');
+    if (head) {
+      head.innerHTML = '<div class="ui-head-l"><h2 class="ui-title">' + API.esc(myClass ? myClass.name : '') + '</h2>' +
+        '<span class="ui-sub">মোট ছাত্র ' + toBn(students.length) + ' জন</span></div>' +
+        (todayRecs.length
+          ? '<span class="ui-badge is-ok">আজ হাজিরা হয়েছে</span>'
+          : '<span class="ui-badge is-warn">আজ হাজিরা এখনো হয়নি</span>');
+    }
+    const U = window.MMUI;
+    const avgTxt = avg !== null ? toBn(avg) : '—';
     grid.innerHTML =
-      '<div class="stat-tile"><span class="stat-num">' + toBn(students.length) + '</span><span class="stat-label">মোট ছাত্র</span></div>' +
-      '<button type="button" class="stat-tile stat-tile--absent" onclick="openClassAbsentListModal()"><span class="stat-num">' + toBn(absentRows.length) + '</span><span class="stat-label">অনুপস্থিত তালিকা</span></button>' +
-      '<div class="stat-tile"><span class="stat-num stat-num--leave">' + toBn(leaveCount) + '</span><span class="stat-label">বিদায়ী</span></div>' +
-      '<button type="button" class="stat-tile" onclick="openWatchListModal()"><span class="stat-num" style="color:#7c3aed">' + toBn(watchCount) + '</span><span class="stat-label">পর্যবেক্ষণ</span></button>' +
-      '<button type="button" class="stat-tile stat-tile--ah" onclick="openAhListModal()"><span class="stat-num" style="color:#b45309">' + toBn(ahCount) + '</span><span class="stat-label">আলহামদুলিল্লাহ</span></button>' +
-      '<div class="stat-tile"><span class="stat-num" style="color:var(--gold)">' + (avg !== null ? toBn(avg) : '—') + '</span><span class="stat-label">গড় হুসনুল খুলুক</span></div>' +
-      '<button type="button" class="stat-tile stat-tile--kh" onclick="openKhulukCatModal()">' +
-      '<div class="stat-kh-hd">' + '\u09B9\u09C1\u09B8\u09A8\u09C1\u09B2 \u0996\u09C1\u09B2\u09C1\u0995' + '</div>' +
-      '<div class="kh-mini">' + threeLines + '</div>' +
-      '</button>';
+      U.stat({ tone: 'ok', icon: 'check', label: 'আজ উপস্থিত', value: todayRecs.length ? toBn(pNow) + '<small class="cls-of">/' + toBn(students.length) + '</small>' : '—',
+        sub: todayRecs.length ? (aNow ? toBn(aNow) + ' জন অনুপস্থিত' : 'সবাই উপস্থিত') : 'দফতর এখনো নেয়নি' }) +
+      U.stat({ tone: 'bad', icon: 'alert', label: 'অনুপস্থিত তালিকা', value: toBn(absentRows.length), sub: 'বর্ষ শুরু থেকে', onclick: 'openClassAbsentListModal()' }) +
+      U.stat({ tone: 'warn', icon: 'search', label: 'পর্যবেক্ষণ', value: toBn(watchCount), sub: 'নজরে রাখা ছাত্র', onclick: 'openWatchListModal()' }) +
+      U.stat({ tone: 'ok', icon: 'star', label: 'আলহামদুলিল্লাহ', value: toBn(ahCount), sub: 'প্রশংসিত ছাত্র', onclick: 'openAhListModal()' }) +
+      U.stat({ tone: 'info', icon: 'user', label: 'হুসনুল খুলুক (গড়)', value: avgTxt,
+        sub: 'মুস্তাহিদ ' + toBn(bands.high) + ' · মুতাওয়াস্সিত ' + toBn(bands.mid) + ' · মুজতাহিদ ' + toBn(bands.low), onclick: 'openKhulukCatModal()' }) +
+      U.stat({ tone: 'deep', icon: 'door', label: 'বিদায়ী', value: toBn(leaveCount), sub: 'এই শিক্ষাবর্ষে' });
     renderDutyAlerts();
   }
 
@@ -465,14 +484,14 @@
     document.getElementById('std-search-strip').style.display = '';
     var allStudents = API.Students.getByClass(classId);
     var students = allStudents.filter(function(s) { return _matchStudentSearch(s); });
-    const today = API.today();
-    const att = API.Attendance.getByClassDate(classId, today) || {};
-    const recs = att.records || [];
+    const recs = todayAttRecs();
     document.getElementById('std-list').innerHTML = students.length
       ? students.map(s => {
           const rec = recs.find(r => r.student_id === s.id);
-          const status = rec ? rec.status : 'unknown';
-          const attLine = status === 'present' ? '🟢 উপস্থিত' : status === 'absent' ? '🔴 অনুপস্থিত' : '';
+          const status = recStatus(rec);
+          const attLine = status === 'present' ? '<span class="ui-badge is-ok">আজ উপস্থিত</span>'
+            : status === 'absent' ? '<span class="ui-badge is-bad">আজ অনুপস্থিত</span>'
+            : status === 'holiday' ? '<span class="ui-badge is-info">বিরতি</span>' : '';
           const kh = API.Khuluk.getLatest(s.id);
           const khScore = kh != null && kh.score != null ? Number(kh.score) : null;
           const khClass = khScore === null || Number.isNaN(khScore) ? 'kh-none' : khScore >= 81 ? 'kh-high' : khScore >= 60 ? 'kh-mid' : 'kh-low';

@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css?v=20260717-photo-toolbar">
 <link rel="stylesheet" href="../css/teacher-hazira.css?v=20260930-hazira">
+<link rel="stylesheet" href="../css/mm-ui.css">
 <link rel="stylesheet" href="../css/pages/madrasa-class.css">
 </head>
 <body>
@@ -25,14 +26,16 @@
 </div>
 
 <!-- PANEL: হোম (স্ট্যাট + ছাত্র তালিকা) -->
-<div class="content" id="panel-std">
+<div class="content ui-cq" id="panel-std">
   <div id="hz-home-card"></div>
   <div class="std-sticky-head">
+  <div class="ui-head cls-head" id="cls-head"></div>
   <div id="duty-panel-wrap"></div>
   <div id="home-stats-block" style="padding-bottom:4px;padding-top:4px;">
-    <div class="stat-grid" id="stat-grid"></div>
+    <div class="ui-stats is-6 cls-stats" id="stat-grid"></div>
   </div>
   <div class="std-search-strip" id="std-search-strip">
+    <svg class="std-search-ic" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
     <input class="std-search-input" id="std-search-q" type="text" inputmode="search" placeholder="নাম বা পরিচিতি লিখে খুঁজুন..." oninput="stdSearchQ=this.value;renderStudents()">
   </div>
   </div>
@@ -262,6 +265,7 @@
 <script src="../js/madrasa/mdr-class-routine.js?v=20260930-hazira"></script>
 <script src="../js/madrasa/mdr-teacher-hazira-core.js?v=20260930-hazira"></script>
 <script src="../js/madrasa/mdr-teacher-hazira-card.js?v=20260930-hazira"></script>
+<script src="../js/shared/mm-ui.js"></script>
 <script src="../js/pages/madrasa-class.js"></script>
 
 <div class="modal-bg" id="modal-pin-change" onclick="if(event.target===this)closePinChangeModal()">

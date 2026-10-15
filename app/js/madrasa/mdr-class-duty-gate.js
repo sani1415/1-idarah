@@ -156,7 +156,8 @@
     st.id = STYLE_ID;
     st.textContent =
       'body.mm-class-duty-gate-active .bottom-nav .nav-item:not([data-gate-allow="1"]){opacity:.4;pointer-events:none}' +
-      'body.mm-class-duty-gate-active button.stat-tile:not([data-gate-allow="1"]){opacity:.4;pointer-events:none}' +
+      'body.mm-class-duty-gate-active button.stat-tile:not([data-gate-allow="1"]),' +
+      'body.mm-class-duty-gate-active #stat-grid button.ui-stat:not([data-gate-allow="1"]){opacity:.4;pointer-events:none}' +
       'body.mm-class-duty-gate-active .topbar-btn:not([data-gate-logout="1"]){opacity:.4;pointer-events:none}' +
       'body.mm-class-duty-gate-active.mm-duty-pending-khuluk #panel-std .std-icon-btn,' +
       'body.mm-class-duty-gate-active.mm-duty-pending-khuluk #panel-std .s-name-btn{opacity:.4;pointer-events:none}' +
@@ -185,7 +186,7 @@
   }
 
   function markStatTiles(state) {
-    global.document.querySelectorAll('#stat-grid button.stat-tile').forEach(function (btn) {
+    global.document.querySelectorAll('#stat-grid button.stat-tile, #stat-grid button.ui-stat').forEach(function (btn) {
       btn.removeAttribute('data-gate-allow');
     });
   }
