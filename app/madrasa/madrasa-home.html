@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css?v=20260717-photo-toolbar">
+<link rel="stylesheet" href="../css/mm-ui.css">
 <style>
 body.page-daftar .content { padding:10px 8px; }
 body.page-daftar .pb-safe { height:80px; }
@@ -46,6 +47,12 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 .mdr-metric.bad strong { color:var(--red); }
 .mdr-metric.gold strong { color:var(--gold); }
 .mdr-metric--solo span { display:none !important; }
+.mh-tools { display:flex; gap:6px; flex-wrap:wrap; }
+.mh-scroll { overflow-x:auto; }
+.mh-tbl td b { font-size:14px; }
+.mh-tbl .mh-teacher { color:var(--ink3); max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+.mh-tbl .mh-wait { color:var(--ink3); font-size:12px; }
+@media (max-width:640px) { .mh .ui-head .ui-title { display:none; } .mh-tools { width:100%; } .mh-tools .ui-pill { flex:1; justify-content:center; } }
 .class-summary-wrap { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); margin:8px 0 12px; overflow:hidden; }
 .class-summary-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 11px; border-bottom:1px solid var(--cream2); }
 .class-summary-title { font-size:13px; font-weight:800; color:var(--ink2); }
@@ -77,14 +84,15 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 .student-tools-tab.active { background:var(--sel-bg); color:var(--sel-fg); }
 .student-section { display:none; }
 .student-section.active { display:block; }
-.stu-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:6px; }
+.stu-row { justify-content:flex-start; background:var(--ui-card); }
+#stu-list { background:var(--ui-card); border:1px solid var(--ui-bd); border-radius:14px; overflow:hidden; }
 .stu-roll { font-size:11px; color:var(--ink3); min-width:28px; text-align:center; }
 .stu-info { flex:1; min-width:0; }
 .stu-name { font-size:13px; font-weight:400; color:var(--ink); }
 .s-name-btn { display:inline; text-align:left; background:none; border:none; font:inherit; font-weight:400; color:var(--ink); font-family:'Tiro Bangla',serif; padding:0; margin:0; cursor:pointer; max-width:100%; }
 .s-name-btn:hover { text-decoration:underline; color:var(--blue); }
 .stu-meta { font-size:11px; color:var(--ink3); margin-top:2px; }
-.cls-label { display:inline-block; font-size:10px; padding:1px 8px; border-radius:20px; background:var(--cream2); color:var(--ink3); margin-bottom:6px; }
+.cls-label { display:block; font-size:13px; font-weight:700; padding:8px 14px; background:var(--cream); color:var(--ink2); border-bottom:1px solid var(--cream2); }
 .csv-box { border:2px dashed var(--cream3); border-radius:var(--radius); padding:24px 16px; text-align:center; cursor:pointer; transition:border-color .2s; margin-bottom:12px; background:#fff; }
 .csv-box:hover, .csv-box.drag-over { border-color:var(--gold); }
 .csv-box input { display:none; }
@@ -113,39 +121,44 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 </div>
 
 <div class="content">
-  <div class="mdr-metrics">
-    <div class="mdr-metrics-row">
-      <button type="button" class="mdr-metric is-clickable" onclick="openStudentManager()"><strong id="m-total">—</strong><span>মোট ছাত্র</span></button>
-      <button type="button" class="mdr-metric is-clickable gold" onclick="MDRHomePanels.openKhadimin()"><strong id="m-khadimin">—</strong><span>খাদিমিন</span></button>
-      <button type="button" class="mdr-metric is-clickable bad" onclick="MDRHomePanels.openAbsent()"><strong id="m-absent-list">—</strong><span>অনুপস্থিত তালিকা</span></button>
-    </div>
-    <div class="mdr-metrics-row mdr-metrics-row--2">
-      <button type="button" class="mdr-metric is-clickable good mdr-metric--solo" onclick="MDRDastarkhan.open()"><strong>দস্তরখান</strong><span></span></button>
-      <button type="button" class="mdr-metric is-clickable" onclick="MDRDaftarNotes.open()"><strong>নোট</strong><span>দফতর দায়িত্বশীল</span></button>
+  <div class="mh ui-wide ui-cq">
+  <div class="ui-head">
+    <div class="ui-head-l"><h2 class="ui-title">মাদ্রাসা</h2><span class="ui-sub" id="mh-date"></span></div>
+    <div class="mh-tools">
+      <button type="button" class="ui-pill" onclick="openStudentManager()">ছাত্র ব্যবস্থাপনা</button>
+      <button type="button" class="ui-pill" onclick="MDRDastarkhan.open()">দস্তরখান</button>
+      <button type="button" class="ui-pill" onclick="MDRDaftarNotes.open()">নোট</button>
     </div>
   </div>
-
-  <div class="class-summary-wrap">
-    <div class="class-summary-head">
-      <div class="class-summary-title">বর্ষভিত্তিক হাজিরা</div>
-      <div class="class-summary-date" id="class-summary-date">আজ</div>
+  <div class="ui-stats mh-stats">
+    <button type="button" class="ui-stat is-info" onclick="openStudentManager()">
+      <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.2c2.4.1 4.1 1.7 4.7 4.3"/></svg></span>
+      <span class="ui-stat-txt"><span class="ui-stat-lbl">মোট ছাত্র</span><span class="ui-stat-val" id="m-total">—</span><span class="ui-stat-sub">চাপলে তালিকা</span></span>
+    </button>
+    <div class="ui-stat is-ok">
+      <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.2 4.2L19 7"/></svg></span>
+      <span class="ui-stat-txt"><span class="ui-stat-lbl">আজ উপস্থিত</span><span class="ui-stat-val" id="m-present">—</span><span class="ui-stat-sub" id="m-present-sub"></span></span>
     </div>
-    <div class="class-summary-scroll">
-      <table class="class-summary-table">
-        <thead>
-          <tr>
-            <th>বর্ষ</th>
-            <th>শ্রেণি শিক্ষক</th>
-            <th>মোট</th>
-            <th>উপস্থিত</th>
-            <th>অনুপস্থিত</th>
-          </tr>
-        </thead>
-        <tbody id="class-summary-body">
-          <tr><td colspan="5" class="class-summary-empty">লোড হচ্ছে…</td></tr>
-        </tbody>
+    <button type="button" class="ui-stat is-bad" onclick="MDRHomePanels.openAbsent()">
+      <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v6"/><path d="M12 16.8v.2"/></svg></span>
+      <span class="ui-stat-txt"><span class="ui-stat-lbl">অনুপস্থিত তালিকা</span><span class="ui-stat-val" id="m-absent-list">—</span><span class="ui-stat-sub">আজ ও সর্বমোট</span></span>
+    </button>
+    <button type="button" class="ui-stat is-warn" onclick="MDRHomePanels.openKhadimin()">
+      <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></svg></span>
+      <span class="ui-stat-txt"><span class="ui-stat-lbl">খাদিমিন</span><span class="ui-stat-val" id="m-khadimin">—</span><span class="ui-stat-sub">সক্রিয়</span></span>
+    </button>
+  </div>
+
+  <section class="ui-box ui-panel">
+    <div class="ui-ph"><h3>বর্ষভিত্তিক হাজিরা</h3><small id="class-summary-date">আজ</small></div>
+    <div class="mh-scroll">
+      <table class="ui-tbl mh-tbl">
+        <thead><tr><th>বর্ষ</th><th class="ui-hide-sm">শ্রেণি শিক্ষক</th><th>মোট</th><th>উপস্থিত</th><th>অনুপস্থিত</th><th class="ui-hide-sm" style="width:24%"></th><th>হার</th></tr></thead>
+        <tbody id="class-summary-body"><tr><td colspan="7" class="ui-empty">লোড হচ্ছে…</td></tr></tbody>
+        <tfoot id="class-summary-foot"></tfoot>
       </table>
     </div>
+  </section>
   </div>
 
   <div class="pb-safe"></div>
@@ -243,6 +256,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 <script src="../js/madrasa/mdr-home-panels.js?v=20261013-absent-total"></script>
 <script src="../js/madrasa/mdr-dastarkhan.js"></script>
 <script src="../js/madrasa/mdr-daftar-notes.js"></script>
+<script src="../js/core/mm-hijri.js"></script>
 <script>
   if (!MMSession.requireStaffRoleOrAdminPerm('daftar', 'daftar', '/admin/madrasa.html')) { throw new Error('daftar permission denied'); }
   mmInsertMonitorBanner();
@@ -270,11 +284,12 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
   function renderClassSummary() {
     const iso = API.today();
     document.getElementById('class-summary-date').textContent = dateLabel(iso);
+    const hij = window.MMHijri && MMHijri.shortHijriBn ? MMHijri.shortHijriBn(iso) : '';
+    document.getElementById('mh-date').textContent = 'আজ ' + dateLabel(iso) + (hij ? ' · ' + hij : '');
     const allStudents = API.Students.getAll().filter(s => s.active);
     const allClasses = API.Classes.getAll();
     const teachers = teachersByClassId();
-    let totalPresent = 0;
-    let totalAbsent = 0;
+    let totalPresent = 0, totalAbsent = 0, totalStudents = 0, pendingClasses = 0;
     const rows = allClasses.map(cls => {
       const students = API.Students.getByClass(cls.id);
       const attRecs = API.Attendance.getByClassDate(cls.id, iso);
@@ -282,17 +297,34 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
       const absent = attRecs.filter(a => API.Attendance.statusOf(a) === 'absent').length;
       totalPresent += present;
       totalAbsent += absent;
-      return `<tr onclick="openStudentManager('${cls.id}')" title="এই বর্ষের ছাত্র দেখুন">
-        <td class="td-class">${API.esc(cls.name)}</td>
-        <td class="td-teacher">${API.esc(teachers[cls.id] || '—')}</td>
-        <td class="td-num">${toBn(students.length)}</td>
-        <td class="td-num n-present">${toBn(present)}</td>
-        <td class="td-num n-absent">${toBn(absent)}</td>
+      totalStudents += students.length;
+      const marked = present + absent;
+      if (students.length && !attRecs.length) pendingClasses++;
+      const pct = marked ? Math.round(present / marked * 100) : 0;
+      const tone = pct >= 90 ? 'ui-ok' : (pct >= 75 ? 'ui-warn' : 'ui-bad');
+      const rateCells = marked
+        ? `<td class="ui-hide-sm"><span class="ui-track"><span class="ui-fill ${tone}" style="width:${pct}%"></span></span></td><td class="${tone}"><b>${toBn(pct)}%</b></td>`
+        : `<td class="ui-hide-sm"></td><td class="mh-wait">${students.length ? 'হাজিরা হয়নি' : '—'}</td>`;
+      return `<tr class="is-link" onclick="openStudentManager('${cls.id}')" title="এই বর্ষের ছাত্র দেখুন">
+        <td><b>${API.esc(cls.name)}</b></td>
+        <td class="ui-hide-sm mh-teacher">${API.esc(teachers[cls.id] || '—')}</td>
+        <td>${toBn(students.length)}</td>
+        <td class="ui-ok">${toBn(present)}</td>
+        <td class="ui-bad">${toBn(absent)}</td>
+        ${rateCells}
       </tr>`;
     }).join('');
     document.getElementById('class-summary-body').innerHTML = rows ||
-      '<tr><td colspan="5" class="class-summary-empty">কোনো বর্ষ নেই</td></tr>';
+      '<tr><td colspan="7" class="ui-empty">কোনো বর্ষ নেই</td></tr>';
+    const marked = totalPresent + totalAbsent;
+    const pctAll = marked ? Math.round(totalPresent / marked * 100) : 0;
+    document.getElementById('class-summary-foot').innerHTML = rows
+      ? `<tr><td>মোট</td><td class="ui-hide-sm"></td><td>${toBn(totalStudents)}</td><td class="ui-ok">${toBn(totalPresent)}</td><td class="ui-bad">${toBn(totalAbsent)}</td><td class="ui-hide-sm"></td><td>${marked ? toBn(pctAll) + '%' : '—'}</td></tr>` : '';
     document.getElementById('m-total').textContent = toBn(allStudents.length);
+    document.getElementById('m-present').textContent = marked ? toBn(totalPresent) : '—';
+    document.getElementById('m-present-sub').textContent = marked
+      ? toBn(pctAll) + '% · ' + toBn(totalAbsent) + ' জন অনুপস্থিত' + (pendingClasses ? ' · ' + toBn(pendingClasses) + 'টি বর্ষ বাকি' : '')
+      : 'আজ এখনো হাজিরা হয়নি';
     MDRHomePanels.updateCards();
   }
   function openStudentManager(classId) {
@@ -336,17 +368,17 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     }
     const clsMap = Object.fromEntries(API.Classes.getAll().map(c => [c.id, c.name]));
     let html = '', lastCls = '';
-    filtered.sort((a,b)=>(a.class_id===b.class_id?(a.roll||'').localeCompare(b.roll||'','bn'):0));
+    filtered.sort((a,b)=>(a.class_id===b.class_id?String(a.roll||'').localeCompare(String(b.roll||''),'bn',{numeric:true}):0));
     filtered.forEach(s => {
       if (cid === 'all' && clsMap[s.class_id] !== lastCls) {
         lastCls = clsMap[s.class_id] || '—';
         html += `<div class="cls-label">${API.esc(lastCls)}</div>`;
       }
-      html += `<div class="stu-row">
+      html += `<div class="ui-row is-link stu-row" onclick="MMStudentModal.open('${s.id}')">
         <div class="stu-roll">${API.escBn(s.roll||'—')}</div>
-        <div class="stu-info">
-          <div class="stu-name"><button type="button" class="s-name-btn" onclick="MMStudentModal.open('${s.id}')">${API.esc(s.name)}</button></div>
-          <div class="stu-meta">${API.escBn(s.permanent_id||'—')} · ${API.esc(s.guardian||'—')} · ${API.escBn(s.phone||'—')}</div>
+        <div class="ui-row-main">
+          <div class="ui-row-name">${API.esc(s.name)}</div>
+          <div class="ui-row-meta">দাখেলা ${API.escBn(s.permanent_id||'—')} · ${API.esc(s.guardian||'—')} · ${API.escBn(s.phone||'—')}</div>
         </div>
       </div>`;
     });
