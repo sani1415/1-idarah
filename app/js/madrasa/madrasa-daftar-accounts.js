@@ -2814,7 +2814,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   var _impBusy = false;
   var _impTab = 'expense'; /* expense | income | qard */
   var _impParsed = null; /* { expense:[], income:[], qardGive:[], qardReturn:[], payments:[], removed:[] } */
-  var _impAllowShift = false;      /* «সারি সরেছে» সারিও সংরক্ষণ — ব্যবহারকারী নিশ্চিত করলে */
   var _impIncludeExisting = false; /* অন্য উৎসে আগে থেকে থাকা হুবহু এন্ট্রিও যোগ */
   var _impShowSame = false;        /* টেবিলে অপরিবর্তিত সারি দেখানো */
 
@@ -3073,14 +3072,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   }
 
   /*
-   * আপলোডের আগে অ্যাপের ডেটার সাথে মিলিয়ে দেখা (প্রতিটি ঠিক-সারির status বদলায়):
-   *   ok     = নতুন — যোগ হবে
-   *   upd    = একই সারি, কিছু বদলেছে — হালনাগাদ হবে
+   * আপলোডের আগে অ্যাপের ডেটার সাথে মিলিয়ে দেখা (প্রতিটি ঠিক-সারির status বদলায়)। সারির পরিচয় = সারির তথ্য
+   * (impContentKey), সারি নম্বর নয় — তাই সারি ঢোকানো/মোছা/sort-এ কিছু বদলায় না:
+   *   ok     = নতুন — যোগ হবে (বদলানো সারিও নতুন; পুরনোটা removed-এ)
    *   same   = হুবহু আগের মতো — পাঠানো লাগে না
-   *   shift  = এই সারি-আইডিতে অ্যাপে পুরো আলাদা এন্ট্রি (তারিখ/টাকা/বিবরণের দুটো বা বেশি আলাদা) — মাঝে সারি
-   *            ঢোকানো/মোছা/সাজানো বা একই আইডির অন্য ফাইল; ব্যবহারকারী নিশ্চিত না করলে সংরক্ষণ বন্ধ
-   *   exists = অন্য উৎসে (হাতে লেখা/পুরনো ফাইল) হুবহু একই এন্ট্রি আছে — ডিফল্টে বাদ
-   * parsed.removed = এই ফাইল থেকেই আগে আসা কিন্তু এখন ফাইলে নেই (বা সমস্যাযুক্ত) এমন এন্ট্রি।
+   *   rekey  = আগের মতো, কিন্তু অ্যাপে পুরনো নিয়মের (শীট + সারি নম্বর) আইডিতে আছে — একবার নতুন আইডিতে যাবে
+   *   exists = অন্য উৎসে (হাতে লেখা/পুরনো ফাইল) একই এন্ট্রি আছে — ডিফল্টে বাদ
+   * parsed.removed = এই ফাইল থেকেই আগে আসা কিন্তু এখন ফাইলে হুবহু নেই — সংরক্ষণে মুছে যাবে।
+   * parsed.deletesHeld = সমস্যার সারির শীটে মোছার মতো এন্ট্রি আছে — সংরক্ষণ বন্ধ।
    */
   function impDbLists() {
     return {
@@ -3104,21 +3103,35 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return t.replace(/[\u200b-\u200d\ufeff]/g, '').replace(/[\s.,।\-–—()\/]+/g, '').toLowerCase();
   }
 
-  function impCmpParts(kind, d) {
-    if (!d) return { date: '', amt: '', text: '' };
-    var text;
-    if (kind === 'payment') text = [impCmpTxt(d.supplier), impCmpTxt(d.receiptNo)].join('|');
-    else if (kind === 'income' || kind === 'qardReturn') text = impCmpTxt(d.note);
-    else text = [impCmpTxt(d.category), impCmpTxt(d.description), impCmpTxt(d.supplier)].join('|');
-    return { date: A.dateKey(d.hijriYear, d.month, d.day), amt: impAmtKey(d.amount), text: text };
+  /*
+   * এন্ট্রির পরিচয় = সারির তথ্য (সারির নম্বর নয়) — তাই Excel-এ sort/ফিল্টার/সারি ঢোকানো-মোছা নিরাপদ।
+   * হুবহু একই তথ্যের একাধিক সারি থাকলে ক্রমিক (#২, #৩…) দিয়ে আলাদা — যতটি আছে ততটিই থাকে।
+   * আইডি = 'xl-' + ফাইল-ট্যাগ + '-' + তথ্যের হ্যাশ; ফাইল-ট্যাগ দিয়ে চেনা যায় কোন এন্ট্রি এই ফাইল থেকে এসেছে।
+   */
+  function impContentKey(kind, d) {
+    if (!d) return '';
+    var date = A.dateKey(d.hijriYear, d.month, d.day);
+    var acc = d.account || 'general'; /* সার্ভারে খালি বিভাগ 'general' হয়ে থাকে */
+    if (kind === 'payment') return ['p', acc, impCmpTxt(d.supplier), date, impAmtKey(d.amount), impCmpTxt(d.receiptNo)].join('|');
+    if (kind === 'income' || kind === 'qardReturn') return [kind === 'qardReturn' ? 'r' : 'i', acc, date, impAmtKey(d.amount), impCmpTxt(d.note)].join('|');
+    return [kind === 'qardGive' || d.account === 'qard' ? 'q' : 'e', acc, date, impAmtKey(d.amount), impCmpTxt(d.category), impCmpTxt(d.description),
+      d.quantity === '' || d.quantity == null ? '' : impAmtKey(d.quantity), impCmpTxt(d.unit), impCmpTxt(d.supplier),
+      d.paymentMethod === 'due' ? 'due' : 'cash', impCmpTxt(d.receiptNo)].join('|');
   }
 
-  /* হুবহু একই কিনা (হালনাগাদ লাগবে কিনা) */
-  function impFullKey(kind, d) {
-    var c = impCmpParts(kind, d);
-    var extra = kind === 'payment' || kind === 'income' || kind === 'qardReturn' ? ''
-      : [d.paymentMethod === 'due' ? 'due' : 'cash', impCmpTxt(d.receiptNo), impAmtKey(d.quantity), impCmpTxt(d.unit)].join('|');
-    return [d.account || '', c.date, c.amt, c.text, extra].join('#');
+  function impWbTag(workbookId) {
+    return impHash('wb|' + (workbookId || '')).slice(0, 6);
+  }
+
+  function impContentId(workbookId, key, occ) {
+    return 'xl-' + impWbTag(workbookId) + '-' + impHash(key) + impHash('2|' + key) + (occ > 1 ? '-' + occ : '');
+  }
+
+  /* অ্যাপের এন্ট্রি (টেবিল + ডাটা) → একই content-key (ফাইলের সারির সাথে মেলাতে) */
+  function impEntryKind(table, e) {
+    if (table === 'payment') return 'payment';
+    if (table === 'income') return e.account === 'qard_return' ? 'qardReturn' : 'income';
+    return e.account === 'qard' ? 'qardGive' : 'expense';
   }
 
   /* অন্য উৎসের (হাতে লেখা/পুরনো ফাইল) একই এন্ট্রি চেনা: একই বিভাগ + একই হিজরী মাস + একই টাকা + একই
@@ -3135,7 +3148,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   /* সার্ভারের মতো করেই বাকি হিসাব: পরিশোধ কোনো সরবরাহকারীর বাকির বেশি হলে আগেই «সমস্যা» দেখানো,
      নইলে সংরক্ষণের সময় পুরো ফাইল আটকে যায় */
-  function impCheckDues(all) {
+  function impCheckDues(all, deletes) {
     var dueKey = function (acc, sup) { return (acc || '') + '|' + impCmpTxt(sup); };
     var isDuePurchase = function (d) { return d && d.paymentMethod === 'due' && String(d.supplier || '').trim() && d.account !== 'qard'; };
     var due = Object.create(null);
@@ -3143,7 +3156,13 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var k = dueKey(d.account, d.supplier);
       due[k] = (due[k] || 0) + Number(d.due || 0);
     });
-    var saving = function (r) { return r.data && (r.status === 'ok' || r.status === 'upd'); };
+    /* সার্ভারের ক্রমেই: আগে মোছা (বাকি-কেনা কমে, পরিশোধ ফেরত যায়), তারপর যোগ */
+    (deletes || []).forEach(function (x) {
+      var e = x.entry;
+      if (x.table === 'payment') { var kp = dueKey(e.account, e.supplier); due[kp] = (due[kp] || 0) + Number(e.amount || 0); }
+      else if (x.table === 'expense' && isDuePurchase(e)) { var ke = dueKey(e.account, e.supplier); due[ke] = (due[ke] || 0) - Number(e.amount || 0); }
+    });
+    var saving = function (r) { return r.data && (r.status === 'ok' || r.status === 'rekey' || (r.status === 'exists' && _impIncludeExisting)); };
     all.forEach(function (r) {
       if (!saving(r) || impTableOf(r.kind) !== 'expense') return;
       if (r.prev && isDuePurchase(r.prev)) { var ko = dueKey(r.prev.account, r.prev.supplier); due[ko] = (due[ko] || 0) - Number(r.prev.amount || 0); }
@@ -3169,46 +3188,63 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   function impCompareWithApp(parsed) {
     if (!parsed) return parsed;
     var db = impDbLists();
-    var byId = { expense: Object.create(null), income: Object.create(null), payment: Object.create(null) };
-    Object.keys(db).forEach(function (t) { db[t].forEach(function (e) { if (e && e.id) byId[t][e.id] = e; }); });
     var lists = ['expense', 'income', 'qardGive', 'qardReturn', 'payments'];
     var all = [];
     lists.forEach(function (k) { (parsed[k] || []).forEach(function (r) { all.push(r); }); });
+    var wbId = parsed.workbookId && parsed.workbookId !== 'legacy-content-id' ? parsed.workbookId : '';
+    var tagPrefix = wbId ? 'xl-' + impWbTag(wbId) + '-' : null;
+    var kindsOf = { expense: ['expense', 'qardGive'], income: ['income', 'qardReturn'], payment: ['payment'] };
+    var sheetNames = [];
+    all.forEach(function (r) { if (r.sheet && sheetNames.indexOf(r.sheet) < 0) sheetNames.push(r.sheet); });
 
-    /* ১) একই আইডির এন্ট্রি অ্যাপে আছে কিনা */
-    var claimed = Object.create(null);
+    /* এই ফাইল থেকে আসা অ্যাপ-এন্ট্রি: নতুন নিয়মের (ফাইল-ট্যাগ) আর পুরনো নিয়মের (শীট + সারি নম্বর) */
+    var mineNew = Object.create(null), legacy = [], others = [];
+    Object.keys(db).forEach(function (t) {
+      db[t].forEach(function (e) {
+        if (!e || !e.id) return;
+        if (tagPrefix && e.id.indexOf(tagPrefix) === 0) { mineNew[t + ':' + e.id] = { table: t, entry: e }; return; }
+        /* ডাটাবেজে শীটের নাম এক ধাঁচে (NFC) রাখা, পুরনো আইডি হয়েছিল ফাইলের আসল নামে — দুটোই চেষ্টা */
+        var isLegacy = wbId && e.sourceRow && kindsOf[t].some(function (k) {
+          return [e.sourceSheet].concat(sheetNames).some(function (sh) {
+            return sh && impSourceId(wbId, { kind: k, sheet: sh, line: Number(e.sourceRow) }, '') === e.id;
+          });
+        });
+        if (isLegacy) legacy.push({ table: t, entry: e, key: impContentKey(impEntryKind(t, e), e) });
+        else others.push({ table: t, entry: e });
+      });
+    });
+
+    /* ১) একই আইডি অ্যাপে আছে → আগের মতো */
+    var present = Object.create(null);
     all.forEach(function (row) {
       if (row.status !== 'ok' || !row.data || !row.data.id) return;
       var t = impTableOf(row.kind);
-      var old = byId[t][row.data.id];
-      if (!old) return;
-      claimed[t + ':' + row.data.id] = 1;
-      var a = impCmpParts(row.kind, row.data), b = impCmpParts(row.kind, old);
-      var diffs = (a.date !== b.date ? 1 : 0) + (a.amt !== b.amt ? 1 : 0) + (a.text !== b.text ? 1 : 0);
-      var acct = (row.data.account || '') !== (old.account || '') && row.kind !== 'payment';
-      if (diffs >= 2) {
-        row.status = 'shift';
-        row.msg = 'অ্যাপে এই সারিতে অন্য এন্ট্রি: ' + bn(b.date) + ' · ৳' + fa(old.amount) + ' · ' + (old.description || old.note || old.supplier || '');
-        row.prev = old;
-      } else if (diffs || acct || impFullKey(row.kind, row.data) !== impFullKey(row.kind, old)) {
-        row.status = 'upd';
-        row.msg = 'আগে: ' + bn(b.date) + ' · ৳' + fa(old.amount);
-        row.prev = old;
-      } else {
-        row.status = 'same';
-        row.msg = '';
+      present[t + ':' + row.data.id] = 1;
+      if (mineNew[t + ':' + row.data.id]) { row.status = 'same'; row.msg = ''; }
+    });
+
+    /* ২) পুরনো নিয়মের এন্ট্রি হুবহু একই তথ্যের সারির সাথে জোড়া — নতুন পরিচয়ে যাবে (টাকা বদলায় না) */
+    var legacyPool = Object.create(null);
+    legacy.forEach(function (x) { (legacyPool[x.table + '#' + x.key] = legacyPool[x.table + '#' + x.key] || []).push(x); });
+    var deletes = [];
+    all.forEach(function (row) {
+      if (row.status !== 'ok' || !row.data) return;
+      var list = legacyPool[impTableOf(row.kind) + '#' + impContentKey(row.kind, row.data)];
+      if (list && list.length) {
+        var x = list.shift();
+        x.paired = true;
+        row.status = 'rekey';
+        row.msg = 'আগের মতো — নতুন পরিচয়ে যাবে';
+        deletes.push({ table: x.table, entry: x.entry, rekey: true });
       }
     });
 
-    /* ২) নতুন সারির মতো হুবহু এন্ট্রি অন্য উৎসে আছে কিনা (প্রতিটি অ্যাপ-এন্ট্রি একবারই মেলে) */
+    /* ৩) অন্য উৎসে (হাতে লেখা/অন্য ফাইল) একই এন্ট্রি আছে কিনা — দুবার গোনা ঠেকাতে */
     var pool = Object.create(null);
-    Object.keys(db).forEach(function (t) {
-      db[t].forEach(function (e) {
-        if (!e || claimed[t + ':' + e.id]) return;
-        var kind = t === 'payment' ? 'payment' : (t === 'income' ? 'income' : 'expense');
-        var fp = t + '#' + impLooseKey(kind, e);
-        pool[fp] = (pool[fp] || 0) + 1;
-      });
+    others.forEach(function (x) {
+      var kind = x.table === 'payment' ? 'payment' : (x.table === 'income' ? 'income' : 'expense');
+      var fp = x.table + '#' + impLooseKey(kind, x.entry);
+      pool[fp] = (pool[fp] || 0) + 1;
     });
     all.forEach(function (row) {
       if (row.status !== 'ok' || !row.data) return;
@@ -3222,39 +3258,24 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       }
     });
 
-    impCheckDues(all);
-
-    /* ৩) এই ফাইল থেকেই আগে আসা, এখন ফাইলে নেই */
-    var wbId = parsed.workbookId && parsed.workbookId !== 'legacy-content-id' ? parsed.workbookId : '';
+    /* ৪) এই ফাইল থেকে আসা কিন্তু ফাইলে আর হুবহু নেই → মুছে যাবে (কোনো সারি বদলালে পুরনোটা এখানে, নতুনটা «নতুন»-এ) */
     var removed = [];
-    if (wbId) {
-      var present = Object.create(null);
-      var bySheetLine = Object.create(null);
-      all.forEach(function (row) {
-        if (row.status !== 'err' && row.data && row.data.id) present[impTableOf(row.kind) + ':' + row.data.id] = 1;
-        bySheetLine[impNormTxt(row.sheet) + '#' + row.line] = row;
-      });
-      var sheetNames = Object.create(null);
-      all.forEach(function (row) { sheetNames[impNormTxt(row.sheet)] = row.sheet; });
-      var kindsOf = { expense: ['expense', 'qardGive'], income: ['income', 'qardReturn'], payment: ['payment'] };
-      Object.keys(db).forEach(function (t) {
-        db[t].forEach(function (e) {
-          if (!e || !e.id || !e.sourceSheet || !e.sourceRow || present[t + ':' + e.id]) return;
-          var sheet = sheetNames[impNormTxt(e.sourceSheet)] || e.sourceSheet;
-          var mine = kindsOf[t].some(function (k) {
-            return impSourceId(wbId, { kind: k, sheet: sheet, line: Number(e.sourceRow) }, '') === e.id;
-          });
-          if (!mine) return;
-          var now = bySheetLine[impNormTxt(sheet) + '#' + e.sourceRow];
-          removed.push({
-            table: t, entry: e, sheet: sheet, line: Number(e.sourceRow),
-            reason: now && now.status === 'err' ? 'ফাইলের এই সারিতে এখন সমস্যা: ' + (now.msg || '') : 'ফাইলে আর নেই',
-          });
-        });
-      });
-    }
-    removed.sort(function (x, y) { return x.sheet === y.sheet ? x.line - y.line : (x.sheet < y.sheet ? -1 : 1); });
+    Object.keys(mineNew).forEach(function (k) {
+      if (!present[k]) removed.push(mineNew[k]);
+    });
+    legacy.forEach(function (x) { if (!x.paired) removed.push({ table: x.table, entry: x.entry }); });
+    removed.sort(function (x, y) {
+      var a = A.dateKey(x.entry.hijriYear, x.entry.month, x.entry.day), b = A.dateKey(y.entry.hijriYear, y.entry.month, y.entry.day);
+      return a < b ? -1 : (a > b ? 1 : 0);
+    });
     parsed.removed = removed;
+    parsed.rekeyDeletes = deletes;
+    impCheckDues(all, deletes.concat(removed));
+    /* যে শীটে সমস্যার সারি আছে, সেই ধরনের কোনো এন্ট্রি মোছার থাকলে সংরক্ষণ স্থগিত — সমস্যার সারিটাই
+       হয়তো আগে ঠিক ছিল; তখন মুছে ফেললে বা না মুছে বদলানোটা যোগ করলে হিসাব ভুল হতো */
+    var errTables = Object.create(null);
+    all.forEach(function (r) { if (r.status === 'err') errTables[impTableOf(r.kind)] = 1; });
+    parsed.deletesHeld = removed.some(function (x) { return errTables[x.table]; });
     return parsed;
   }
 
@@ -3283,15 +3304,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return parsed;
   }
 
-  function impFinishRow(row, workbookId) {
-    if (!row || !row.data) return row;
-    var fp = impRowFingerprint(row);
-    row.data.id = impSourceId(workbookId, row, fp);
-    row.data.sourceSheet = row.sheet;
-    row.data.sourceRow = row.line;
-    row.data.sourceKey = row.data.id;
-    return row;
-  }
 
   function impParseExpenseSheet(matrix, sheetName) {
     if (!matrix || !matrix.length) return [];
@@ -3482,7 +3494,16 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (!found) {
       out.expense = [{ line: 1, sheet: '', status: 'err', msg: 'ব্যয়/আয়/করজ/পরিশোধ নামের কোনো শীট পাওয়া যায়নি', amt: 0 }];
     }
-    [].concat(out.expense, out.income, out.qardGive, out.qardReturn, out.payments).forEach(function (row) { impFinishRow(row, workbookId); });
+    var occ = Object.create(null);
+    [].concat(out.expense, out.income, out.qardGive, out.qardReturn, out.payments).forEach(function (row) {
+      if (!row || !row.data) return;
+      var key = impContentKey(row.kind, row.data);
+      occ[key] = (occ[key] || 0) + 1;
+      row.data.id = impContentId(workbookId, key, occ[key]);
+      row.data.sourceSheet = row.sheet;
+      row.data.sourceRow = row.line;
+      row.data.sourceKey = row.data.id;
+    });
     out.workbookId = workbookId || 'legacy-content-id';
     return out;
   }
@@ -3502,8 +3523,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   }
 
   function impIsSaveRow(r) {
-    return r.status === 'ok' || r.status === 'upd' ||
-      (r.status === 'shift' && _impAllowShift) || (r.status === 'exists' && _impIncludeExisting);
+    return r.status === 'ok' || r.status === 'rekey' || (r.status === 'exists' && _impIncludeExisting);
   }
 
   function impOkRows() {
@@ -3514,12 +3534,16 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     return impAllRows().filter(function (r) { return r.status === st; }).length;
   }
 
-  function impRemovedLive() {
-    return ((_impParsed && _impParsed.removed) || []).filter(function (x) {
-      if (x.table === 'expense') return !!(A.Expense.getById && A.Expense.getById(x.entry.id));
-      if (x.table === 'income') return !!(A.Income.getById && A.Income.getById(x.entry.id));
-      return true;
-    });
+  function impRemoved() {
+    return (_impParsed && _impParsed.removed) || [];
+  }
+
+  /* সংরক্ষণে যা মুছবে: নতুন পরিচয়ে যাওয়া পুরনো এন্ট্রি (টাকা বদলায় না) + ফাইলে আর নেই এমন এন্ট্রি */
+  function impDeleteList() {
+    if (!_impParsed) return [];
+    var list = (_impParsed.rekeyDeletes || []).slice();
+    if (!_impParsed.deletesHeld) list = list.concat(impRemoved());
+    return list.map(function (x) { return { type: x.table, id: x.entry.id }; });
   }
 
   function bindAccImpDrop() {
@@ -3548,7 +3572,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var help =
       '<div class="acc-imp-help"><b>স্ট্যান্ডার্ড .xlsx ফাইল আপলোড করুন</b> — শীট: <b>ব্যয়</b>, <b>আয়</b>, <b>করজ</b>, <b>পরিশোধ</b>। ' +
       'ড্যাশবোর্ড/নির্দেশনা শীট অ্যাপ পড়ে না। ব্যয়ে <b>হিসাব বিভাগ</b> কলাম থেকে বিভাগ অটো-সাজানো হয়। ' +
-      'মোট টাকা লিখুন; পরিমাণ থাকলে একক মূল্য অটো হিসাব হবে। একই টেমপ্লেট আবার আপলোড করলে একই সারি আপডেট হবে—দ্বিতীয়বার যোগ হবে না। সব শীট একসঙ্গে সফল হলেই ডেটাবেজে সংরক্ষিত হবে।' +
+      'মোট টাকা লিখুন; পরিমাণ থাকলে একক মূল্য অটো হিসাব হবে। প্রতিবার পুরো ফাইল আপলোড করুন: হুবহু আগের মতো সারি বাদ থাকে, নতুন সারি যোগ হয়, আর ফাইল থেকে মুছে ফেলা বা বদলানো সারির পুরনো এন্ট্রি অ্যাপ থেকেও মুছে যায়। সারি সাজানো (sort) বা মাঝে ঢোকানো/মোছায় সমস্যা নেই। সব শীট একসঙ্গে সফল হলেই ডেটাবেজে সংরক্ষিত হবে।' +
       '<br><button type="button" class="acc-imp-tpl" onclick="downloadAccHisabTemplate()">⬇ খালি টেমপ্লেট ডাউনলোড</button></div>';
     var drop =
       '<div class="acc-imp-drop" id="acc-imp-drop" role="button" tabindex="0">' +
@@ -3572,26 +3596,27 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var errN = impCount('err');
     var dupN = impCount('dup');
     var savedN = impCount('saved');
-    var newN = impCount('ok'), updN = impCount('upd'), sameN = impCount('same');
-    var shiftN = impCount('shift'), existsN = impCount('exists');
-    var removedL = impRemovedLive();
+    var newN = impCount('ok'), rekeyN = impCount('rekey'), sameN = impCount('same') + rekeyN;
+    var existsN = impCount('exists');
+    var removedL = impRemoved();
+    var held = !!_impParsed.deletesHeld;
     var tabs =
       '<div class="acc-imp-tabs">' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'expense' ? ' is-on' : '') + '" onclick="setAccImpTab(\'expense\')">ব্যয় (' + bn((_impParsed.expense || []).length) + ')</button>' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'income' ? ' is-on' : '') + '" onclick="setAccImpTab(\'income\')">আয় (' + bn((_impParsed.income || []).length) + ')</button>' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'qard' ? ' is-on' : '') + '" onclick="setAccImpTab(\'qard\')">করজ (' + bn(((_impParsed.qardGive || []).length + (_impParsed.qardReturn || []).length)) + ')</button>' +
       '<button type="button" class="acc-imp-tab' + (_impTab === 'payment' ? ' is-on' : '') + '" onclick="setAccImpTab(\'payment\')">পরিশোধ (' + bn((_impParsed.payments || []).length) + ')</button>' +
-      (removedL.length ? '<button type="button" class="acc-imp-tab is-warn' + (_impTab === 'removed' ? ' is-on' : '') + '" onclick="setAccImpTab(\'removed\')">ফাইলে নেই (' + bn(removedL.length) + ')</button>' : '') +
+      (removedL.length ? '<button type="button" class="acc-imp-tab is-warn' + (_impTab === 'removed' ? ' is-on' : '') + '" onclick="setAccImpTab(\'removed\')">মুছে যাবে (' + bn(removedL.length) + ')</button>' : '') +
       '</div>';
     var rows = impTabRows();
     var hiddenSame = 0;
     if (!_impShowSame) {
-      rows = rows.filter(function (r) { if (r.status === 'same') { hiddenSame++; return false; } return true; });
+      rows = rows.filter(function (r) { if (r.status === 'same' || r.status === 'rekey') { hiddenSame++; return false; } return true; });
     }
-    var okTab = rows.filter(impIsSaveRow);
+    var okTab = rows.filter(function (r) { return r.status === 'ok' || (r.status === 'exists' && _impIncludeExisting); });
     var totalAmt = okTab.reduce(function (s, r) { return s + (r.amt || 0); }, 0);
     var statusLabel = {
-      ok: '＋ নতুন', upd: '✎ বদলেছে', same: 'আগের মতো', shift: '⚠ সারি সরেছে?',
+      ok: '＋ নতুন', same: 'আগের মতো', rekey: 'আগের মতো',
       exists: _impIncludeExisting ? '＋ যোগ হবে (আগেও আছে)' : 'আগে থেকেই আছে — বাদ',
       err: '', saved: 'সংরক্ষিত ✓', dup: 'ডুপ্লিকেট — বাদ',
     };
@@ -3605,8 +3630,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var okDate = r.status !== 'err';
       var dateTxt = okDate && r.date && !r.date.err ? bn(A.dateKey(r.date.year, r.date.month, r.date.day)) : '—';
       var st = '<span class="acc-imp-status ' + r.status + '"' + (r.msg && r.status !== 'err' ? ' title="' + esc(r.msg) + '"' : '') + '>' +
-        esc(statusLabel[r.status] || r.msg || '') + '</span>' +
-        ((r.status === 'upd' || r.status === 'shift') && r.msg ? '<div class="acc-imp-prev">' + esc(r.msg) + '</div>' : '');
+        esc(statusLabel[r.status] || r.msg || '') + '</span>';
       var cells;
       if (_impTab === 'income') {
         cells = '<td>' + dateTxt + '</td><td><b>' + (r.amt ? fa(r.amt) : '—') + '</b></td><td>' + esc(d.note || '') + '</td>';
@@ -3630,22 +3654,22 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<div class="acc-imp-summary">' +
       '<span class="acc-imp-pill">মোট সারি: ' + bn(all.length) + '</span>' +
       (newN ? '<span class="acc-imp-pill ok">নতুন: ' + bn(newN) + '</span>' : '') +
-      (updN ? '<span class="acc-imp-pill upd">বদলেছে: ' + bn(updN) + '</span>' : '') +
       (sameN ? '<span class="acc-imp-pill">আগের মতো: ' + bn(sameN) + '</span>' : '') +
       (existsN ? '<span class="acc-imp-pill dup">আগে থেকেই আছে: ' + bn(existsN) + '</span>' : '') +
-      (shiftN ? '<span class="acc-imp-pill err">সারি সরেছে?: ' + bn(shiftN) + '</span>' : '') +
-      (removedL.length ? '<span class="acc-imp-pill err">ফাইলে নেই: ' + bn(removedL.length) + '</span>' : '') +
+      (removedL.length ? '<span class="acc-imp-pill err">মুছে যাবে: ' + bn(removedL.length) + '</span>' : '') +
       (dupN ? '<span class="acc-imp-pill dup">ডুপ্লিকেট: ' + bn(dupN) + '</span>' : '') +
       (errN ? '<span class="acc-imp-pill err">সমস্যা: ' + bn(errN) + '</span>' : '') +
       (savedN ? '<span class="acc-imp-pill ok">সংরক্ষিত: ' + bn(savedN) + '</span>' : '') +
-      (_impTab !== 'removed' ? '<span class="acc-imp-pill">এই ট্যাবে যোগ/হালনাগাদ: ৳' + fa(totalAmt) + '</span>' : '') +
+      (_impTab !== 'removed' ? '<span class="acc-imp-pill">এই ট্যাবে নতুন যোগ: ৳' + fa(totalAmt) + '</span>' : '') +
       '</div>';
     var notes = '';
-    if (shiftN) {
-      notes += '<div class="acc-imp-alert is-danger"><b>' + bn(shiftN) + 'টি সারিতে অ্যাপে পুরো আলাদা এন্ট্রি আছে।</b> ' +
-        'সাধারণত মাঝে সারি ঢোকানো/মোছা বা সাজানো (sort) হলে, অথবা অন্য কোনো ফাইলের সাথে একই ফাইল-আইডি থাকলে এমন হয়। ' +
-        'এভাবে সংরক্ষণ করলে অ্যাপের পুরনো এন্ট্রিগুলো এই সারির তথ্যে বদলে যাবে। Excel-এ সারির ক্রম আগের মতো করে আবার আপলোড করুন।' +
-        '<label class="acc-imp-check"><input type="checkbox"' + (_impAllowShift ? ' checked' : '') + ' onchange="setAccImpFlag(\'shift\', this.checked)"> আমি নিশ্চিত — এই সারিগুলো দিয়েই অ্যাপের এন্ট্রি বদলান</label></div>';
+    if (held) {
+      notes += '<div class="acc-imp-alert is-danger"><b>ফাইলে ' + bn(errN) + 'টি সমস্যার সারি আছে, আর ' + bn(removedL.length) + 'টি পুরনো এন্ট্রি ফাইলে হুবহু পাওয়া যাচ্ছে না।</b> ' +
+        'সমস্যার সারিটাই হয়তো আগে ঠিক ছিল — তাই ভুল করে কিছু যেন না মোছে, সমস্যার সারিগুলো Excel-এ ঠিক করে আবার আপলোড করুন। ততক্ষণ সংরক্ষণ বন্ধ।</div>';
+    }
+    if (rekeyN) {
+      notes += '<div class="acc-imp-alert"><b>' + bn(rekeyN) + 'টি সারি আগের মতোই আছে।</b> এগুলো পুরনো নিয়মে (সারি নম্বর দিয়ে) রাখা ছিল; ' +
+        'সংরক্ষণ করলে নতুন নিয়মে (সারির তথ্য দিয়ে) রাখা হবে — শুধু এই প্রথমবার। টাকার হিসাব বদলাবে না।</div>';
     }
     if (existsN) {
       notes += '<div class="acc-imp-alert"><b>' + bn(existsN) + 'টি সারির</b> মতো এন্ট্রি (একই বিভাগ, একই মাস, একই বিবরণ ও টাকা) অ্যাপে আগে থেকেই আছে — হাতে লেখা বা আগের অন্য ফাইল থেকে। দুবার গোনা এড়াতে এগুলো বাদ রাখা হয়েছে; «আগে থেকেই আছে» সারিগুলো দেখে নিন।' +
@@ -3655,18 +3679,23 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var rmRows = removedL.map(function (x) {
         var e = x.entry;
         var what = x.table === 'payment' ? (e.supplier || '') : (e.description || e.note || e.category || '');
-        var del = x.table === 'payment' ? '<span class="acc-imp-muted">পরিশোধ তালিকা থেকে মুছুন</span>'
-          : '<button type="button" class="acc-imp-del" onclick="delAccImpRemoved(\'' + x.table + '\',\'' + esc(e.id) + '\')">অ্যাপ থেকে মুছুন</button>';
-        return '<tr class="is-err"><td>' + esc(x.sheet) + ' ' + bn(x.line) + '</td><td>' + bn(A.dateKey(e.hijriYear, e.month, e.day)) + '</td><td>' + esc(what) +
-          '</td><td><b>৳' + fa(e.amount) + '</b></td><td><span class="acc-imp-status err">' + esc(x.reason) + '</span></td><td>' + del + '</td></tr>';
-      }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink3)">সব মিলে গেছে</td></tr>';
-      var rmHelp = '<div class="acc-imp-alert">এই এন্ট্রিগুলো আগে এই ফাইল থেকেই অ্যাপে এসেছিল, কিন্তু ফাইলের ঐ সারিতে এখন নেই। আপলোড এগুলো নিজে মোছে না — সত্যিই বাদ দিতে চাইলে এখান থেকে মুছুন।</div>';
-      return tabs + pills + rmHelp + '<div class="acc-imp-wrap"><table class="acc-imp-table"><thead><tr><th>শীট · সারি</th><th>তারিখ</th><th>বিবরণ</th><th>টাকা</th><th>অবস্থা</th><th></th></tr></thead><tbody>' + rmRows + '</tbody></table></div>';
+        var kindTxt = x.table === 'payment' ? 'পরিশোধ' : (x.table === 'income' ? 'আয়' : 'ব্যয়');
+        return '<tr class="is-err"><td>' + esc(kindTxt) + '</td><td>' + esc(A.ACCOUNT_LABELS[e.account] || e.account || '') + '</td><td>' + bn(A.dateKey(e.hijriYear, e.month, e.day)) + '</td><td>' + esc(what) +
+          '</td><td><b>৳' + fa(e.amount) + '</b></td></tr>';
+      }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink3)">কিছু মুছবে না</td></tr>';
+      var rmHelp = '<div class="acc-imp-alert">এই এন্ট্রিগুলো আগে এই ফাইল থেকেই অ্যাপে এসেছিল, কিন্তু ফাইলে এখন হুবহু নেই — সারি মুছে ফেলা হয়েছে, অথবা কোনো ঘর বদলানো হয়েছে (তখন বদলানো সারিটা «নতুন» হিসেবে যোগ হবে)। ' +
+        (held ? 'ফাইলে সমস্যার সারি থাকায় এখন কিছু মোছা হবে না।' : 'সংরক্ষণ করলে এগুলো অ্যাপ থেকে মুছে যাবে, বাকির হিসাবও সেভাবে ঠিক হবে।') + '</div>';
+      return tabs + pills + notes + rmHelp + '<div class="acc-imp-wrap"><table class="acc-imp-table"><thead><tr><th>ধরন</th><th>বিভাগ</th><th>তারিখ</th><th>বিবরণ</th><th>টাকা</th></tr></thead><tbody>' + rmRows + '</tbody></table></div>';
     }
-    var blocked = shiftN && !_impAllowShift;
-    var saveBtn = '<button type="button" class="submit-btn gold" id="acc-imp-save" onclick="saveAccImport()"' + (okAll.length && !_impBusy && !blocked ? '' : ' disabled') + '>' +
-      (blocked ? '«সারি সরেছে?» ঠিক না করা পর্যন্ত সংরক্ষণ বন্ধ'
-        : (okAll.length ? '✓ ' + count(okAll.length, 'টি') + ' এন্ট্রি সংরক্ষণ করুন' : (sameN ? 'সব আগের মতোই আছে — নতুন কিছু নেই' : 'সংরক্ষণের মতো সারি নেই'))) + '</button>';
+    var addN = okAll.length - rekeyN;
+    var delN = held ? 0 : removedL.length;
+    var canSave = !held && !_impBusy && (okAll.length || delN);
+    var saveTxt;
+    if (held) saveTxt = 'সমস্যার সারি ঠিক না করা পর্যন্ত সংরক্ষণ বন্ধ';
+    else if (addN || delN) saveTxt = '✓ সংরক্ষণ করুন — ' + [addN ? bn(addN) + 'টি যোগ' : '', delN ? bn(delN) + 'টি মুছবে' : ''].filter(Boolean).join(', ');
+    else if (rekeyN) saveTxt = '✓ নতুন নিয়মে সংরক্ষণ করুন (টাকা বদলাবে না)';
+    else saveTxt = sameN ? 'সব আগের মতোই আছে — নতুন কিছু নেই' : 'সংরক্ষণের মতো সারি নেই';
+    var saveBtn = '<button type="button" class="submit-btn gold" id="acc-imp-save" onclick="saveAccImport()"' + (canSave ? '' : ' disabled') + '>' + saveTxt + '</button>';
     return tabs + pills + notes + '<div class="acc-imp-wrap"><table class="acc-imp-table"><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table></div>' + saveBtn;
   }
 
@@ -3677,7 +3706,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     _impFileName = '';
     _impBusy = false;
     _impTab = 'expense';
-    _impAllowShift = false;
     _impIncludeExisting = false;
     _impShowSame = false;
     renderAccImport();
@@ -3685,7 +3713,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.setAccImpFlag = function (which, on) {
-    if (which === 'shift') _impAllowShift = !!on;
     if (which === 'exists') _impIncludeExisting = !!on;
     var pv = document.getElementById('acc-imp-preview');
     if (pv) pv.innerHTML = buildImpPreview();
@@ -3693,12 +3720,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   window.toggleAccImpSame = function () {
     _impShowSame = !_impShowSame;
-    var pv = document.getElementById('acc-imp-preview');
-    if (pv) pv.innerHTML = buildImpPreview();
-  };
-
-  window.delAccImpRemoved = async function (table, id) {
-    await window.delAccEntry(table === 'income' ? 'income' : 'expense', id, { fromImport: true });
     var pv = document.getElementById('acc-imp-preview');
     if (pv) pv.innerHTML = buildImpPreview();
   };
@@ -3726,7 +3747,6 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         var data = new Uint8Array(ev.target.result);
         var wb = XLSX.read(data, { type: 'array', cellDates: true });
         _impFileName = name;
-        _impAllowShift = false;
         _impIncludeExisting = false;
         _impShowSame = false;
         _impParsed = impCompareWithApp(impApplyDupGuard(impParseWorkbook(wb)));
@@ -3740,12 +3760,11 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         if (pv) pv.scrollIntoView({ block: 'nearest' });
         var parts = [];
         if (impCount('ok')) parts.push(bn(impCount('ok')) + 'টি নতুন');
-        if (impCount('upd')) parts.push(bn(impCount('upd')) + 'টি বদলেছে');
-        if (impCount('shift')) parts.push(bn(impCount('shift')) + 'টি সারি সরেছে?');
+        if (impRemoved().length) parts.push(bn(impRemoved().length) + 'টি মুছে যাবে' + (_impParsed.deletesHeld ? ' (স্থগিত)' : ''));
         if (impCount('exists')) parts.push(bn(impCount('exists')) + 'টি আগে থেকেই আছে');
         if (impCount('dup')) parts.push(bn(impCount('dup')) + 'টি ডুপ্লিকেট বাদ');
         if (impCount('err')) parts.push(bn(impCount('err')) + 'টি সমস্যা');
-        if (!parts.length && impCount('same')) parts.push('সব আগের মতোই আছে');
+        if (!parts.length && (impCount('same') || impCount('rekey'))) parts.push('সব আগের মতোই আছে');
         showToast(parts.length ? parts.join(', ') : 'সঠিক সারি পাওয়া যায়নি');
       } catch (err) {
         console.warn('[Accounts] xlsx parse failed', err);
@@ -3765,13 +3784,17 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var okQardR = (_impParsed && _impParsed.qardReturn || []).filter(impIsSaveRow);
     var okPayments = (_impParsed && _impParsed.payments || []).filter(impIsSaveRow);
     var totalOk = okExpense.length + okIncome.length + okQardG.length + okQardR.length + okPayments.length;
-    if (!totalOk) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
-    if (impCount('shift') && !_impAllowShift) { showToast('«সারি সরেছে?» সারিগুলো আগে ঠিক করুন'); return; }
+    if (_impParsed && _impParsed.deletesHeld) { showToast('সমস্যার সারিগুলো আগে Excel-এ ঠিক করুন'); return; }
+    var deletes = impDeleteList();
+    var realDelN = impRemoved().length;
+    var addN = totalOk - impCount('rekey');
+    if (!totalOk && !deletes.length) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
+    if (realDelN && !confirm(bn(realDelN) + 'টি পুরনো এন্ট্রি ফাইলে আর নেই — অ্যাপ থেকে মুছে যাবে («মুছে যাবে» ট্যাবে তালিকা)।\n\nসংরক্ষণ করবেন?')) return;
     if (!A.remoteReady || !A.remoteReady()) { showToast('সার্ভার সংযোগ নেই — নেট/লগইন দেখে আবার চেষ্টা করুন'); return; }
     _impBusy = true;
     var btn = document.getElementById('acc-imp-save');
     var done = 0;
-    function prog() { if (btn) btn.textContent = 'আপলোড হচ্ছে… ' + bn(done) + '/' + bn(totalOk); }
+    function prog() { if (btn) btn.textContent = 'আপলোড হচ্ছে… ' + bn(done) + '/' + bn(totalOk + deletes.length); }
     function markListSaved(list) {
       (list || []).forEach(function (r) { r.status = 'saved'; r.msg = ''; });
     }
@@ -3788,7 +3811,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         incomeTotal: incList.reduce(function (s, e) { return s + Number(e.amount || 0); }, 0),
         paymentTotal: paymentList.reduce(function (s, e) { return s + Number(e.amount || 0); }, 0)
       };
-      var result = await A.importBatch({ workbookId: _impParsed.workbookId, expenses: expList, incomes: incList, payments: paymentList, categories: categories, expected: expected });
+      if (deletes.length) {
+        /* পুরনো সার্ভার deletes চেনে না — তখন মোছা ছাড়াই যোগ হয়ে দ্বিগুণ হতো; খালি ব্যাচে আগে যাচাই */
+        var probe = await A.importBatch({ workbookId: _impParsed.workbookId, deletes: [], expected: { expenseCount: 0, incomeCount: 0, paymentCount: 0 } });
+        if (!probe.reconciliation || probe.reconciliation.deleteCount == null) throw new Error('server_needs_update');
+      }
+      var result = await A.importBatch({ workbookId: _impParsed.workbookId, deletes: deletes, expenses: expList, incomes: incList, payments: paymentList, categories: categories, expected: expected });
       var actual = result.reconciliation || {};
       ['expenseCount','incomeCount','paymentCount'].forEach(function (k) {
         if (Number(actual[k]) !== Number(expected[k])) throw new Error('reconciliation_' + k);
@@ -3796,21 +3824,27 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       ['expenseTotal','incomeTotal','paymentTotal'].forEach(function (k) {
         if (Math.abs(Number(actual[k] || 0) - Number(expected[k] || 0)) > 0.009) throw new Error('reconciliation_' + k);
       });
-      done = totalOk; prog();
+      done = totalOk + deletes.length; prog();
       markListSaved(okExpense); markListSaved(okIncome); markListSaved(okQardG); markListSaved(okQardR); markListSaved(okPayments);
       _impBusy = false;
       _impParsed = null;
       _impFileName = '';
       closeModal('account-import');
       refreshAccountsViews();
-      showToast(count(totalOk, 'টি') + ' সারি যাচাইসহ ডেটাবেজে সিঙ্ক হয়েছে ✓');
+      var doneParts = [];
+      if (addN > 0) doneParts.push(bn(addN) + 'টি যোগ');
+      if (realDelN) doneParts.push(bn(realDelN) + 'টি মোছা');
+      showToast((doneParts.length ? doneParts.join(', ') + ' — ' : '') + 'যাচাইসহ ডেটাবেজে সিঙ্ক হয়েছে ✓');
     } catch (err) {
       console.warn('[Accounts] excel import failed', err);
       _impBusy = false;
       var em = String((err && (err.message || err.details)) || err || '');
       var mm = em.match(/payment_exceeds_due:\s*(.+)/) || em.match(/payment_due_not_found:\s*(.+)/);
       showToast(mm ? 'কোনো সারি সংরক্ষিত হয়নি — «' + mm[1].trim() + '»-এর পরিশোধ বাকির চেয়ে বেশি বা বাকি পাওয়া যায়নি'
-        : 'কোনো সারি সংরক্ষিত হয়নি — সমস্যাটি ঠিক করে আবার চেষ্টা করুন');
+        : em === 'server_needs_update' ? 'কোনো সারি সংরক্ষিত হয়নি — সার্ভার এখনো আপডেট হয়নি (নতুন SQL চালানো বাকি)। জিম্মাদারকে জানান'
+        : (/purchase_total_below_existing_payments/.test(em)
+          ? 'কোনো সারি সংরক্ষিত হয়নি — কোনো সরবরাহকারীর বাকি কেনা মুছে/কমে গেছে, অথচ পরিশোধ তার চেয়ে বেশি। ব্যয় ও পরিশোধ শীট মিলিয়ে দেখুন'
+          : 'কোনো সারি সংরক্ষিত হয়নি — সমস্যাটি ঠিক করে আবার চেষ্টা করুন'));
       refreshAccountsViews();
       renderAccImport();
     }
@@ -3923,7 +3957,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   /* ══════════════ HELPERS ══════════════ */
   window.delAccEntry = async function (type, id, opts) {
-    /* Excel থেকে আসা যে সারি ফাইলে আর নেই — Excel মোডেও আপলোডের «ফাইলে নেই» তালিকা থেকে মোছা যায় */
+    /* opts.fromImport: Excel থেকে আসা (xl-…) এন্ট্রি Excel মোডেও মোছা যায় (সার্ভারও তাই মানে) */
     var fromImport = !!(opts && opts.fromImport) && !isAdminAccountsPage() && /^xl-/.test(String(id || ''));
     if (isAccountsReadOnly() && !fromImport) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     var entry = type === 'income' ? A.Income.getById(id) : A.Expense.getById(id);

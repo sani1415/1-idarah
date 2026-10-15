@@ -17,7 +17,7 @@ from datetime import date, timedelta
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from hisab_excel_protect import protect_file  # noqa: E402  শীট-সুরক্ষা (সারি মোছা/ঢোকানো/sort বন্ধ)
+from hisab_excel_protect import protect_file  # noqa: E402  শীট-সুরক্ষা (নির্দেশনা/বকেয়া/ড্যাশবোর্ড, শীটের নাম)
 OUTS = [
     ROOT / "app" / "madrasa" / "templates" / "daftar-hisab-template-v2.xlsx",
     ROOT / "output" / "daftar-hisab-template.xlsx",
@@ -143,7 +143,7 @@ def main():
         ("পরিশোধ", "বকেয়া মেটানোর এন্ট্রি; সংশ্লিষ্ট হিসাব বিভাগ ও সরবরাহকারী বেছে নিন।"),
         ("আয় / করজ", "নিয়মিত আয় আলাদা; করজে দেওয়া/আদায় করজ শীটে।"),
         ("তারিখ", "ঘরটি আসল Excel Date; দেখা যাবে হিজরী সন-মাস-দিন। Date Filter/Sort কাজ করবে। নতুন তারিখ Excel date picker বা স্বীকৃত date entry দিয়ে দিন।"),
-        ("অ্যাপে", "হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। একই ফাইল আবার দিলে একই সারি আপডেট হবে; ডুপ্লিকেট হবে না।"),
+        ("অ্যাপে", "হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। প্রতিবার পুরো ফাইল দিন: আগের মতো সারি বাদ থাকে, নতুন সারি যোগ হয়, মুছে ফেলা বা বদলানো সারি অ্যাপেও বদলায়। সারি ঢোকানো/মোছা/সাজানো (sort), ফিল্টার, সূত্র টেনে নেওয়া চলবে; শুধু কলামের শিরোনাম বদলাবেন না।"),
     ]
     r = 3
     for a, b in lines:

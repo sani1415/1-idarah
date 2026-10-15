@@ -15,7 +15,7 @@
 | মাদরাসা — staff UI | `app/madrasa/madrasa-*.html` | `app/js/madrasa/madrasa-*.js`, `mdr-*.js` |
 | মাদরাসা — জিম্মাদার UI | `app/madrasa/admin/*.html` | `app/js/madrasa/mdr-*.js` |
 | দফতর হাজিরা + বাকি-হাজিরা lock | `madrasa-daftar.html` | `app/js/pages/madrasa-daftar.js` + `mdr-daftar-attendance-gate.js` |
-| দফতর হিসাব / Excel import / ▦ শীট / Excel মোড | `madrasa-daftar.html`, `madrasa/admin/accounts.html` | `madrasa-daftar-accounts.js`, `madrasa-accounts-sheet.js` (Excel-এর মতো শীট; import-এর পার্সার `MdrAccSheetCore` দিয়ে), `madrasa-accounts-api.js`, `madrasa-accounts-reports.js`; টেমপ্লেট: `scripts/make-hisab-excel-template.py` → `scripts/hisab_excel_protect.py` (শীট-সুরক্ষা) → `app/madrasa/templates/daftar-hisab-template-v2.xlsx` |
+| দফতর হিসাব / Excel import / ▦ শীট / Excel মোড | `madrasa-daftar.html`, `madrasa/admin/accounts.html` | `madrasa-daftar-accounts.js`, `madrasa-accounts-sheet.js` (Excel-এর মতো শীট; import-এর পার্সার `MdrAccSheetCore` দিয়ে), `madrasa-accounts-api.js`, `madrasa-accounts-reports.js`; টেমপ্লেট: `scripts/make-hisab-excel-template.py` → `scripts/hisab_excel_protect.py` (নির্দেশনা/বকেয়া/ড্যাশবোর্ড সুরক্ষা; ডাটার শীট খোলা) → `app/madrasa/templates/daftar-hisab-template-v2.xlsx` |
 | কর্মসূচি | `madrasa-kormosuchi.html`, `madrasa/admin/kormosuchi.html` | `madrasa-kormosuchi.js` |
 | খাদিমিন, দফতর হোম প্যানেল | `madrasa-home.html` | `mdr-home-panels.js`, `mdr-khadimin-supabase.js`, `mdr-daftar-notes.js` |
 | দস্তরখান | `madrasa-home.html` | `mdr-dastarkhan.js` |

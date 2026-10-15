@@ -3,19 +3,17 @@
     python scripts/hisab_excel_protect.py in.xlsx [out.xlsx]     (out না দিলে একই ফাইলে)
 
 make-hisab-excel-template.py টেমপ্লেট বানানোর পর নিজে এটা চালায়; দফতরের চলতি ফাইলেও চালানো যায়।
-অ্যাপ প্রতিটি এন্ট্রি চেনে «শীট + সারি নম্বর» দিয়ে (madrasa-daftar-accounts.js → impSourceId), তাই
-সারি ঢোকানো/মোছা/sort আর শীটের নাম বদল বন্ধ রাখাই এর উদ্দেশ্য। পাসওয়ার্ড নেই (Review → Unprotect
-দিয়ে খোলা যায়) — ভুল ঠেকাতে, নিরাপত্তার জন্য নয়।
+অ্যাপ প্রতিটি এন্ট্রি চেনে সারির তথ্য দিয়ে (madrasa-daftar-accounts.js → impContentKey), সারি নম্বর
+দিয়ে নয় — তাই ডাটার শীটে সারি ঢোকানো/মোছা, sort, ফিল্টার, সূত্র টেনে নেওয়া সব খোলা। পাসওয়ার্ড নেই।
 
-- লেখার ঘর খোলা: ব্যয় A–F,H–K; আয় A–C; করজ A–E; পরিশোধ A–F (২–২০০০০ সারি), বকেয়া A10:A109
-  (সরবরাহকারীর তালিকা), ড্যাশবোর্ড B21, D21 (বছর/মাস) ও A25:A39 (খাতের নাম)।
-- বাকি সব তালাবদ্ধ: হেডার, সূত্রের কলাম, নির্দেশনা শীট।
-- শীট: সারি/কলাম ঢোকানো-মোছা, sort ও ফিল্টার বন্ধ (ফিল্টারের ড্রপডাউন দিয়ে sort হয়ে যায়);
-  কলাম/সারির মাপ বদলানো চালু। খুঁজতে Ctrl+F।
-- বই: শীটের নাম বদল/মোছা/সরানো বন্ধ।
+- ডাটার শীট (ব্যয়, আয়, করজ, পরিশোধ): কোনো সুরক্ষা নেই। শুধু লেখার কলামগুলো «unlocked» ফরম্যাটে,
+  যাতে কেউ পরে নিজে শীট-সুরক্ষা দিলেও লেখা যায়।
+- তালাবদ্ধ: নির্দেশনা; বকেয়া (খোলা A10:A109 — সরবরাহকারীর তালিকা); ড্যাশবোর্ড (খোলা B21, D21
+  বছর/মাস ও A25:A39 খাতের নাম)।
+- বই: শীটের নাম বদল/মোছা/সরানো বন্ধ — অ্যাপ শীট চেনে নাম দিয়ে।
 - ড্যাশবোর্ডের মাসিক টেবিল শিক্ষাবর্ষ (শাওয়াল–রমজান) ধরে; B21 = শিক্ষাবর্ষ শুরুর হিজরী বছর।
 - ব্যয়ের সূত্র-কলাম (G একক মূল্য, L/M হিজরী বছর/মাস), ড্রপডাউন এবং বকেয়া/ড্যাশবোর্ডের
-  সূত্রের সারি-সীমা ২০০০০ পর্যন্ত — তালা দেওয়ার পর দফতর নিজে এগুলো নিচে টানতে পারে না।
+  সূত্রের সারি-সীমা ২০০০০ পর্যন্ত আগেই বসানো — নতুন সারিতে নিজে থেকেই হিসাব হয়।
 """
 import os
 import re
@@ -25,7 +23,6 @@ import zipfile
 from html import unescape
 
 LAST = 20000
-# ফিল্টারও বন্ধ: ফিল্টার চালু রাখলে Excel তার ড্রপডাউন থেকে sort করতে দেয় (পরীক্ষায় দেখা গেছে)
 PROTECT = ('<sheetProtection sheet="1" objects="1" scenarios="1" '
            'formatColumns="0" formatRows="0"/>')
 FORMULAS = {
@@ -92,6 +89,10 @@ class Styles:
 
     def dump(self):
         return self.xml.replace(self.m.group(0), '<cellXfs count="%d">%s</cellXfs>' % (len(self.new), ''.join(self.new)))
+
+
+def remove_protection(x):
+    return re.sub(r'<sheetProtection\b[^>]*/>', '', x)
 
 
 def add_protection(x):
@@ -235,6 +236,10 @@ def fill_expense_formulas(x):
 
 HIJRI_MONTHS = ['মুহাররম', 'সফর', 'রবিউল আউয়াল', 'রবিউস সানি', 'জুমাদাল উলা', 'জুমাদাল উখরা',
                 'রজব', 'শাবান', 'রমজান', 'শাওয়াল', 'জিলকদ', 'জিলহজ']
+# নির্দেশনা শীটের পুরনো «অ্যাপে» লাইন (সারি নম্বরের যুগের) → নতুন নিয়ম
+OLD_APP_LINE = 'হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। একই ফাইল আবার দিলে একই সারি আপডেট হবে; ডুপ্লিকেট হবে না।'
+NEW_APP_LINE = 'হিসাব → এক্সেল ↧ → এই ফাইল আপলোড। প্রতিবার পুরো ফাইল দিন: আগের মতো সারি বাদ থাকে, নতুন সারি যোগ হয়, মুছে ফেলা বা বদলানো সারি অ্যাপেও বদলায়। সারি ঢোকানো/মোছা/সাজানো (sort), ফিল্টার, সূত্র টেনে নেওয়া চলবে; শুধু কলামের শিরোনাম বদলাবেন না।'
+
 ACAD_ORDER = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # শিক্ষাবর্ষ: শাওয়াল → পরের রমজান
 
 
@@ -332,7 +337,7 @@ def protect_file(src, dst=None):
         x = col_styles(x, st, cols)
         x = set_autofilter(x)
         x = extend_sqref(x)
-        parts[sheets[name]] = add_protection(x).encode('utf-8')
+        parts[sheets[name]] = remove_protection(x).encode('utf-8')
 
     x = parts[sheets['বকেয়া']].decode('utf-8')
     x = fix_ranges(x)
@@ -354,6 +359,11 @@ def protect_file(src, dst=None):
     parts[sheets['নির্দেশনা']] = add_protection(x).encode('utf-8')
 
     parts['xl/styles.xml'] = st.dump().encode('utf-8')
+    for n in ('xl/sharedStrings.xml', sheets['নির্দেশনা']):
+        if n in parts:
+            parts[n] = re.sub(r'(<t\b[^>]*>)([^<]*)(</t>)',
+                              lambda m: m.group(1) + (_xe(NEW_APP_LINE) if unescape(m.group(2)) == OLD_APP_LINE else m.group(2)) + m.group(3),
+                              parts[n].decode('utf-8')).encode('utf-8')
 
     if dash_changed and '<calcPr' in wb and 'fullCalcOnLoad' not in re.search(r'<calcPr\b[^>]*>', wb).group(0):
         wb = re.sub(r'<calcPr\b', '<calcPr fullCalcOnLoad="1"', wb, count=1)  # বদলানো সূত্র খোলার সময় নতুন করে হিসাব
