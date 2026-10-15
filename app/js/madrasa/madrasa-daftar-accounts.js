@@ -3903,6 +3903,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     parsePayment: function (m, n) { return impParsePaymentSheet(m, n); },
     checkDues: function (rows) { return impCheckDues(rows); },
     normTxt: function (v) { return impNormTxt(v); },
+    resolveBook: function (v) { return impResolveBook(v); },
+    resolveQardKind: function (v) { return impResolveQardKind(v); },
     isReadOnly: function () { return isAccountsReadOnly(); },
     isExcelMode: function () { return isExcelMode(); },
     isAdminPage: function () { return isAdminAccountsPage(); },
