@@ -540,7 +540,7 @@
     setTimeout(function () { load(true); }, 4000);
   }
 
-  // হিসাব পাতার ছোট সারাংশ: গত মাসে সময়মতো %, চলতি মাসে কতজন দিয়েছে, একাধিক মাস বকেয়া
+  // হিসাব পাতার ছোট সারাংশ: চলতি মাসে কতজন দিয়েছে/দেয়নি ও আদায়; গত মাসে সময়মতো/দেরিতে/বকেয়া
   var _sumFetching = false, _sumAt = 0, _sumErr = '';
   function summary(onReady) {
     if (!S.data) {
@@ -564,22 +564,28 @@
     var list = students().filter(function (st) { return st.status === 'ok'; });
     var cur = now && opts[0].k === key(now.y, now.m) ? opts[0] : null;
     var prev = cur ? opts[1] : opts[0];
-    var out = { multi: 0 };
-    list.forEach(function (st) { if (dueSummary(st, now).dueMonths >= 2) out.multi++; });
+    var out = {};
     if (prev) {
-      var c = { ok: 0, n: 0 };
-      list.forEach(function (st) { var s = monthStatus(st, prev.y, prev.m, now).s; if (s === 'none') return; c.n++; if (s === 'ontime') c.ok++; });
-      out.prev = { label: monthName(prev.m), pct: c.n ? Math.round(c.ok * 100 / c.n) : 0 };
+      var c = { ontime: 0, late: 0, due: 0, total: 0 };
+      list.forEach(function (st) {
+        var s = monthStatus(st, prev.y, prev.m, now).s;
+        if (s === 'none') return;
+        c.total++;
+        if (s === 'ontime') c.ontime++; else if (s === 'late') c.late++; else c.due++;
+      });
+      c.label = monthName(prev.m) + ' ' + bn(prev.y);
+      out.prev = c;
     }
     if (cur) {
-      var d = { paid: 0, total: 0, unpaid: 0 };
+      var d = { paid: 0, total: 0, unpaid: 0, amount: 0 };
       list.forEach(function (st) {
-        var s = monthStatus(st, cur.y, cur.m, now).s;
-        if (s === 'none') return;
+        var ms = monthStatus(st, cur.y, cur.m, now);
+        if (ms.s === 'none') return;
         d.total++;
-        if (s === 'pending' || s === 'due') d.unpaid++; else d.paid++;
+        if (ms.s === 'pending' || ms.s === 'due') d.unpaid++; else { d.paid++; d.amount += ms.amount || 0; }
       });
-      out.cur = { label: monthName(cur.m), paid: d.paid, total: d.total, unpaid: d.unpaid };
+      d.label = monthName(cur.m) + ' ' + bn(cur.y);
+      out.cur = d;
     }
     return out;
   }

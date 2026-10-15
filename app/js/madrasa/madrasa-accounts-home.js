@@ -95,20 +95,28 @@
       '.acd-track{display:block;width:100%;min-width:60px;height:8px;border-radius:4px;background:var(--cream2);overflow:hidden;}' +
       '.acd-fill{display:block;height:100%;border-radius:4px;background:#c9973a;}' +
       '.acd-due{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}' +
-      '.acd-mrow{display:grid;grid-template-columns:92px minmax(0,1fr) 96px;gap:10px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--cream2);}' +
-      '.acd-mrow:last-child{border-bottom:none;}' +
-      '.acd-mname{font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-      '.acd-bars{display:flex;flex-direction:column;gap:3px;}' +
-      '.acd-bar{height:7px;border-radius:4px;min-width:2px;}' +
-      '.acd-bar.in{background:var(--acd-ok);}.acd-bar.out{background:var(--acd-bad);opacity:.85;}' +
-      '.acd-net{text-align:right;font-size:13px;font-weight:700;white-space:nowrap;}' +
-      '.acd-legend{display:flex;gap:12px;font-size:12px;color:var(--ink3);}' +
-      '.acd-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;}' +
+      '.acd-chips{display:flex;gap:4px;flex-wrap:wrap;}' +
+      '.acd-chip{font:inherit;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--acd-bd);background:#fff;color:var(--ink2);cursor:pointer;}' +
+      '.acd-chip.is-on{background:var(--acd-bad);border-color:var(--acd-bad);color:#fff;}' +
+      '.acd-crow{display:grid;grid-template-columns:22px minmax(0,1.4fr) minmax(50px,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--cream2);cursor:pointer;}' +
+      '.acd-crow:hover{background:var(--cream);}' +
+      '.acd-rank{width:22px;height:22px;border-radius:50%;background:var(--cream2);color:var(--ink3);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}' +
+      '.acd-cname{display:flex;flex-direction:column;min-width:0;}' +
+      '.acd-cname b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.acd-cname small,.acd-camt small{font-size:11.5px;color:var(--ink3);}' +
+      '.acd-camt{display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap;}' +
+      '.acd-camt b{color:var(--acd-bad);font-size:14px;}' +
+      '.acd-cfoot{padding:9px 14px;font-size:12.5px;color:var(--ink3);background:var(--cream);}' +
       '.acd-wz{display:flex;flex-direction:column;}' +
-      '.acd-wz-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 14px;}' +
-      '.acd-wz-it{border-radius:12px;padding:10px 12px;background:var(--cream);}' +
-      '.acd-wz-it b{display:block;font-family:var(--font-bn);font-size:22px;line-height:1.2;}' +
-      '.acd-wz-it span{font-size:12.5px;color:var(--ink3);}' +
+      '.acd-wz-months{display:grid;grid-template-columns:minmax(0,1fr);}' +
+      '.acd-wz-m{padding:10px 14px 12px;}' +
+      '.acd-wz-m+.acd-wz-m{border-top:1px solid var(--cream2);}' +
+      '.acd-wz-h{font-size:13px;font-weight:700;color:var(--ink2);margin-bottom:8px;}' +
+      '.acd-wz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}' +
+      '.acd-wz-it{border-radius:12px;padding:8px 10px;background:var(--cream);min-width:0;}' +
+      '.acd-wz-it b{display:block;font-family:var(--font-bn);font-size:20px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.acd-wz-it span{display:block;font-size:12.5px;color:var(--ink2);font-weight:600;}' +
+      '.acd-wz-it em{display:block;font-style:normal;font-size:11.5px;color:var(--ink3);}' +
       '.acd-wz-open{display:flex;align-items:center;justify-content:center;gap:4px;font:inherit;font-size:14px;font-weight:600;color:var(--acd-bad);' +
         'background:transparent;border:none;border-top:1px solid var(--cream2);padding:11px;cursor:pointer;width:100%;}' +
       '.acd-wz-open:hover{background:var(--cream);}' +
@@ -117,12 +125,14 @@
       '@container (min-width:860px){' +
         '.acd-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}' +
         '.acd-main>.acd-wz{grid-column:1/-1;}' +
-        '.acd-main>.acd-wz .acd-wz-grid{grid-template-columns:repeat(4,minmax(0,1fr));}' +
+        '.acd-main>.acd-wz .acd-wz-months{grid-template-columns:repeat(2,minmax(0,1fr));}' +
+        '.acd-main>.acd-wz .acd-wz-m+.acd-wz-m{border-top:none;border-left:1px solid var(--cream2);}' +
       '}' +
       '@container (min-width:1200px){' +
         '.acd-main{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr);}' +
         '.acd-main>.acd-wz{grid-column:auto;}' +
-        '.acd-main>.acd-wz .acd-wz-grid{grid-template-columns:repeat(2,minmax(0,1fr));}' +
+        '.acd-main>.acd-wz .acd-wz-months{grid-template-columns:minmax(0,1fr);}' +
+        '.acd-main>.acd-wz .acd-wz-m+.acd-wz-m{border-left:none;border-top:1px solid var(--cream2);}' +
       '}' +
       '@media (max-width:640px){' +
         '.acd-title{font-size:19px;}' +
@@ -135,16 +145,11 @@
         '.acd-tbl th,.acd-tbl td{padding:8px 8px;}' +
         '.acd-hide-sm{display:none;}' +
         '.acd-shell{padding:2px 10px 24px;}' +
-        '.acd-mrow{grid-template-columns:104px minmax(0,1fr) auto;gap:8px;padding:7px 10px;}' +
-        '.acd-net{font-size:12px;}' +
+        '.acd-crow{grid-template-columns:22px minmax(0,1fr) auto;padding:8px 10px;}' +
+        '.acd-cbar{display:none;}' +
+        '.acd-wz-it b{font-size:17px;}' +
       '}';
     document.head.appendChild(st);
-  }
-
-  function rowKey(r) {
-    var api = A();
-    var dk = String(r.dateKey || api.dateKey(r.hijriYear, r.month, r.day) || '');
-    return dk.slice(0, 7); // YYYY-MM
   }
 
   // সর্বশেষ এন্ট্রির তারিখ
@@ -194,33 +199,47 @@
       '</table></div></section>';
   }
 
-  // মাসভিত্তিক আয়-ব্যয় (করজ বাদে), শেষ ১২ মাস, নতুন আগে
-  function monthlyPanel(inc, exp) {
-    var api = A(), by = {};
-    function add(r, f) {
-      var k = rowKey(r);
-      if (!/^\d{4}-\d{2}$/.test(k) || k.slice(5) === '00') return;
-      var b = by[k] || (by[k] = { inc: 0, exp: 0 });
-      b[f] += num(r.amount);
-    }
-    inc.forEach(function (r) { if (r.account !== 'qard_return') add(r, 'inc'); });
-    exp.forEach(function (r) { if (r.account !== 'qard') add(r, 'exp'); });
-    var keys = Object.keys(by).sort().reverse().slice(0, 12);
-    if (!keys.length) return '';
-    var max = 1;
-    keys.forEach(function (k) { max = Math.max(max, by[k].inc, by[k].exp); });
-    var rows = keys.map(function (k) {
-      var b = by[k], net = b.inc - b.exp;
-      var name = api.monthFromNo(Number(k.slice(5))) + ' ' + bn(k.slice(0, 4));
-      return '<div class="acd-mrow" title="আয় ' + esc(taka(b.inc)) + ' · ব্যয় ' + esc(taka(b.exp)) + '">' +
-        '<span class="acd-mname">' + esc(name) + '</span>' +
-        '<span class="acd-bars"><span class="acd-bar in" style="width:' + Math.round(b.inc / max * 100) + '%"></span>' +
-        '<span class="acd-bar out" style="width:' + Math.round(b.exp / max * 100) + '%"></span></span>' +
-        '<span class="acd-net ' + (net < 0 ? 'acd-red' : 'acd-green') + '">' + (net < 0 ? '−' : '+') + taka(net) + '</span></div>';
+  // খাতভিত্তিক বড় ব্যয়: নির্বাচিত সময়ে কোন খাতে (হিসাব বিভাগসহ) সবচেয়ে বেশি খরচ
+  var PERIODS = [['cur', 'চলতি মাস'], ['prev', 'গত মাস'], ['year', 'এই শিক্ষাবর্ষ'], ['all', 'সব']];
+  var _period = 'year';
+  function inPeriod(r, t) {
+    var api = A();
+    if (_period === 'all') return true;
+    if (_period === 'year') return api.academicYearOf(r.hijriYear, r.month) === api.academicYearOf(t.year, t.month);
+    var y = t.year, m = t.monthNo;
+    if (_period === 'prev') { m -= 1; if (m < 1) { m = 12; y -= 1; } }
+    return Number(r.hijriYear) === y && api.monthNo(r.month) === m;
+  }
+  function topCatsPanel(exp) {
+    var api = A(), AL = api.ACCOUNT_LABELS, t = api.todayHijri();
+    var by = {}, total = 0;
+    exp.forEach(function (r) {
+      if (r.account === 'qard' || !inPeriod(r, t)) return;
+      var cat = api.clean(r.category, '') || 'খাত লেখা নেই';
+      var k = r.account + '|' + cat;
+      var g = by[k] || (by[k] = { acc: r.account, cat: cat, amt: 0, n: 0 });
+      g.amt += num(r.amount); g.n++;
+      total += num(r.amount);
+    });
+    var list = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.amt - a.amt; });
+    var top = list.slice(0, 10);
+    var max = top.length ? top[0].amt : 1;
+    var chips = '<div class="acd-chips">' + PERIODS.map(function (p) {
+      return '<button type="button" class="acd-chip' + (_period === p[0] ? ' is-on' : '') + '" onclick="MdrAccHome.setPeriod(\'' + p[0] + '\')">' + p[1] + '</button>';
+    }).join('') + '</div>';
+    var body = top.map(function (g, i) {
+      var pc = total ? Math.round(g.amt * 100 / total) : 0;
+      return '<div class="acd-crow" onclick="openAccAccountDetails(\'' + esc(g.acc) + '\')" title="' + esc(g.cat) + ' — ' + bn(g.n) + 'টি এন্ট্রি">' +
+        '<span class="acd-rank">' + bn(i + 1) + '</span>' +
+        '<span class="acd-cname"><b>' + esc(g.cat) + '</b><small>' + esc(AL[g.acc] || g.acc) + ' · ' + bn(g.n) + 'টি এন্ট্রি</small></span>' +
+        '<span class="acd-cbar"><span class="acd-track"><span class="acd-fill" style="width:' + Math.max(2, Math.round(g.amt / max * 100)) + '%"></span></span></span>' +
+        '<span class="acd-camt"><b>' + taka(g.amt) + '</b><small>' + bn(pc) + '%</small></span></div>';
     }).join('');
-    return '<section class="acd-box acd-panel"><div class="acd-ph"><h3>মাসভিত্তিক আয়-ব্যয়</h3>' +
-      '<span class="acd-legend"><span><i style="background:var(--acd-ok)"></i>আয়</span><span><i style="background:var(--acd-bad)"></i>ব্যয়</span><span>ডানে: মাসের ফল</span></span></div>' +
-      rows + '</section>';
+    var label = { cur: 'চলতি মাসে', prev: 'গত মাসে', year: 'এই শিক্ষাবর্ষে', all: 'সব মিলিয়ে' }[_period];
+    return '<section class="acd-box acd-panel"><div class="acd-ph"><h3>খাতভিত্তিক বড় ব্যয়</h3>' + chips + '</div>' +
+      (body || '<div class="acd-empty">' + esc(label) + ' কোনো ব্যয় নেই</div>') +
+      (list.length ? '<div class="acd-cfoot">' + esc(label) + ' মোট ব্যয় ' + taka(total) + (list.length > 10 ? ' · শীর্ষ ১০টি খাত দেখানো হলো (মোট ' + bn(list.length) + 'টি)' : '') + '</div>' : '') +
+      '</section>';
   }
 
   function wazifaPanel() {
@@ -231,13 +250,25 @@
     if (!sm) body = '<div class="acd-empty">ওজিফার তথ্য আনা হচ্ছে…</div>';
     else if (sm.error) body = '<div class="acd-empty">' + esc(sm.error) + '</div>';
     else {
-      var it = function (val, lbl, color) { return '<div class="acd-wz-it"><b style="color:' + color + '">' + val + '</b><span>' + lbl + '</span></div>'; };
-      body = '<div class="acd-wz-grid">' +
-        (sm.prev ? it(bn(sm.prev.pct) + '%', esc(sm.prev.label) + ' — সময়মতো', sm.prev.pct >= 70 ? 'var(--acd-ok)' : (sm.prev.pct >= 50 ? 'var(--acd-warn)' : 'var(--acd-bad)')) : '') +
-        (sm.cur ? it(bn(sm.cur.paid) + '/' + bn(sm.cur.total), esc(sm.cur.label) + ' — দিয়েছে', 'var(--ink)') : '') +
-        (sm.cur ? it(bn(sm.cur.unpaid), 'বর্তমান বকেয়া (জন)', 'var(--acd-bad)') : '') +
-        it(bn(sm.multi), 'একাধিক মাস বকেয়া (জন)', '#8f3f2a') +
-        '</div>';
+      var it = function (val, lbl, color, sub) {
+        return '<div class="acd-wz-it"><b style="color:' + color + '">' + val + '</b><span>' + lbl + '</span>' + (sub ? '<em>' + sub + '</em>' : '') + '</div>';
+      };
+      var pctOf = function (n, t) { return t ? bn(Math.round(n * 100 / t)) + '%' : ''; };
+      var cur = sm.cur
+        ? '<div class="acd-wz-m"><div class="acd-wz-h">চলতি মাস · ' + esc(sm.cur.label) + '</div><div class="acd-wz-grid">' +
+            it(bn(sm.cur.paid), 'দিয়েছে', 'var(--acd-ok)', pctOf(sm.cur.paid, sm.cur.total)) +
+            it(bn(sm.cur.unpaid), 'এখনো দেয়নি', 'var(--acd-bad)', pctOf(sm.cur.unpaid, sm.cur.total)) +
+            it(taka(sm.cur.amount), 'আদায় হয়েছে', 'var(--ink)', bn(sm.cur.total) + ' জনের মধ্যে') +
+          '</div></div>'
+        : '<div class="acd-wz-m"><div class="acd-wz-h">চলতি মাস</div><div class="acd-empty">চলতি মাসের তথ্য এখনো আসেনি</div></div>';
+      var prev = sm.prev
+        ? '<div class="acd-wz-m"><div class="acd-wz-h">গত মাস · ' + esc(sm.prev.label) + '</div><div class="acd-wz-grid">' +
+            it(bn(sm.prev.ontime), 'সময়মতো', 'var(--acd-ok)', pctOf(sm.prev.ontime, sm.prev.total)) +
+            it(bn(sm.prev.late), 'দেরিতে', 'var(--acd-warn)', pctOf(sm.prev.late, sm.prev.total)) +
+            it(bn(sm.prev.due), 'বকেয়া', 'var(--acd-bad)', pctOf(sm.prev.due, sm.prev.total)) +
+          '</div></div>'
+        : '';
+      body = '<div class="acd-wz-months">' + cur + prev + '</div>';
     }
     return '<section class="acd-box acd-panel acd-wz"><div class="acd-ph"><h3>ওজিফা</h3><small>ফি-সফটওয়্যার থেকে</small></div>' + body +
       '<button type="button" class="acd-wz-open" onclick="openWazifaReport()">পুরো ওজিফা রিপোর্ট ' + icon('chev', 15) + '</button></section>';
@@ -266,8 +297,11 @@
       '</div>';
     var note = '<div class="acd-note">' + icon('info', 14) + '<span>নগদ = আয় − ব্যয় − করজ দেওয়া + করজ আদায় · ঘরে চাপলে বিস্তারিত</span></div>';
     return '<div class="acd-shell">' + head + xl + cards + note +
-      '<div class="acd-main">' + ledgerPanel(s, inc, exp, dues) + monthlyPanel(inc, exp) + wazifaPanel() + '</div></div>';
+      '<div class="acd-main">' + ledgerPanel(s, inc, exp, dues) + topCatsPanel(exp) + wazifaPanel() + '</div></div>';
   }
 
-  global.MdrAccHome = { build: build };
+  global.MdrAccHome = {
+    build: build,
+    setPeriod: function (p) { _period = p; if (typeof global.renderAccounts === 'function') global.renderAccounts(); },
+  };
 })(typeof window !== 'undefined' ? window : this);
