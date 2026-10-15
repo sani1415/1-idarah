@@ -14,7 +14,7 @@
 
   var S = {
     data: null, loading: false, error: '', month: null, view: 'due',
-    dept: '', classId: '', q: '', sort: 'amount', limit: 40, polling: null, pollUntil: 0, root: null,
+    dept: '', classId: '', q: '', sort: 'amount', limit: 40, polling: null, pollUntil: 0, root: null, active: false,
   };
 
   /* ── ছোট সহায়ক ── */
@@ -150,8 +150,6 @@
       // পাতার .content ডেস্কটপ শেলে var(--desk-max)/১১০০–১২০০px-এ বাঁধা (বেশি জোরালো selector-এ) —
       // রিপোর্ট খোলা থাকলে পুরো চওড়া, যেন জুম আউট/বড় মনিটরে তিন কলাম আসে
       '.content:has(.wz-shell){max-width:none !important;}' +
-      // জিম্মাদারের হিসাব পাতার সাদা খোলস (admin-accounts-shell) রিপোর্টের পেছনে আলাদা বক্স না দেখাক
-      '.admin-accounts-shell:has(.wz-shell){background:none !important;border:none !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;}' +
       '.wz-shell{--wz-ok:#3f7a50;--wz-ok-bg:#e8f2e7;--wz-late:#b07a14;--wz-late-bg:#fbf0d6;--wz-due:#b5573a;--wz-due-bg:#fbe7df;' +
         '--wz-card:#fffdf9;--wz-bd:#ece3d2;padding:4px 0 28px;container-type:inline-size;color:var(--ink);}' +
       '.wz-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}' +
@@ -325,7 +323,7 @@
 
   function render() {
     var root = S.root;
-    if (!root || !root.isConnected) return;
+    if (!S.active || !root || !root.isConnected) return;
     ensureStyles();
     var head = function (withSync) {
       return '<div class="wz-top"><div class="wz-head"><h2 class="wz-title">ওজিফা — সময়মতো আদায়</h2>' + (withSync ? syncInfo() : '') + '</div>' +
@@ -527,7 +525,7 @@
     var sy = (S.data && S.data.sync) || {};
     var running = sy.started_at && !sy.finished_at && (Date.now() - new Date(sy.started_at).getTime() < 20 * 60000);
     var waiting = S.pollUntil > Date.now();
-    if (!(running || waiting) || !S.root || !S.root.isConnected) return;
+    if (!(running || waiting) || !S.active || !S.root || !S.root.isConnected) return;
     S.polling = setTimeout(function () { load(true); }, 15000);
   }
 
@@ -542,8 +540,54 @@
     setTimeout(function () { load(true); }, 4000);
   }
 
+  // হিসাব পাতার ছোট সারাংশ: গত মাসে সময়মতো %, চলতি মাসে কতজন দিয়েছে, একাধিক মাস বকেয়া
+  var _sumFetching = false, _sumAt = 0, _sumErr = '';
+  function summary(onReady) {
+    if (!S.data) {
+      if (_sumErr) return { error: _sumErr };
+      if (!_sumFetching && Date.now() - _sumAt > 60000) {
+        var a = actor();
+        if (!a || !global.MMSharedAPI || !global.MMSharedAPI.wazifaReport) return { error: 'লগইন তথ্য পাওয়া যায়নি' };
+        _sumFetching = true; _sumAt = Date.now();
+        global.MMSharedAPI.wazifaReport(a.id, a.pin).then(function (res) {
+          _sumFetching = false;
+          if (res && res.ok) S.data = res;
+          else _sumErr = res && res.error === 'not_allowed' ? 'শুধু জিম্মাদার ও দফতর দেখতে পারেন' : 'ওজিফার তথ্য আনা যায়নি';
+          if (onReady) onReady();
+        }, function () { _sumFetching = false; _sumErr = 'ওজিফার তথ্য আনা যায়নি'; if (onReady) onReady(); });
+      }
+      return null;
+    }
+    var now = nowHijri();
+    var opts = monthOptions(now);
+    if (!opts.length) return { error: 'ওজিফার তথ্য নেই' };
+    var list = students().filter(function (st) { return st.status === 'ok'; });
+    var cur = now && opts[0].k === key(now.y, now.m) ? opts[0] : null;
+    var prev = cur ? opts[1] : opts[0];
+    var out = { multi: 0 };
+    list.forEach(function (st) { if (dueSummary(st, now).dueMonths >= 2) out.multi++; });
+    if (prev) {
+      var c = { ok: 0, n: 0 };
+      list.forEach(function (st) { var s = monthStatus(st, prev.y, prev.m, now).s; if (s === 'none') return; c.n++; if (s === 'ontime') c.ok++; });
+      out.prev = { label: monthName(prev.m), pct: c.n ? Math.round(c.ok * 100 / c.n) : 0 };
+    }
+    if (cur) {
+      var d = { paid: 0, total: 0, unpaid: 0 };
+      list.forEach(function (st) {
+        var s = monthStatus(st, cur.y, cur.m, now).s;
+        if (s === 'none') return;
+        d.total++;
+        if (s === 'pending' || s === 'due') d.unpaid++; else d.paid++;
+      });
+      out.cur = { label: monthName(cur.m), paid: d.paid, total: d.total, unpaid: d.unpaid };
+    }
+    return out;
+  }
+
   var _searchT = null;
   global.MdrWazifaReport = {
+    summary: summary,
+    leave: function () { S.active = false; if (S.polling) { clearTimeout(S.polling); S.polling = null; } },
     load: function () { load(false); },
     refresh: refresh,
     set: function (k, v) {
@@ -571,6 +615,7 @@
   var _lastLoad = 0;
   global.renderWazifaReport = function (root) {
     S.root = root;
+    S.active = true;
     if (!S.data) { _lastLoad = Date.now(); load(false); return; }
     render();
     // হিসাব পাতা বারবার আঁকলেও এক মিনিটে একবারের বেশি নতুন করে আনা নয়

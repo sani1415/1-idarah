@@ -3948,6 +3948,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       if (typeof window.renderWazifaReport === 'function') { window.renderWazifaReport(root); return; }
       _tab = 'summary';
     }
+    /* ওজিফা রিপোর্ট থেকে বেরোলে তার পেছনের হালনাগাদ যেন এই পাতা মুছে না দেয় */
+    if (window.MdrWazifaReport && window.MdrWazifaReport.leave) window.MdrWazifaReport.leave();
     var adminPage = isAdminAccountsPage();
     var excelOn = isExcelMode();
     var actionBtns = '<button type="button" class="acc-report-top" onclick="openAccReportsPanel()">রিপোর্ট</button>' +
@@ -3963,6 +3965,17 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       topControls = '<div class="acc-add-btns acc-readonly">' + actionBtns + sheetBtn + impBtn + '</div>' + buildExcelModeCard(false);
     } else {
       topControls = '<div class="acc-add-btns has-month"><button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + actionBtns + sheetBtn + impBtn + '</div>';
+    }
+    /* প্রথম স্ক্রিন: নতুন ড্যাশবোর্ড (madrasa-accounts-home.js); না থাকলে পুরনো সারসংক্ষেপ */
+    if (_tab !== 'settings' && window.MdrAccHome && window.MdrAccHome.build) {
+      var tools = adminPage || excelOn
+        ? actionBtns + sheetBtn + (adminPage ? '' : impBtn)
+        : '<button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + actionBtns + sheetBtn + impBtn;
+      var homeHtml = '';
+      try {
+        homeHtml = window.MdrAccHome.build({ tools: tools, excelCard: adminPage || excelOn ? buildExcelModeCard(adminPage) : '', excelOn: excelOn });
+      } catch (err) { console.warn('[Accounts] home build failed', err); }
+      if (homeHtml) { root.innerHTML = homeHtml; return; }
     }
     root.innerHTML =
       '<div class="acc-shell">' +
