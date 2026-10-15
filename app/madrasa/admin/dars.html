@@ -12,25 +12,16 @@
 <link rel="stylesheet" href="../../css/mm-ui.css">
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
 <style>
-  .dars-lead { font-size:12px; color:var(--ink3); line-height:1.5; margin:0 0 12px; }
-  .dars-tabs { display:flex; gap:8px; margin-bottom:10px; }
-  .dars-tab { flex:1; padding:10px 6px; background:#fff; border:1.5px solid var(--cream3); border-radius:var(--radius-sm); text-align:center; cursor:pointer; font-size:12px; color:var(--ink3); }
-  .dars-tab.active { border-color:var(--sel-line); background:var(--sel-bg); color:var(--sel-fg); font-weight:600; }
-  .dars-class-select-wrap { margin:0 0 12px; }
-  .dars-class-select-label { display:block; font-size:11px; color:var(--ink3); margin-bottom:5px; }
-  .dars-book-btn { display:inline; border:0; background:none; padding:0; margin:0; font:inherit; font-family:'Tiro Bangla',serif; color:var(--ink); text-align:left; cursor:pointer; }
-  .dars-book-btn:hover { color:var(--gold); text-decoration:underline; }
-  .dars-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; border:1px solid rgba(26,18,8,.06); }
-  .dars-class-h { padding:10px 12px; background:var(--cream2); font-family:'Tiro Bangla',serif; font-size:14px; font-weight:700; color:var(--ink2); }
-  .dars-class-sub { font-size:10px; font-weight:500; color:var(--ink3); margin-top:2px; font-family:'Tiro Bangla',serif; }
-  .dars-book { padding:10px 12px; border-top:1px solid var(--cream2); }
-  .dars-book-t { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px; }
-  .dars-book-n { font-size:13px; font-family:'Tiro Bangla',serif; color:var(--ink); }
-  .dars-book-meta { font-size:10px; color:var(--ink3); }
-  .dars-pct { font-size:12px; font-weight:700; color:var(--green); }
-  .dars-bar { height:6px; background:var(--cream2); border-radius:3px; overflow:hidden; margin-top:6px; }
-  .dars-fill { height:100%; background:var(--green); border-radius:3px; transition:width .3s; }
-  .dars-empty { text-align:center; color:var(--ink3); padding:20px; font-size:12px; }
+  .dars-book-btn { display:inline; border:0; background:none; padding:0; margin:0; font:inherit; font-weight:700; color:var(--ink); text-align:left; cursor:pointer; }
+  .dars-book-btn:hover { color:var(--ui-accent); text-decoration:underline; }
+  .dars-book { padding:10px 14px; border-bottom:1px solid var(--cream2); }
+  .dars-book:last-child { border-bottom:none; }
+  .dars-book-t { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px; }
+  .dars-book-meta { font-size:12px; color:var(--ink3); margin-top:5px; }
+  .dars-book-meta .ui-badge { margin-left:4px; }
+  .dars-pct { font-size:15px; font-weight:800; }
+  .dars-empty { text-align:center; color:var(--ink3); padding:20px; font-size:13px; }
+  .dars-grid { margin-bottom: 12px; }
   .hist-row { padding:10px 0; border-bottom:1px solid var(--cream2); }
   .hist-row:last-child { border-bottom:none; }
   .hist-date { font-size:11px; color:var(--ink3); margin-bottom:3px; }
@@ -60,18 +51,15 @@
   </div>
 </div>
 
-<div class="content content-640">
-  <p class="dars-lead">উপরে <strong>বর্ষ</strong> বেছে নিন—নিচে ওই বর্ষের কিতাবের পড়া দেখাবে। বইয়ের নামে ক্লিক করলে হালনাগাদের বিস্তারিত ইতিহাস দেখা যাবে।</p>
-  <div class="dars-tabs">
-    <button type="button" class="dars-tab active" id="dtab-a" onclick="setDept('all')">সামগ্রিক</button>
-    <button type="button" class="dars-tab" id="dtab-k" onclick="setDept('kitab')">কিতাব বিভাগ</button>
-    <button type="button" class="dars-tab" id="dtab-m" onclick="setDept('maktab')">মক্তব বিভাগ</button>
+<div class="content ui-wide ui-cq">
+  <div class="ui-head"><div class="ui-head-l"><h2 class="ui-title">দরস — কিতাব পড়া</h2><span class="ui-sub" id="dars-sub">সব বর্ষ একসাথে · কিতাবে চাপলে হালনাগাদের ইতিহাস</span></div></div>
+  <div class="ui-stats" id="dars-stats"></div>
+  <div class="ui-box ui-tabs" id="dars-tabs">
+    <button type="button" class="ui-tab is-on" id="dtab-a" onclick="setDept('all')">সামগ্রিক</button>
+    <button type="button" class="ui-tab" id="dtab-k" onclick="setDept('kitab')">কিতাব বিভাগ</button>
+    <button type="button" class="ui-tab" id="dtab-m" onclick="setDept('maktab')">মক্তব বিভাগ</button>
   </div>
-  <div class="dars-class-select-wrap">
-    <label class="dars-class-select-label" for="dars-class-select">বর্ষ নির্বাচন করুন</label>
-    <select class="form-input form-select" id="dars-class-select" onchange="selectClass(this.value)" aria-label="বর্ষ নির্বাচন"></select>
-  </div>
-  <div id="dars-detail"></div>
+  <div id="dars-detail" class="ui-grid is-3 dars-grid"></div>
 </div>
 
 <div class="modal-bg" id="modal-dars-history">
@@ -112,6 +100,7 @@
 <script src="../../js/core/mm-session.js"></script>
 <script src="../../js/core/mm-shell.js"></script>
 <script src="../../js/madrasa/mdr-supabase-sync.js"></script>
+<script src="../../js/shared/mm-ui.js"></script>
 <script>
   if (!MMSession.requireAdminPerm('dars', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
   const toBn = n => String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
@@ -126,7 +115,9 @@
     if (dept !== 'all' && !MMSession.canUseMadrasaDept(dept)) dept = allowed[0] || 'kitab';
     if (dept === 'all' && allowed.length <= 1) dept = allowed[0] || 'kitab';
   })();
-  let selectedClassId = null;
+  let filter = '';   // '' | 'behind' | 'stale'
+  const STALE_DAYS = 7;
+  const BEHIND_GAP = 15;
 
   function sortClasses(list) {
     return [...list].sort((a, b) => {
@@ -150,27 +141,24 @@
     if (d === 'all' && allowed.length <= 1) return;
     if (d !== 'all' && !MMSession.canUseMadrasaDept(d)) return;
     dept = d;
-    document.getElementById('dtab-a').classList.toggle('active', d === 'all');
-    document.getElementById('dtab-k').classList.toggle('active', d === 'kitab');
-    document.getElementById('dtab-m').classList.toggle('active', d === 'maktab');
+    document.getElementById('dtab-a').classList.toggle('is-on', d === 'all');
+    document.getElementById('dtab-k').classList.toggle('is-on', d === 'kitab');
+    document.getElementById('dtab-m').classList.toggle('is-on', d === 'maktab');
     document.getElementById('dtab-a').style.display = allowed.length > 1 ? '' : 'none';
     document.getElementById('dtab-k').style.display = MMSession.canUseMadrasaDept('kitab') ? '' : 'none';
     document.getElementById('dtab-m').style.display = MMSession.canUseMadrasaDept('maktab') ? '' : 'none';
-    const cl = currentClasses();
-    const still = cl.some(c => c.id === selectedClassId);
-    if (!still) selectedClassId = cl[0] ? cl[0].id : null;
+    document.getElementById('dars-tabs').style.display = allowed.length > 1 ? '' : 'none';
     renderAll();
   }
 
-  function selectClass(cid) {
-    selectedClassId = cid;
-    renderClassSelect();
-    renderDetail();
+  function setFilter(f) {
+    filter = filter === f ? '' : f;
+    renderAll();
   }
 
   function fmtDate(iso) {
     if (!iso) return '—';
-    const p = iso.split('-');
+    const p = String(iso).slice(0, 10).split('-');
     if (p.length < 3) return API.esc(iso);
     return toBn(parseInt(p[2], 10)) + '/' + toBn(parseInt(p[1], 10)) + '/' + toBn(p[0]);
   }
@@ -188,72 +176,92 @@
     return m;
   }
 
-  function renderClassSelect() {
-    const classes = currentClasses();
-    const sel = document.getElementById('dars-class-select');
-    if (!classes.length) {
-      selectedClassId = null;
-      sel.innerHTML = '';
-      return;
-    }
-    if (!selectedClassId || !classes.some(c => c.id === selectedClassId)) selectedClassId = classes[0].id;
-    sel.innerHTML = classes.map(c => `<option value="${API.esc(c.id)}">${dept === 'all' ? API.esc(deptLabel(c.dept)) + ' — ' : ''}${API.esc(c.name)}</option>`).join('');
-    sel.value = selectedClassId;
-  }
-
   function jsArg(v) {
     return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   }
 
-  function renderDetail() {
-    const el = document.getElementById('dars-detail');
-    const classes = currentClasses();
-    const tm = teacherMap();
-    if (!classes.length) {
-      el.innerHTML = '<div class="dars-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
-      return;
-    }
-    const cls = classes.find(c => c.id === selectedClassId) || classes[0];
-    const books = API.KitabProgress.getByClass(cls.id);
-    const tName = tm[cls.id] || '—';
+  /** শিক্ষাবর্ষের কত ভাগ সময় গেছে (হিজরি বছর ≈ ৩৫৪ দিন); শুরু জানা না থাকলে null */
+  function elapsedPct() {
+    let start = null;
+    try {
+      const st = API.Settings && API.Settings.get ? API.Settings.get() : null;
+      if (st && st.session_start_date) start = String(st.session_start_date).slice(0, 10);
+    } catch (e) {}
+    try {
+      if (!start && API.Sessions && API.Sessions.getCurrent) {
+        const cur = API.Sessions.getCurrent();
+        if (cur && cur.start_date) start = String(cur.start_date).slice(0, 10);
+      }
+    } catch (e) {}
+    if (!start) return null;
+    const days = (new Date(API.today() + 'T12:00:00') - new Date(start + 'T12:00:00')) / 86400000;
+    if (!(days >= 0)) return null;
+    return Math.min(100, Math.round(days / 354 * 100));
+  }
 
-    if (!books.length) {
-      el.innerHTML = `<div class="dars-panel">
-        <div class="dars-class-h">${API.esc(cls.name)}<div class="dars-class-sub">${dept === 'all' ? deptLabel(cls.dept) + ' · ' : ''}শ্রেণি শিক্ষক: ${API.esc(tName)}</div></div>
-        <div class="dars-empty">এ বর্ষে কোনো কিতাব যোগ নেই। সেটিং বা বই তালিকা যাচাই করুন।</div>
-      </div>`;
-      return;
-    }
-    const rows = books.map(k => {
-      const total = k.total_pages != null ? Number(k.total_pages) : 0;
-      const done = Number(k.pages_done) || 0;
-      const pct = barPct(done, total);
-      const pctInt = Math.round(pct);
-      return `<div class="dars-book">
-        <div class="dars-book-t">
-          <div><div class="dars-book-n"><button type="button" class="dars-book-btn" onclick="openHistoryModal('${jsArg(k.id)}')">${API.esc(k.name || '—')}</button></div>
-            <div class="dars-book-meta">সর্বশেষ হালনাগাদ: ${fmtDate(k.last_updated)}</div></div>
-          <div class="dars-pct">${toBn(pctInt)}%</div>
-        </div>
-        <div class="dars-book-meta">পৃষ্ঠা: <strong style="color:var(--ink2);">${toBn(done)}</strong> / ${total ? toBn(total) : '—'}</div>
-        <div class="dars-bar" aria-hidden="true"><div class="dars-fill" style="width:${Math.min(100, pct)}%"></div></div>
-      </div>`;
-    }).join('');
+  function daysSince(iso) {
+    if (!iso) return Infinity;
+    return Math.floor((new Date(API.today() + 'T12:00:00') - new Date(String(iso).slice(0, 10) + 'T12:00:00')) / 86400000);
+  }
 
-    el.innerHTML = `<div class="dars-panel">
-      <div class="dars-class-h">${API.esc(cls.name)}<div class="dars-class-sub">${dept === 'all' ? deptLabel(cls.dept) + ' · ' : ''}শ্রেণি শিক্ষক: ${API.esc(tName)}</div></div>
-      ${rows}
-    </div>`;
+  function bookInfo(k, elapsed) {
+    const total = k.total_pages != null ? Number(k.total_pages) : 0;
+    const done = Number(k.pages_done) || 0;
+    const pct = barPct(done, total);
+    const behind = elapsed != null && total > 0 && pct < elapsed - BEHIND_GAP;
+    const gap = elapsed != null ? elapsed - pct : 0;
+    const tone = elapsed == null ? MMUI.pctTone(pct).replace('ui-', '') : (behind ? 'bad' : gap > 5 ? 'warn' : 'ok');
+    const stale = daysSince(k.last_updated) > STALE_DAYS && pct < 100;
+    return { k, total, done, pct, behind, stale, tone };
   }
 
   function renderAll() {
-    renderClassSelect();
-    renderDetail();
+    const el = document.getElementById('dars-detail');
+    const classes = currentClasses();
+    const tm = teacherMap();
+    const elapsed = elapsedPct();
+    const all = classes.map(cls => ({ cls, books: API.KitabProgress.getByClass(cls.id).map(k => bookInfo(k, elapsed)) }));
+    const books = all.flatMap(x => x.books);
+    const withTotal = books.filter(b => b.total > 0);
+    const avg = withTotal.length ? Math.round(withTotal.reduce((s0, b) => s0 + b.pct, 0) / withTotal.length) : 0;
+    const nBehind = books.filter(b => b.behind).length;
+    const nStale = books.filter(b => b.stale).length;
+
+    document.getElementById('dars-stats').innerHTML =
+      MMUI.stat({ tone: 'info', icon: 'book', label: 'মোট কিতাব', value: toBn(books.length) + 'টি', sub: toBn(classes.length) + 'টি বর্ষে' }) +
+      MMUI.stat({ tone: elapsed == null ? MMUI.pctTone(avg).replace('ui-', '') : (avg >= elapsed - 5 ? 'ok' : avg >= elapsed - BEHIND_GAP ? 'warn' : 'bad'), icon: 'check', label: 'গড় অগ্রগতি', value: toBn(avg) + '%',
+        sub: elapsed != null ? 'শিক্ষাবর্ষের ' + toBn(elapsed) + '% সময় গেছে' : '' }) +
+      MMUI.stat({ tone: nBehind ? 'bad' : 'ok', icon: 'alert', label: 'পিছিয়ে আছে', value: toBn(nBehind) + 'টি কিতাব',
+        sub: elapsed != null ? 'সময়ের চেয়ে ' + toBn(BEHIND_GAP) + '%+ কম' : 'শিক্ষাবর্ষ শুরু জানা নেই', on: filter === 'behind', onclick: elapsed != null ? "setFilter('behind')" : '' }) +
+      MMUI.stat({ tone: nStale ? 'warn' : 'ok', icon: 'clock', label: 'হালনাগাদ হয়নি', value: toBn(nStale) + 'টি', sub: toBn(STALE_DAYS) + ' দিনের বেশি', on: filter === 'stale', onclick: "setFilter('stale')" });
+
+    document.getElementById('dars-sub').textContent = filter === 'behind' ? 'শুধু পিছিয়ে থাকা কিতাব · আবার চাপলে সব'
+      : filter === 'stale' ? 'শুধু হালনাগাদ-না-হওয়া কিতাব · আবার চাপলে সব'
+      : 'সব বর্ষ একসাথে · কিতাবে চাপলে হালনাগাদের ইতিহাস';
+
+    if (!classes.length) {
+      el.innerHTML = '<div class="ui-box dars-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
+      return;
+    }
+    const panels = all.map(({ cls, books: bs }) => {
+      const shown = bs.filter(b => !filter || (filter === 'behind' ? b.behind : b.stale));
+      if (filter && !shown.length) return '';
+      const rows = shown.length ? shown.map(b => `<div class="dars-book">
+          <div class="dars-book-t"><button type="button" class="dars-book-btn" onclick="openHistoryModal('${jsArg(cls.id)}','${jsArg(b.k.id)}')">${API.esc(b.k.name || '—')}</button>
+            <span class="dars-pct ui-${b.tone}">${toBn(Math.round(b.pct))}%</span></div>
+          <span class="ui-track"><span class="ui-fill ui-${b.tone}" style="width:${Math.min(100, b.pct)}%"></span></span>
+          <div class="dars-book-meta">${toBn(b.done)} / ${b.total ? toBn(b.total) : '—'} পৃষ্ঠা · হালনাগাদ ${fmtDate(b.k.last_updated)}${b.stale ? '<span class="ui-badge is-warn">হালনাগাদ হয়নি</span>' : ''}${b.behind ? '<span class="ui-badge is-bad">পিছিয়ে</span>' : ''}</div>
+        </div>`).join('') : '<div class="dars-empty">এ বর্ষে কোনো কিতাব যোগ নেই।</div>';
+      return `<section class="ui-box ui-panel">
+        <div class="ui-ph"><h3>${API.esc(cls.name)}</h3><small>${dept === 'all' ? deptLabel(cls.dept) + ' · ' : ''}${API.esc(tm[cls.id] || '—')}</small></div>
+        ${rows}
+      </section>`;
+    }).join('');
+    el.innerHTML = panels || '<div class="ui-box dars-empty">এই বাছাইয়ে কোনো কিতাব নেই।</div>';
   }
 
-  function openHistoryModal(bookId) {
-    const cls = currentClasses().find(c => c.id === selectedClassId);
-    const book = (cls ? API.KitabProgress.getByClass(cls.id) : []).find(k => k.id === bookId);
+  function openHistoryModal(classId, bookId) {
+    const book = API.KitabProgress.getByClass(classId).find(k => k.id === bookId);
     if (!book) return;
     document.getElementById('hist-title').textContent = (book.name || 'কিতাব') + ' — হালনাগাদ ইতিহাস';
     const hist = Array.isArray(book.history) ? book.history : [];
@@ -266,7 +274,7 @@
         <div class="hist-main">${toBn(done)} পৃষ্ঠা${total ? ' / ' + toBn(total) : ''} · ${toBn(pct)}%</div>
         ${h.note ? `<div class="hist-note">${API.esc(h.note)}</div>` : ''}
       </div>`;
-    }).join('') : '<div class="dars-empty">এ বইয়ের কোনো হালনাগাদ ইতিহাস নেই।</div>';
+    }).join('') : '<div class="dars-empty">এ বইয়ের কোনো হালনাগাদ ইতিহাস নেই।</div>';
     document.getElementById('modal-dars-history').classList.add('open');
   }
 

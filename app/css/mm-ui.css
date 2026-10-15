@@ -17,7 +17,7 @@
 }
 
 /* পাতার .content ডেস্কটপে ১১০০–১২৪০px-এ বাঁধা — .ui-wide থাকলে পুরো চওড়া (জুম আউটে বেশি কলাম) */
-.content:has(.ui-wide) { max-width: none !important; }
+.content:has(.ui-wide), .content.ui-wide { max-width: none !important; }
 
 /* ── শিরোনাম ── */
 .ui-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
