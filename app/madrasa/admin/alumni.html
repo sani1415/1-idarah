@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/mm-ui.css">
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
 <style>
   .alumni-card { background:#fff; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:10px; cursor:pointer; transition:transform .12s; }
@@ -60,7 +61,7 @@
   .ov-empty { text-align:center; color:var(--ink3); padding:40px 0; font-size:13px; }
 </style>
 </head>
-<body>
+<body class="ui-skin">
 
 <div class="topbar">
   <div class="topbar-left">
@@ -74,13 +75,11 @@
 
 <div class="content">
   <div class="panel active" id="panel-home">
-    <div style="background:linear-gradient(135deg,#3d2e14,#6b5a3e);border-radius:var(--radius);padding:16px;color:#fff;margin:8px 0 14px;">
-      <div style="font-size:12px;opacity:.72;line-height:1.7;margin-bottom:12px;">পাস করা, মাঝপথে বিদায় নেওয়া এবং follow-up দরকার এমন পুরনো ছাত্রদের রেজিস্ট্রি। বর্তমান সক্রিয় ছাত্রদের তালিকা “মোট ছাত্র” কার্ড থেকে দেখা যাবে।</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="total-alumni">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">মোট পুরনো ছাত্র</div></div>
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="completed">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">সম্পন্ন</div></div>
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="this-month">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">এ মাসে যোগাযোগ</div></div>
-      </div>
+    <div class="ui-note">পাস করা, মাঝপথে বিদায় নেওয়া এবং follow-up দরকার এমন পুরনো ছাত্রদের রেজিস্ট্রি। বর্তমান সক্রিয় ছাত্রদের তালিকা “মোট ছাত্র” কার্ড থেকে দেখা যাবে।</div>
+    <div class="ui-stats is-3">
+      <div class="ui-stat is-info"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.2c2.4.1 4.1 1.7 4.7 4.3"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">মোট পুরনো ছাত্র</span><span class="ui-stat-val" id="total-alumni">—</span></span></div>
+      <div class="ui-stat is-ok"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.2 4.2L19 7"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">সম্পন্ন</span><span class="ui-stat-val" id="completed">—</span></span></div>
+      <div class="ui-stat is-warn"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H8l-4 4z"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">এ মাসে যোগাযোগ</span><span class="ui-stat-val" id="this-month">—</span></span></div>
     </div>
     <div class="filter-row" id="filter-row">
       <div class="filter-btn active" onclick="filterAlumni('সব',this)">সব</div>

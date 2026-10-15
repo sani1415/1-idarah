@@ -124,6 +124,47 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .exa-sep { border-top: 1px solid var(--ui-bd); }
 @media (max-width: 640px) { .exa-bar { display: none; } }
 
+/* ── সেতু: পুরনো style.css অংশ (stat-card, card, tab-btn …) — <body class="ui-skin"> হলে নতুন ধাঁচে ──
+   কম ব্যবহারের পাতায় (খেদমত, বিভাগ, সেটিংস, বর্ষ উন্নীতকরণ, পুরনো ছাত্র, লাইব্রেরি) markup না বদলে একই রূপ দেয়। */
+.ui-skin .stat-row, .ui-skin .stat-row-2 { gap: 10px; }
+.ui-skin .stat-card { position: relative; overflow: hidden; display: flex; flex-direction: column; text-align: left; padding: 11px 12px 11px 16px;
+  background: linear-gradient(135deg, var(--ui-info-bg), var(--ui-card) 70%); border: 1.5px solid var(--ui-bd); border-radius: 14px; box-shadow: 0 1px 2px rgba(42,35,24,.04); }
+.ui-skin .stat-card::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0; background: var(--ui-info); }
+.ui-skin .stat-card .stat-num { font-size: 22px; line-height: 1.2; color: var(--ui-info); }
+.ui-skin .stat-card .stat-label { order: -1; font-size: 12.5px; font-weight: 600; color: var(--ink2); margin: 0 0 2px; }
+.ui-skin .stat-card:nth-child(5n+2) { background: linear-gradient(135deg, var(--ui-ok-bg), var(--ui-card) 70%); }
+.ui-skin .stat-card:nth-child(5n+2)::before { background: var(--ui-ok); } .ui-skin .stat-card:nth-child(5n+2) .stat-num { color: var(--ui-ok); }
+.ui-skin .stat-card:nth-child(5n+3) { background: linear-gradient(135deg, var(--ui-warn-bg), var(--ui-card) 70%); }
+.ui-skin .stat-card:nth-child(5n+3)::before { background: var(--ui-warn); } .ui-skin .stat-card:nth-child(5n+3) .stat-num { color: var(--ui-warn); }
+.ui-skin .stat-card:nth-child(5n+4) { background: linear-gradient(135deg, var(--ui-bad-bg), var(--ui-card) 70%); }
+.ui-skin .stat-card:nth-child(5n+4)::before { background: var(--ui-bad); } .ui-skin .stat-card:nth-child(5n+4) .stat-num { color: var(--ui-bad); }
+.ui-skin .stat-card:nth-child(5n+5) { background: linear-gradient(135deg, #f6e3dc, var(--ui-card) 70%); }
+.ui-skin .stat-card:nth-child(5n+5)::before { background: var(--ui-deep); } .ui-skin .stat-card:nth-child(5n+5) .stat-num { color: var(--ui-deep); }
+.ui-skin .card, .ui-skin .card-static, .ui-skin .list-item { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 14px; box-shadow: var(--ui-shadow); }
+.ui-skin .card:hover, .ui-skin .list-item:hover { border-color: rgba(181,87,58,.35); }
+.ui-skin .tab-bar:not(.tab-bar-class) { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 14px; box-shadow: var(--ui-shadow); padding: 4px; gap: 4px; }
+.ui-skin .tab-bar:not(.tab-bar-class) .tab-btn { flex: 1 0 auto; border: none; background: transparent; border-radius: 10px; }
+.ui-skin .tab-btn { font-size: 14px; font-weight: 600; color: var(--ink2); padding: 7px 12px; }
+.ui-skin .tab-btn.active, .ui-skin .tab-bar:not(.tab-bar-class) .tab-btn.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; box-shadow: 0 4px 12px -6px rgba(181,87,58,.7); }
+.ui-skin .sec-title { font-size: 16px; }
+.ui-skin .add-btn { border-radius: 12px; }
+.ui-skin .form-input:focus { border-color: var(--ui-accent); box-shadow: 0 0 0 3px rgba(181,87,58,.12); }
+.ui-skin .list-name { font-size: 15px; font-weight: 700; }
+.ui-skin .list-sub { font-size: 12.5px; }
+.ui-skin .filter-btn, .ui-skin .source-chip { border-color: var(--ui-bd); background: #fff; color: var(--ink2); font-weight: 600; }
+.ui-skin .filter-btn.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
+.ui-skin .search-input, .ui-skin .cat-select { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 12px; font-size: 14px; }
+.ui-skin .search-input:focus, .ui-skin .cat-select:focus { border-color: var(--ui-accent); outline: none; box-shadow: 0 0 0 3px rgba(181,87,58,.12); }
+.ui-skin .lib-top-tab.active { color: var(--ui-accent); border-color: var(--ui-accent); }
+.ui-skin .step-dot.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
+.ui-skin .ui-stats { margin-bottom: 12px; }
+.ui-skin .tab-pills { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 14px; box-shadow: var(--ui-shadow); padding: 4px; gap: 4px; }
+.ui-skin .tab-pills .pill { border: none; background: transparent; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink2); }
+.ui-skin .tab-pills .pill.active { background: var(--ui-accent); color: #fff; box-shadow: 0 4px 12px -6px rgba(181,87,58,.7); }
+.ui-skin .settings-section { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 16px; box-shadow: var(--ui-shadow); }
+.ui-skin .settings-title { font-family: var(--font-bn); font-size: 16px; }
+.ui-skin .dept-settings-tab.active, .ui-skin .cls-ov-tab.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
+
 /* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */
 .ui-cq { container-type: inline-size; }
 .ui-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
