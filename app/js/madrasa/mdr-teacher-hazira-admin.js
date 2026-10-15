@@ -143,6 +143,25 @@
     }
   }
 
+  // রঙিন ঘর (mm-ui) — MMUI না থাকলে পুরনো ছোট ঘর
+  function statsHtml(items) {
+    var U = global.MMUI;
+    if (!U) {
+      return '<div class="hz-metrics">' + items.map(function (it) {
+        return '<div class="hz-metric"><b class="' + (it.cls || '') + '">' + it.value + '</b><span>' + esc(it.label) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    return '<div class="ui-stats hza-stats">' + items.map(function (it) {
+      return U.stat({ tone: it.tone, icon: it.icon, label: esc(it.label), value: it.value, sub: it.sub ? esc(it.sub) : '' });
+    }).join('') + '</div>';
+  }
+  function pctBar(ok, n) {
+    var pct = n ? Math.round(ok * 100 / n) : 0;
+    var tone = global.MMUI ? global.MMUI.pctTone(pct) : '';
+    return '<td class="hza-bar"><span class="ui-track"><span class="ui-fill ' + tone + '" style="width:' + pct + '%"></span></span></td>' +
+      '<td class="' + tone + '"><b>' + (n ? toBn(pct) + '%' : '—') + '</b></td>';
+  }
+
   function canFix(st) { return st === 'done' || st === 'auto' || st === 'missed'; }
 
   // ── আজকের বোর্ড ─────────────────────────────────────────────────────
@@ -215,25 +234,26 @@
         rows += slotRow(c, sl, st, false);
       });
       var sub = esc(c.lead_name || 'দায়িত্বশীল নেই') + (state.dept === 'all' && allowedDepts().length > 1 ? ' · ' + deptLabel(c.division_code) : '');
-      classHtml += '<div class="hz-class-h">' + esc(c.name) + '<span>' + sub + '</span></div>';
+      classHtml += '<section class="ui-box ui-panel hza-cls"><div class="ui-ph"><h3>' + esc(c.name) + '</h3><small>' + sub + '</small></div>';
       if (c.holiday) classHtml += '<div class="hz-empty">ছুটি — ' + esc(c.holiday) + '</div>';
       else if (!slots.length) classHtml += '<div class="hz-empty">নিজামে কোনো দরসে শিক্ষক বাছাই করা নেই</div>';
       else classHtml += rows;
+      classHtml += '</section>';
     });
 
-    html += '<div class="hz-metrics">' +
-      '<div class="hz-metric"><b>' + toBn(m.live) + '</b><span>এখন চলছে</span></div>' +
-      '<div class="hz-metric"><b class="hz-ok">' + toBn(m.ok) + '</b><span>সময়মতো শেষ</span></div>' +
-      '<div class="hz-metric"><b class="hz-warn">' + toBn(m.late) + '</b><span>দেরি</span></div>' +
-      '<div class="hz-metric"><b class="hz-bad">' + toBn(m.pending) + '</b><span>যাচাই বাকি</span></div>' +
-    '</div>';
+    html += statsHtml([
+      { tone: 'info', icon: 'clock', label: 'এখন চলছে', value: toBn(m.live), cls: '' },
+      { tone: 'ok', icon: 'check', label: 'সময়মতো শেষ', value: toBn(m.ok), cls: 'hz-ok' },
+      { tone: 'warn', icon: 'clock', label: 'দেরি', value: toBn(m.late), cls: 'hz-warn' },
+      { tone: 'bad', icon: 'alert', label: 'যাচাই বাকি', value: toBn(m.pending), cls: 'hz-bad', sub: m.pending ? 'নিচে সংশোধন করুন' : 'কিছু বাকি নেই' },
+    ]);
 
     if (pending.length) {
-      html += '<div class="hz-sec-h"><h3>যাচাই বাকি</h3><span>অটো-বন্ধ বা শুরু হয়নি — সময় ঠিক করে কারণ লিখুন</span></div>';
-      html += pending.map(function (p) { return slotRow(p.c, p.sl, p.st, true); }).join('');
+      html += '<section class="ui-box ui-panel hza-pending"><div class="ui-ph"><h3>যাচাই বাকি</h3><small>অটো-বন্ধ বা শুরু হয়নি — সময় ঠিক করে কারণ লিখুন</small></div>';
+      html += pending.map(function (p) { return slotRow(p.c, p.sl, p.st, true); }).join('') + '</section>';
     }
     html += '<div class="hz-sec-h"><h3>বর্ষভিত্তিক</h3><span>' + esc(H.dateLabel(b.date)) + '</span></div>';
-    html += classHtml || '<div class="hz-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
+    html += classHtml ? '<div class="ui-grid is-3">' + classHtml + '</div>' : '<div class="hz-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
     return html;
   }
 
@@ -372,17 +392,38 @@
     var sum = summarize(rows);
     html += '<div class="hz-sec-h"><h3>' + esc(H.shortDate(rep.from)) + ' – ' + esc(H.shortDate(rep.to)) + '</h3>' +
       '<span>' + (state.reportClass ? esc((classById(state.reportClass) || {}).name || '') : 'সব বর্ষ') + '</span></div>';
-    html += '<div class="hz-metrics">' +
-      '<div class="hz-metric"><b>' + toBn(sum.planned) + '</b><span>নির্ধারিত দরস</span></div>' +
-      '<div class="hz-metric"><b class="hz-ok">' + toBn(sum.ok) + '</b><span>সময়মতো</span></div>' +
-      '<div class="hz-metric"><b class="hz-warn">' + toBn(sum.late) + '</b><span>দেরি</span></div>' +
-      '<div class="hz-metric"><b class="hz-bad">' + toBn(sum.missed + sum.auto) + '</b><span>অনুপস্থিত / অটো</span></div>' +
-    '</div>';
+    var pctOf = function (n) { return sum.planned ? toBn(Math.round(n * 100 / sum.planned)) + '%' : ''; };
+    html += statsHtml([
+      { tone: 'info', icon: 'cal', label: 'নির্ধারিত দরস', value: toBn(sum.planned), sub: 'মোট সময় ' + H.mins(sum.minutes) },
+      { tone: 'ok', icon: 'check', label: 'সময়মতো', value: toBn(sum.ok), cls: 'hz-ok', sub: pctOf(sum.ok) },
+      { tone: 'warn', icon: 'clock', label: 'দেরি', value: toBn(sum.late), cls: 'hz-warn', sub: pctOf(sum.late) },
+      { tone: 'bad', icon: 'alert', label: 'অনুপস্থিত / অটো', value: toBn(sum.missed + sum.auto), cls: 'hz-bad', sub: pctOf(sum.missed + sum.auto) },
+    ]);
 
     if (!rows.length) {
       return html + '<div class="hz-empty">এই সময়ে কোনো হাজিরার রেকর্ড নেই। (কিয়স্ক প্রথম ব্যবহারের দিন থেকে হিসাব শুরু হয়।)</div>';
     }
-    return html + (state.reportMode === 'teacher' ? teacherTable(rows) : classTable(rows));
+    return html + (state.reportMode === 'teacher' ? teacherTable(rows) : classSummaryTable(rows) + classTable(rows));
+  }
+
+  // বর্ষভিত্তিক সারাংশ: প্রতি বর্ষে নির্ধারিত, সময়মতো, দেরি, অনুপস্থিত আর সময়মতো-হার
+  function classSummaryTable(rows) {
+    var map = {}, order = [];
+    rows.forEach(function (r) {
+      if (!r.sl || !counted(r.st)) return;
+      if (!map[r.c.id]) { map[r.c.id] = { name: r.c.name, rows: [] }; order.push(r.c.id); }
+      map[r.c.id].rows.push(r);
+    });
+    if (order.length < 2) return '';
+    var tot = summarize(rows);
+    var body = order.map(function (k) {
+      var s = summarize(map[k].rows);
+      return '<tr><td><b>' + esc(map[k].name) + '</b></td><td>' + toBn(s.planned) + '</td><td class="hz-ok">' + toBn(s.ok) + '</td>' +
+        '<td class="hz-warn">' + toBn(s.late) + '</td><td class="hz-bad">' + toBn(s.missed + s.auto) + '</td>' + pctBar(s.ok, s.planned) + '</tr>';
+    }).join('');
+    return '<section class="ui-box ui-panel hza-sum"><div class="ui-ph"><h3>বর্ষভিত্তিক সারাংশ</h3><small>সময়মতো-হার: ৭০%+ সবুজ, ৫০–৬৯ হলুদ, কম লাল</small></div>' +
+      '<div style="overflow-x:auto"><table class="ui-tbl"><thead><tr><th>বর্ষ</th><th>নির্ধারিত</th><th>সময়মতো</th><th>দেরি</th><th>অনুপস্থিত/অটো</th><th class="hza-bar"></th><th>হার</th></tr></thead>' +
+      '<tbody>' + body + '</tbody><tfoot><tr><td>মোট</td><td>' + toBn(tot.planned) + '</td><td>' + toBn(tot.ok) + '</td><td>' + toBn(tot.late) + '</td><td>' + toBn(tot.missed + tot.auto) + '</td>' + pctBar(tot.ok, tot.planned) + '</tr></tfoot></table></div></section>';
   }
 
   function classTable(rows) {
@@ -435,10 +476,11 @@
         '<td class="hz-bad">' + toBn(s.missed) + '</td>' +
         '<td class="hz-bad">' + toBn(s.auto) + '</td>' +
         '<td>' + esc(H.mins(s.minutes)) + '</td>' +
+        pctBar(s.ok, s.planned) +
       '</tr>';
     }).join('');
-    return '<div class="hz-tbl-wrap"><table class="hz-tbl"><thead><tr><th>শিক্ষক</th><th>নির্ধারিত</th><th>সময়মতো</th><th>দেরি</th><th>অনুপস্থিত</th><th>অটো-বন্ধ</th><th>মোট সময়</th></tr></thead><tbody>' +
-      (body || '<tr><td colspan="7" class="hz-muted">কোনো রেকর্ড নেই</td></tr>') + '</tbody></table></div>';
+    return '<div class="hz-tbl-wrap"><table class="hz-tbl"><thead><tr><th>শিক্ষক</th><th>নির্ধারিত</th><th>সময়মতো</th><th>দেরি</th><th>অনুপস্থিত</th><th>অটো-বন্ধ</th><th>মোট সময়</th><th class="hza-bar"></th><th>সময়মতো</th></tr></thead><tbody>' +
+      (body || '<tr><td colspan="9" class="hz-muted">কোনো রেকর্ড নেই</td></tr>') + '</tbody></table></div>';
   }
 
   // ── দরস শিক্ষক ─────────────────────────────────────────────────────

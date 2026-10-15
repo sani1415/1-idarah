@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="../../css/style.css">
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
 <link rel="stylesheet" href="../../css/teacher-hazira.css">
+<link rel="stylesheet" href="../../css/mm-ui.css">
 <style>
   .content { padding-bottom:var(--app-content-pad-bottom); }
   .hz-toolbar { display:flex; gap:8px; align-items:flex-end; margin-bottom:10px; flex-wrap:wrap; }
@@ -20,6 +21,36 @@
   @media (min-width: 960px) {
     html body .content { max-width: 1100px; }
   }
+  /* নতুন ধাঁচ (mm-ui.css-এর উপর) */
+  .hza .hz-tabs { background:var(--ui-card); border:1px solid var(--ui-bd); border-radius:14px; box-shadow:var(--ui-shadow); padding:4px; gap:4px; }
+  .hza .hz-tab { border:none; background:transparent; border-radius:10px; font-size:14px; font-weight:600; color:var(--ink2); padding:8px 12px; }
+  .hza .hz-tab.active { background:var(--ui-accent); color:#fff; box-shadow:0 4px 12px -6px rgba(181,87,58,.7); }
+  .hza .hz-filter { font-size:12.5px; font-weight:600; padding:5px 12px; color:var(--ink2); border-color:var(--ui-bd); }
+  .hza .hz-filter.is-on { background:var(--ui-accent); border-color:var(--ui-accent); color:#fff; }
+  .hza .hz-toolbar { background:var(--ui-card); border:1px solid var(--ui-bd); border-radius:14px; box-shadow:var(--ui-shadow); padding:10px 12px; }
+  .hza .hz-toolbar label { font-size:11.5px; font-weight:600; }
+  .hza .hz-toolbar > div { flex:0 1 240px; }
+  .hza .hz-toolbar .form-input { height:38px; padding:0 10px; font-size:14px; border-radius:10px; }
+  .hza .hz-sec-h { margin:16px 2px 8px; }
+  .hza .hz-sec-h h3 { font-size:16px; font-family:var(--font-bn); }
+  .hza .hz-sec-h span { font-size:12px; }
+  .hza .ui-panel .hz-row { box-shadow:none; border-radius:0; margin:0; border-bottom:1px solid var(--cream2); background:transparent; padding:10px 14px; }
+  .hza .ui-panel .hz-row:last-child { border-bottom:none; }
+  .hza .ui-panel .hz-row-main b { font-size:13.5px; }
+  .hza .ui-panel .hz-row-main span { font-size:12px; }
+  .hza .ui-panel .hz-row-st { font-size:12px; }
+  .hza .ui-panel .hz-empty { box-shadow:none; background:transparent; margin:0; }
+  .hza .hza-pending { margin-bottom:10px; border-color:rgba(181,87,58,.35); }
+  .hza .hza-sum { margin-bottom:10px; }
+  .hza .hza-bar { width:22%; min-width:80px; }
+  .hza .hz-tbl-wrap { border:1px solid var(--ui-bd); border-radius:14px; box-shadow:var(--ui-shadow); background:var(--ui-card); }
+  .hza .hz-tbl { font-size:12.5px; }
+  .hza .hz-tbl th { font-size:12px; background:var(--cream); }
+  .hza .hz-tbl td small { font-size:11px; }
+  .hza .hz-panel { border-radius:16px; border-color:var(--ui-bd); background:var(--ui-card); box-shadow:var(--ui-shadow); }
+  .hza .hz-empty { border:1px solid var(--ui-bd); box-shadow:none; background:var(--ui-card); }
+  @media (max-width:640px) { .hza .hz-head .ui-title { display:none; } .hza .hza-bar { display:none; } }
+  @media print { .hza .ui-stats { break-inside:avoid; } }
 </style>
 </head>
 <body>
@@ -34,6 +65,8 @@
 </div>
 
 <div class="content content-760">
+  <div class="hza ui-wide ui-cq">
+  <div class="ui-head hz-head hz-no-print"><div class="ui-head-l"><h2 class="ui-title">শিক্ষক হাজিরা</h2><span class="ui-sub">দরস কিয়স্কের হিসাব</span></div></div>
   <div class="hz-tabs" role="tablist">
     <button type="button" class="hz-tab active" data-tab="today" role="tab">আজ</button>
     <button type="button" class="hz-tab" data-tab="report" role="tab">রিপোর্ট</button>
@@ -42,6 +75,7 @@
   </div>
   <div class="hz-filters" id="hz-dept-filters"></div>
   <div id="hz-panel"><div class="hz-empty">লোড হচ্ছে…</div></div>
+  </div>
 </div>
 
 <div class="hz-sheet-bg" id="hz-sheet" role="dialog" aria-modal="true">
@@ -82,6 +116,7 @@
   if (!MMSession.requireAdminPerm('teacher_hazira', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
 </script>
 <script src="../../js/madrasa/mdr-teacher-hazira-core.js"></script>
+<script src="../../js/shared/mm-ui.js"></script>
 <script src="../../js/madrasa/mdr-teacher-hazira-admin.js"></script>
 <script src="../../js/shared/admin-nav.js"></script>
 </body>
