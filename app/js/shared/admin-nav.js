@@ -109,9 +109,11 @@
     if (!pill || !btn || !btn.getClientRects().length) return;
     var nr = pill.parentElement.getBoundingClientRect();
     var br = btn.getBoundingClientRect();
-    pill.style.transform = 'translate3d(' + (br.left - nr.left) + 'px,' + (br.top - nr.top) + 'px,0)';
-    pill.style.width  = br.width             + 'px';
-    pill.style.height = br.height            + 'px';
+    /* «বড় লেখা» (html-এ CSS zoom) থাকলে মাপ zoom-সহ আসে — style-এ বসানোর আগে ভাগ করে নাও */
+    var z = pill.currentCSSZoom || parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+    pill.style.transform = 'translate3d(' + (br.left - nr.left) / z + 'px,' + (br.top - nr.top) / z + 'px,0)';
+    pill.style.width  = br.width / z  + 'px';
+    pill.style.height = br.height / z + 'px';
   }
 
   /* permission-check শেষ হওয়ার পরে run করতে rAF ব্যবহার */

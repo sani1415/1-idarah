@@ -1,5 +1,10 @@
 'use strict';
 /* global MdrAccAPI, renderAccountsReports, openModal, closeModal, showToast */
+/* «বড় লেখা» (html-এ CSS zoom) থাকলে মাপ zoom ছাড়া আসে — fixed প্যানেল বসাতে zoom দিয়ে ভাগ */
+function _zf() { var d = document.documentElement; return d.currentCSSZoom || parseFloat(getComputedStyle(d).zoom) || 1; }
+function _zr(el) { var r = el.getBoundingClientRect(), z = _zf(); return { left: r.left / z, top: r.top / z, right: r.right / z, bottom: r.bottom / z, width: r.width / z, height: r.height / z }; }
+function _zw() { return window.innerWidth / _zf(); }
+function _zh() { return window.innerHeight / _zf(); }
 
 /* ── global state (settable from inline onclick) ── */
 var _tab      = 'summary';
@@ -997,14 +1002,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '</div>';
     var trigger = _mainFilterDropdownTrigger;
     if (trigger) {
-      var rect = trigger.getBoundingClientRect();
+      var rect = _zr(trigger);
       var panelEl = el.querySelector('.acc-dd-panel');
-      var dw = window.innerWidth >= 520 ? 360 : (window.innerWidth - 12);
+      var dw = _zw() >= 520 ? 360 : (_zw() - 12);
       panelEl.style.position = 'fixed';
-      panelEl.style.top = Math.min(rect.bottom + 4, window.innerHeight - 20) + 'px';
-      panelEl.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - dw - 4)) + 'px';
+      panelEl.style.top = Math.min(rect.bottom + 4, _zh() - 20) + 'px';
+      panelEl.style.left = Math.max(4, Math.min(rect.left, _zw() - dw - 4)) + 'px';
       panelEl.style.width = dw + 'px';
-      panelEl.style.maxHeight = Math.min(560, window.innerHeight - rect.bottom - 24) + 'px';
+      panelEl.style.maxHeight = Math.min(560, _zh() - rect.bottom - 24) + 'px';
       panelEl.style.overflowY = 'auto';
     }
     document.body.appendChild(el);
@@ -2071,14 +2076,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<div class="acc-filter-bar" style="margin:2px 12px 6px;position:sticky;top:0;z-index:2;background:#fffaf1;padding:6px 0;border-radius:10px"><button type="button" class="acc-btn acc-btn-inc" onclick="closeAccFilterDropdown();renderAccAccountDetails(_detailAccount)" style="border-radius:10px;flex:2">প্রয়োগ করুন</button><button type="button" class="acc-date-clear" onclick="clearAccDetailFilters();closeAccFilterDropdown()" style="flex:1">রিসেট</button></div>' +
       sectionsHtml +
       '</div>';
-    var rect = triggerEl.getBoundingClientRect();
+    var rect = _zr(triggerEl);
     var panelEl = el.querySelector('.acc-dd-panel');
-    var dw = window.innerWidth >= 520 ? 360 : (window.innerWidth - 12);
+    var dw = _zw() >= 520 ? 360 : (_zw() - 12);
     panelEl.style.position = 'fixed';
-    panelEl.style.top = Math.min(rect.bottom + 4, window.innerHeight - 20) + 'px';
-    panelEl.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - dw - 4)) + 'px';
+    panelEl.style.top = Math.min(rect.bottom + 4, _zh() - 20) + 'px';
+    panelEl.style.left = Math.max(4, Math.min(rect.left, _zw() - dw - 4)) + 'px';
     panelEl.style.width = dw + 'px';
-    panelEl.style.maxHeight = Math.min(480, window.innerHeight - rect.bottom - 24) + 'px';
+    panelEl.style.maxHeight = Math.min(480, _zh() - rect.bottom - 24) + 'px';
     panelEl.style.overflowY = 'auto';
     document.body.appendChild(el);
   };
@@ -2234,13 +2239,13 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<button type="button" class="col-flt-link" onclick="deselectAllColFlt(\'' + _sq(colKey) + '\')">সব বাতিল</button></div>' +
       '<div class="col-flt-options">' + itemsHtml + '<div class="col-flt-empty" hidden>কোনো অপশন মেলেনি</div></div>' +
       '</div>';
-    var rect = triggerEl.getBoundingClientRect();
+    var rect = _zr(triggerEl);
     document.body.appendChild(el);
-    var panelRect = el.getBoundingClientRect();
+    var panelRect = _zr(el);
     var top = rect.bottom + 4;
-    if (top + panelRect.height > window.innerHeight - 8) top = Math.max(8, rect.top - panelRect.height - 4);
+    if (top + panelRect.height > _zh() - 8) top = Math.max(8, rect.top - panelRect.height - 4);
     el.style.top = top + 'px';
-    el.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - panelRect.width - 8)) + 'px';
+    el.style.left = Math.max(8, Math.min(rect.left, _zw() - panelRect.width - 8)) + 'px';
     document.addEventListener('click', _closeColFltHandler);
     if (optionQuery) window.filterColFltOptions(optionQuery);
   };
@@ -2508,13 +2513,13 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       '<div class="acc-dd-section-list">' + itemsHtml + '</div></div>' +
       '<div class="acc-filter-bar" style="margin:4px 12px 12px"><button type="button" class="acc-btn acc-btn-inc" onclick="closeDuesFilterDropdown();renderAccMetricModal()" style="border-radius:10px;flex:2">প্রয়োগ করুন</button><button type="button" class="acc-date-clear" onclick="_dueAccFs=[];closeDuesFilterDropdown();renderAccMetricModal()" style="flex:1">রিসেট</button></div>' +
       '</div>';
-    var rect = triggerEl.getBoundingClientRect();
+    var rect = _zr(triggerEl);
     var panelEl = el.querySelector('.acc-dd-panel');
     panelEl.style.position = 'fixed';
-    panelEl.style.top = Math.min(rect.bottom + 4, window.innerHeight - 20) + 'px';
-    panelEl.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+    panelEl.style.top = Math.min(rect.bottom + 4, _zh() - 20) + 'px';
+    panelEl.style.left = Math.max(4, Math.min(rect.left, _zw() - 300)) + 'px';
     panelEl.style.width = '260px';
-    panelEl.style.maxHeight = Math.min(380, window.innerHeight - rect.bottom - 24) + 'px';
+    panelEl.style.maxHeight = Math.min(380, _zh() - rect.bottom - 24) + 'px';
     panelEl.style.overflowY = 'auto';
     document.body.appendChild(el);
   };

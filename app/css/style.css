@@ -1602,3 +1602,11 @@ html.mm-leaving body > :where(:not(.main-nav, .bottom-nav, #mm-app-load-screen))
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ── বড় লেখা (app/js/core/mm-textsize.js) — ব্রাউজার-জুমের মতো পুরো পাতা বড় হয় ── */
+html.mm-text-lg { zoom: 1.12; }
+html.mm-text-xl { zoom: 1.24; }
+.mm-ts-btn span { font-family: 'Tiro Bangla', serif; font-size: 17px; font-weight: 700; line-height: 1; }
+.mm-ts-btn[data-level="1"] span { font-size: 20px; }
+.mm-ts-btn[data-level="2"] span { font-size: 23px; }
+.mm-ts-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 10060; background: rgba(42,35,24,.88); color: #fff; padding: 8px 16px; border-radius: 999px; font-size: 14px; }

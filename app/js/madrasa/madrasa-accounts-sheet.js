@@ -1,5 +1,10 @@
 'use strict';
 /* global MdrAccAPI, MdrAccSheetCore, showToast */
+/* «বড় লেখা» (html-এ CSS zoom) থাকলে মাপ zoom ছাড়া আসে — fixed প্যানেল বসাতে zoom দিয়ে ভাগ */
+function _zf() { var d = document.documentElement; return d.currentCSSZoom || parseFloat(getComputedStyle(d).zoom) || 1; }
+function _zr(el) { var r = el.getBoundingClientRect(), z = _zf(); return { left: r.left / z, top: r.top / z, right: r.right / z, bottom: r.bottom / z, width: r.width / z, height: r.height / z }; }
+function _zw() { return window.innerWidth / _zf(); }
+function _zh() { return window.innerHeight / _zf(); }
 
 /*
  * হিসাব ▦ শীট — Excel-এর মতো ঘর-ঘর করে হিসাব লেখা (দফতরের টেমপ্লেটের একই কলাম)।
@@ -774,11 +779,11 @@
     dd.innerHTML = S.dd.items.map(function (x, k) {
       return '<div class="accg-dd-it' + (k === S.dd.hi ? ' is-hi' : '') + '" data-k="' + k + '">' + esc(x) + '</div>';
     }).join('');
-    var rc = el.getBoundingClientRect();
+    var rc = _zr(el);
     dd.style.left = Math.round(rc.left) + 'px';
     dd.style.minWidth = Math.max(140, Math.round(rc.width)) + 'px';
-    var below = window.innerHeight - rc.bottom;
-    if (below < 180 && rc.top > below) { dd.style.top = ''; dd.style.bottom = Math.round(window.innerHeight - rc.top + 2) + 'px'; }
+    var below = _zh() - rc.bottom;
+    if (below < 180 && rc.top > below) { dd.style.top = ''; dd.style.bottom = Math.round(_zh() - rc.top + 2) + 'px'; }
     else { dd.style.bottom = ''; dd.style.top = Math.round(rc.bottom + 2) + 'px'; }
     dd.hidden = false;
     var hiEl = dd.querySelector('.is-hi');
