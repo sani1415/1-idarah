@@ -562,8 +562,13 @@ body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-deta
 body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:normal;overflow-wrap:anywhere}
 @media (max-width:700px){body #modal-account-details.acc-qard-detail-open{padding:12px 0 0;align-items:flex-end}body #modal-account-details.acc-qard-detail-open .modal{width:100vw;height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);border-radius:24px 24px 0 0;border-bottom:0;padding:16px 14px}body #modal-account-details.acc-qard-detail-open .acc-table-wrap--qard .acc-detail-table{min-width:640px;table-layout:auto}}
 /* ── Excel import (.xlsx upload) ── */
-.acc-add-btns.has-month{grid-template-columns:repeat(2,minmax(0,1fr))}
-@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.acc-add-btns.has-month{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (min-width:700px){.acc-add-btns.has-month{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.acc-add-btns.acc-readonly{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+.acc-xl-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 4px 10px;padding:10px 12px;border-radius:12px;background:var(--blue-light,#e8f1f7);border:1px solid rgba(47,107,147,.25);color:var(--ink2);font-size:12.5px;line-height:1.6}
+.acc-xl-banner.is-off{background:var(--cream,#faf6ee);border-color:var(--cream2)}
+.acc-xl-banner b{color:var(--ink)}
+.acc-xl-toggle{flex-shrink:0;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--cream2);background:#fff;color:var(--ink);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}
 #modal-account-import .modal{width:min(980px,calc(100vw - 24px));max-width:980px;max-height:calc(100vh - 24px);overflow:auto;padding:22px 20px 26px;box-sizing:border-box}
 .acc-imp-help{background:rgba(154,106,33,.07);border:1px solid rgba(154,106,33,.14);border-radius:12px;padding:10px 12px;font-size:11px;color:var(--ink3);line-height:1.7;margin-bottom:12px}
 .acc-imp-help b{color:var(--ink2)}
@@ -1139,7 +1144,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   /* ══════════════ OPEN MODAL (new + edit) ══════════════ */
   window.openAccModal = function (type, entryId, opts) {
     opts = opts || {};
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     resetAccEntryAccountChrome();
     refreshAccDatalists();
     _editEntryId   = entryId || null;
@@ -1227,7 +1232,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.toggleQardGiveInline = function (forceClose) {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     if (_detailAccount !== 'qard') return;
     if (forceClose === true) _qardGiveInlineOpen = false;
     else _qardGiveInlineOpen = !_qardGiveInlineOpen;
@@ -1239,7 +1244,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.saveQardGiveInline = async function () {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     try {
       var parsed = A.parseDateInput((document.getElementById('acc-qard-inline-date') || {}).value);
       if (!parsed || !parsed.year || !parsed.month || !parsed.day) { showToast('তারিখ লিখুন: সন-মাস-দিন'); return; }
@@ -2538,7 +2543,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         (isDef ? '' : '<button class="acc-del-btn" onclick="delAccCategory(\'' + esc(c) + '\')">✕</button>') + '</div>';
     }).join('');
     var pinBlock = '';
-    if (!isAccountsReadOnly() && typeof MMSession !== 'undefined' && MMSession.getStaffUserId()) {
+    if (!isAdminAccountsPage() && typeof MMSession !== 'undefined' && MMSession.getStaffUserId()) {
       pinBlock = '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--cream2)">' +
         '<div style="font-weight:700;font-size:14px;margin-bottom:10px">PIN পরিবর্তন</div>' +
         '<form onsubmit="event.preventDefault();saveOwnPin()">' +
@@ -2592,8 +2597,18 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       /\/admin\/accounts\.html$/i.test((typeof location !== 'undefined' && location.pathname) || '');
   }
 
+  /* Excel মোড: হিসাব শুধু Excel আপলোডে বদলায়; অ্যাপে যোগ/এডিট/মোছা বন্ধ (সার্ভারও আটকায়) */
+  function isExcelMode() {
+    return !!(A.excelMode && A.excelMode());
+  }
+
   function isAccountsReadOnly() {
-    return isAdminAccountsPage();
+    return isAdminAccountsPage() || isExcelMode();
+  }
+
+  function accLockMsg(adminMsg) {
+    if (isAdminAccountsPage()) return adminMsg;
+    return 'হিসাব এখন Excel মোডে — যোগ/বদল শুধু Excel আপলোডে হয়';
   }
 
   function entryAgeHours(entry) {
@@ -3648,7 +3663,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   }
 
   window.openAccImportModal = function () {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না'); return; }
+    if (isAdminAccountsPage()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না')); return; }
     if (typeof XLSX === 'undefined') { showToast('Excel লাইব্রেরি লোড হয়নি — পেজ রিফ্রেশ করে আবার চেষ্টা করুন'); return; }
     _impParsed = null;
     _impFileName = '';
@@ -3675,7 +3690,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.delAccImpRemoved = async function (table, id) {
-    await window.delAccEntry(table === 'income' ? 'income' : 'expense', id);
+    await window.delAccEntry(table === 'income' ? 'income' : 'expense', id, { fromImport: true });
     var pv = document.getElementById('acc-imp-preview');
     if (pv) pv.innerHTML = buildImpPreview();
   };
@@ -3735,7 +3750,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   window.saveAccImport = async function () {
     if (_impBusy) return;
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না'); return; }
+    if (isAdminAccountsPage()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি যোগ করা যায় না')); return; }
     var okExpense = (_impParsed && _impParsed.expense || []).filter(impIsSaveRow);
     var okIncome = (_impParsed && _impParsed.income || []).filter(impIsSaveRow);
     var okQardG = (_impParsed && _impParsed.qardGive || []).filter(impIsSaveRow);
@@ -3793,6 +3808,67 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     }
   };
 
+  /* ══════════════ EXCEL মোড (জিম্মাদারের সুইচ) ══════════════ */
+  function buildExcelModeCard(isAdmin) {
+    var on = isExcelMode();
+    if (!isAdmin) {
+      return '<div class="acc-xl-banner"><div><b>Excel মোড চালু</b> — হিসাব এখন শুধু দফতরের Excel ফাইল আপলোডে যোগ ও বদল হয়। ' +
+        'অ্যাপে সরাসরি আয়/ব্যয়/পরিশোধ লেখা বন্ধ রাখা হয়েছে, যাতে একই হিসাব দুই জায়গায় না হয়। চালু/বন্ধ করেন জিম্মাদার।</div></div>';
+    }
+    return '<div class="acc-xl-banner' + (on ? '' : ' is-off') + '">' +
+      '<div><b>হিসাব লেখার পদ্ধতি: ' + (on ? 'Excel মোড চালু' : 'অ্যাপে সরাসরি') + '</b><br>' +
+      (on ? 'দফতর শুধু Excel আপলোডে হিসাব দেয়; অ্যাপে আয়/ব্যয়/পরিশোধ যোগ-বদল বন্ধ।'
+          : 'দফতর অ্যাপে (ফর্ম বা ▦ শীট) হিসাব লেখে; Excel আপলোডও চলে — একই হিসাব দুই জায়গায় যেন না লেখা হয়।') +
+      '</div><button type="button" class="acc-xl-toggle" onclick="setAccExcelMode(' + (on ? 'false' : 'true') + ')">' +
+      (on ? 'Excel মোড বন্ধ করুন' : 'Excel মোড চালু করুন') + '</button></div>';
+  }
+
+  window.setAccExcelMode = async function (on) {
+    if (!isAdminAccountsPage()) return;
+    var q = on
+      ? 'Excel মোড চালু করবেন? এরপর দফতর অ্যাপে সরাসরি হিসাব লিখতে পারবে না, শুধু Excel আপলোড চলবে।'
+      : 'Excel মোড বন্ধ করবেন? এরপর দফতর অ্যাপে সরাসরি (ফর্ম ও ▦ শীট) হিসাব লিখতে পারবে।\n\nমনে রাখবেন: যেদিন থেকে অ্যাপে লেখা শুরু, সেদিন থেকে Excel-এ আর লেখা যাবে না।';
+    if (!confirm(q)) return;
+    try {
+      var now = await A.setExcelMode(on);
+      showToast(now ? 'Excel মোড চালু হয়েছে ✓' : 'Excel মোড বন্ধ — এখন অ্যাপে সরাসরি লেখা যাবে ✓');
+    } catch (err) {
+      console.warn('[Accounts] excel mode set failed', err);
+      showToast(String(err && err.message) === 'not_allowed' ? 'শুধু মূল জিম্মাদার এটি বদলাতে পারেন' : 'বদলানো যায়নি — আবার চেষ্টা করুন');
+    }
+    window.renderAccounts();
+  };
+
+  window.openAccSheet = function () {
+    if (typeof window.renderAccSheet !== 'function') return;
+    _metricModalKind = '';
+    _settingsModalOpen = false;
+    _tab = 'sheet';
+    window.renderAccounts();
+    try { window.scrollTo({ top: 0 }); } catch (e) {}
+  };
+
+  window.closeAccGrid = function () {
+    _tab = 'summary';
+    window.renderAccounts();
+  };
+
+  /* অ্যাপের ▦ শীট (madrasa-accounts-sheet.js) Excel আপলোডের একই পার্সার ও যাচাই ব্যবহার করে */
+  window.MdrAccSheetCore = {
+    parseExpense: function (m, n) { return impParseExpenseSheet(m, n); },
+    parseIncome: function (m, n) { return impParseIncomeSheet(m, n); },
+    parseQard: function (m, n) { return impParseQardSheet(m, n); },
+    parsePayment: function (m, n) { return impParsePaymentSheet(m, n); },
+    checkDues: function (rows) { return impCheckDues(rows); },
+    normTxt: function (v) { return impNormTxt(v); },
+    isReadOnly: function () { return isAccountsReadOnly(); },
+    isExcelMode: function () { return isExcelMode(); },
+    isAdminPage: function () { return isAdminAccountsPage(); },
+    isAdminSession: function () { return isAdminSession(); },
+    entryAgeHours: function (e) { return entryAgeHours(e); },
+    lockMsg: function () { return accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); },
+  };
+
   /* ══════════════ MAIN RENDER ══════════════ */
   window.renderAccounts = function () {
     A.ensureSeed();
@@ -3809,12 +3885,25 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       }
       return;
     }
-    var readOnly = isAccountsReadOnly();
+    if (_tab === 'sheet') {
+      if (typeof window.renderAccSheet === 'function') window.renderAccSheet(root);
+      else { _tab = 'summary'; }
+      if (_tab === 'sheet') return;
+    }
+    var adminPage = isAdminAccountsPage();
+    var excelOn = isExcelMode();
     var actionBtns = '<button type="button" class="acc-report-top" onclick="openAccReportsPanel()">রিপোর্ট</button>';
-    var topControls = readOnly
-      ? '<div class="acc-add-btns acc-readonly">' + actionBtns + '</div>'
-      : '<div class="acc-add-btns has-month"><button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + actionBtns +
-        '<button type="button" class="acc-report-top acc-imp-open" onclick="openAccImportModal()">এক্সেল ↧</button></div>';
+    var sheetBtn = typeof window.renderAccSheet === 'function'
+      ? '<button type="button" class="acc-report-top acc-sheet-open" onclick="openAccSheet()" title="Excel-এর মতো শীটে হিসাব">▦ শীট</button>' : '';
+    var impBtn = '<button type="button" class="acc-report-top acc-imp-open" onclick="openAccImportModal()">এক্সেল ↧</button>';
+    var topControls;
+    if (adminPage) {
+      topControls = '<div class="acc-add-btns acc-readonly">' + actionBtns + sheetBtn + '</div>' + buildExcelModeCard(true);
+    } else if (excelOn) {
+      topControls = '<div class="acc-add-btns acc-readonly">' + actionBtns + sheetBtn + impBtn + '</div>' + buildExcelModeCard(false);
+    } else {
+      topControls = '<div class="acc-add-btns has-month"><button class="acc-btn acc-btn-inc" onclick="openAccModal(\'income\')">＋ আয়</button><button class="acc-btn acc-btn-exp" onclick="openAccModal(\'expense\')">＋ ব্যয়</button>' + actionBtns + sheetBtn + impBtn + '</div>';
+    }
     root.innerHTML =
       '<div class="acc-shell">' +
       topControls +
@@ -3825,11 +3914,13 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   /* ══════════════ HELPERS ══════════════ */
-  window.delAccEntry = async function (type, id) {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); return; }
+  window.delAccEntry = async function (type, id, opts) {
+    /* Excel থেকে আসা যে সারি ফাইলে আর নেই — Excel মোডেও আপলোডের «ফাইলে নেই» তালিকা থেকে মোছা যায় */
+    var fromImport = !!(opts && opts.fromImport) && !isAdminAccountsPage() && /^xl-/.test(String(id || ''));
+    if (isAccountsReadOnly() && !fromImport) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     var entry = type === 'income' ? A.Income.getById(id) : A.Expense.getById(id);
     if (!entry) { showToast('এন্ট্রি পাওয়া যায়নি'); return; }
-    if (!isAdminSession() && entryAgeHours(entry) > 24) {
+    if (!fromImport && !isAdminSession() && entryAgeHours(entry) > 24) {
       var reason = prompt('২৪ ঘণ্টার বেশি পুরনো এন্ট্রি মুছতে জিম্মাদারের অনুমতি লাগবে। কারণ লিখুন:');
       if (!reason || !reason.trim()) return;
       if (await requestEntryChange('delete', type, entry, reason.trim())) showToast('সংশোধন অনুরোধ বার্তায় পাঠানো হয়েছে');
@@ -3840,9 +3931,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     try {
       if (type === 'expense') {
         var sup = A.clean(entry.supplier, '');
-        var wasCredit = entry.paymentMethod !== 'cash';
-        if (sup && wasCredit) await A.Dues.cancelPurchase(sup, entry.account, A.num(entry.amount));
-        await A.Expense.del(id);
+        var wasCredit = entry.paymentMethod === 'due';
+        var delRes = await A.Expense.del(id);
+        /* নতুন সার্ভার মোছার সাথেই বাকি কমায়; পুরনো সার্ভারে আলাদা করে কমাতে হয় */
+        if (sup && wasCredit && entry.account !== 'qard' && !(delRes && delRes.dues_adjusted)) {
+          await A.Dues.cancelPurchase(sup, entry.account, A.num(entry.amount));
+        }
       } else {
         await A.Income.del(id);
       }
@@ -3857,14 +3951,14 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   };
 
   window.editAccEntry = async function (type, id) {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, এন্ট্রি বদলানো যায় না')); return; }
     var entry = type === 'income' ? A.Income.getById(id) : A.Expense.getById(id);
     if (!entry) { showToast('এন্ট্রি পাওয়া যায়নি'); return; }
     window.openAccModal(type, id);
   };
 
   window.payDue = async function (dueId) {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে হিসাব দেখা যায়, পরিশোধ এন্ট্রি করা যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে হিসাব দেখা যায়, পরিশোধ এন্ট্রি করা যায় না')); return; }
     var amtStr = prompt('পরিশোধের পরিমাণ (টাকা):');
     var amt = parseFloat(amtStr);
     if (!amt || amt <= 0) return;
@@ -3897,7 +3991,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 
   /* ↩ আদায় — ইনপুট থেকে সংরক্ষণ */
   window.confirmQardPay = async function (bucketKey) {
-    if (isAccountsReadOnly()) { showToast('এডমিন পেইজে আদায় নথিভুক্ত করা যায় না'); return; }
+    if (isAccountsReadOnly()) { showToast(accLockMsg('এডমিন পেইজে আদায় নথিভুক্ত করা যায় না')); return; }
     var amtEl = document.getElementById('qpay-expand-amt');
     var amt = parseFloat(amtEl ? amtEl.value : 0);
     if (!amt || amt <= 0) { showToast('সঠিক পরিমাণ লিখুন'); if (amtEl) amtEl.focus(); return; }

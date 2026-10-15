@@ -111,6 +111,10 @@ const MMSharedAPI = (() => {
     adminDutyPauseClear(actorId, pin, id) {
       return rpc('mdr_rel_admin_duty_pause_clear', { p_actor_id: actorId || null, p_pin: pin, p_id: id });
     },
+    /* হিসাবের Excel মোড চালু/বন্ধ (শুধু মূল জিম্মাদার) */
+    adminAccountsExcelModeSet(actorId, pin, on) {
+      return rpc('mdr_rel_admin_accounts_excel_mode_set', { p_actor_id: actorId || null, p_pin: pin, p_on: !!on });
+    },
     teacherDutyPauseStatus(actorId, pin) {
       return rpc('mdr_rel_teacher_duty_pause_status', { p_actor_id: actorId, p_pin: pin });
     },

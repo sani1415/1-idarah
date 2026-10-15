@@ -8,6 +8,7 @@ const MdrAccAPI = (() => {
   const DUE_KEY = 'mdr_acc_due';
   const DUE_PAY_KEY = 'mdr_acc_due_pay';
   const CAT_KEY = 'mdr_acc_cats';
+  const XL_MODE_KEY = 'mdr_acc_excel_mode';
   const CACHE_VERSION = 'accounts-db-v2-20260614';
 
   /* MONTHS in academic-year order (Ramadan = start) */
@@ -275,6 +276,7 @@ const MdrAccAPI = (() => {
       supplier: typeof p.supplier === 'string' ? normText(p.supplier) : p.supplier,
     })) : []);
     store(CAT_KEY, Array.isArray(res.categories) ? res.categories.map((c) => normText(String(c))) : []);
+    try { localStorage.setItem(XL_MODE_KEY, res.excel_mode ? '1' : '0'); } catch (e) {}
     localStorage.setItem(SV_KEY, CACHE_VERSION + '-' + Date.now());
   }
 
@@ -287,7 +289,7 @@ const MdrAccAPI = (() => {
   }
 
   function clearLocalCache() {
-    [SV_KEY, INC_KEY, EXP_KEY, DUE_KEY, DUE_PAY_KEY, CAT_KEY].forEach(function (k) {
+    [SV_KEY, INC_KEY, EXP_KEY, DUE_KEY, DUE_PAY_KEY, CAT_KEY, XL_MODE_KEY].forEach(function (k) {
       try { localStorage.removeItem(k); } catch (e) {}
     });
   }
@@ -304,7 +306,24 @@ const MdrAccAPI = (() => {
     return true;
   }
 
+  /* Excel মোড: দফতরের হিসাব শুধু Excel আপলোডে বদলায় (সার্ভারও আটকায়) */
+  function excelMode() {
+    try { return localStorage.getItem(XL_MODE_KEY) === '1'; } catch (e) { return false; }
+  }
+
+  async function setExcelMode(on) {
+    if (!remoteReady()) throw new Error('server_connection_required');
+    const ra = remoteActor();
+    const res = await MMSharedAPI.adminAccountsExcelModeSet(ra.id, ra.pin, !!on);
+    if (!res || !res.ok) throw new Error((res && res.error) || 'excel_mode_set_failed');
+    try { localStorage.setItem(XL_MODE_KEY, res.excel_mode ? '1' : '0'); } catch (e) {}
+    return !!res.excel_mode;
+  }
+
   async function remoteRefreshAfter(res) {
+    if (res && res.error === 'excel_mode') {
+      try { localStorage.setItem(XL_MODE_KEY, '1'); } catch (e) {}
+    }
     if (!res || !res.ok) throw new Error((res && res.error) || 'accounts_save_failed');
     await bootstrapRemote({ force: true });
     return res;
@@ -401,7 +420,7 @@ const MdrAccAPI = (() => {
       await remoteCall((ra) => MMSharedAPI.upsertAccountIncome(ra.id, ra.pin, e));
       return e;
     },
-    async del(id)     { store(INC_KEY, load(INC_KEY).filter(x => x.id !== id)); await remoteCall((ra) => MMSharedAPI.deleteAccountEntry(ra.id, ra.pin, 'income', id)); },
+    async del(id)     { store(INC_KEY, load(INC_KEY).filter(x => x.id !== id)); return remoteCall((ra) => MMSharedAPI.deleteAccountEntry(ra.id, ra.pin, 'income', id)); },
     months()          { return [...new Set(load(INC_KEY).map(x => monthKey(x.month)).filter(Boolean))]; },
   };
 
@@ -433,7 +452,8 @@ const MdrAccAPI = (() => {
       await remoteCall((ra) => MMSharedAPI.upsertAccountExpense(ra.id, ra.pin, e));
       return e;
     },
-    async del(id)       { store(EXP_KEY, load(EXP_KEY).filter(x => x.id !== id)); await remoteCall((ra) => MMSharedAPI.deleteAccountEntry(ra.id, ra.pin, 'expense', id)); },
+    /* সার্ভার নতুন সংস্করণে বাকিও কমায় — ফলাফলে dues_adjusted: true */
+    async del(id)       { store(EXP_KEY, load(EXP_KEY).filter(x => x.id !== id)); return remoteCall((ra) => MMSharedAPI.deleteAccountEntry(ra.id, ra.pin, 'expense', id)); },
     itemNames()         { const nm = new Set(); load(EXP_KEY).forEach(x => { if (x.description && num(x.quantity) > 0) nm.add(normText(x.description)); }); return [...nm].sort((a,b) => a.localeCompare(b,'bn')); },
     months()            { return [...new Set(load(EXP_KEY).map(x => monthKey(x.month)).filter(Boolean))]; },
     categories()        { return [...new Set(load(EXP_KEY).map(x => normText(x.category)).filter(Boolean))]; },
@@ -573,7 +593,7 @@ const MdrAccAPI = (() => {
     }
   }
 
-  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, importBatch, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
+  return { ensureSeed, bootstrapRemote, isLocalCacheWarm, clearLocalCache, remoteReady, importBatch, excelMode, setExcelMode, Income, Expense, Dues, Summary, Categories, Settings, MONTHS, HIJRI_MONTHS, ACCOUNT_LABELS, esc, bn, fa, pct, count, clean, monthKey, monthFromNo, monthNo, dateKey, dateLabel, parseDateInput, toDateKey, inRange, num, todayHijri, gregorianISOToHijri };
 })();
 
 if (typeof window !== 'undefined') {
