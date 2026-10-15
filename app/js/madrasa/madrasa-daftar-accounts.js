@@ -3890,6 +3890,16 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     try { window.scrollTo({ top: 0 }); } catch (e) {}
   };
 
+  /* ওজিফা রিপোর্ট (madrasa-wazifa-report.js) — হিসাব পাতার ভেতরেই, ▦ শীটের মতো */
+  window.openWazifaReport = function () {
+    if (typeof window.renderWazifaReport !== 'function') return;
+    _metricModalKind = '';
+    _settingsModalOpen = false;
+    _tab = 'wazifa';
+    window.renderAccounts();
+    try { window.scrollTo({ top: 0 }); } catch (e) {}
+  };
+
   window.closeAccGrid = function () {
     _tab = 'summary';
     window.renderAccounts();
@@ -3934,9 +3944,15 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       else { _tab = 'summary'; }
       if (_tab === 'sheet') return;
     }
+    if (_tab === 'wazifa') {
+      if (typeof window.renderWazifaReport === 'function') { window.renderWazifaReport(root); return; }
+      _tab = 'summary';
+    }
     var adminPage = isAdminAccountsPage();
     var excelOn = isExcelMode();
-    var actionBtns = '<button type="button" class="acc-report-top" onclick="openAccReportsPanel()">রিপোর্ট</button>';
+    var actionBtns = '<button type="button" class="acc-report-top" onclick="openAccReportsPanel()">রিপোর্ট</button>' +
+      (typeof window.renderWazifaReport === 'function'
+        ? '<button type="button" class="acc-report-top" onclick="openWazifaReport()" title="কে সময়মতো ওজিফা দিচ্ছে">ওজিফা</button>' : '');
     var sheetBtn = typeof window.renderAccSheet === 'function'
       ? '<button type="button" class="acc-report-top acc-sheet-open" onclick="openAccSheet()" title="Excel-এর মতো শীটে হিসাব">▦ শীট</button>' : '';
     var impBtn = '<button type="button" class="acc-report-top acc-imp-open" onclick="openAccImportModal()">এক্সেল ↧</button>';

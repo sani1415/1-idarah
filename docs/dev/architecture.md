@@ -14,7 +14,7 @@
 | Auth | app-level লগইন আইডি + ৪ অঙ্কের PIN, যা RPC যাচাই করে। session রাখে `app/js/core/mm-session.js` |
 | Hosting | Vercel static (`public/`) + একটি serverless function (`api/admin-assistant.js`) |
 | Push | Web Push (VAPID), Supabase Edge Function `supabase/functions/send-admin-push/` |
-| বাইরের API | ছাত্রের মাসিক ফি: Edge Function `supabase/functions/mdr-student-fee/` — চাবি শুধু secret `WAZIFA_API_KEY`-এ; অনুমতি `mdr_rel_student_fee_access` (service_role-only) দিয়ে, ব্রাউজারে চাবি যায় না |
+| বাইরের API | ছাত্রের ওজিফা (মাসিক ফি): Edge Function `mdr-student-fee` (একজন) ও `mdr-wazifa-sync` (সবাই → `mdr_wazifa_snapshot`, RLS deny-all) — চাবি শুধু secret `WAZIFA_API_KEY`-এ, ব্রাউজারে যায় না; অনুমতি service_role-only RPC দিয়ে। সিঙ্ক চালায় `pg_cron` (রাত ২:৩০) ও `pg_net` (vault secret `mdr_notify_webhook_secret`); ফি-সফটওয়্যার মিনিটে ~৫০ অনুরোধের বেশি নিলে 429 দেয়, তাই সিঙ্ক এক-এক করে |
 | PWA | service worker + install prompt (`mm-install.js`), auto update check (`app-update.js`)। Capacitor/Android সরানো হয়েছে |
 
 React/Vue/Next বা bundler যোগ করা হবে না, যদি না স্পষ্টভাবে সিদ্ধান্ত হয়।

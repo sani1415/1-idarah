@@ -15,7 +15,7 @@
 | মাদরাসা — staff UI | `app/madrasa/madrasa-*.html` | `app/js/madrasa/madrasa-*.js`, `mdr-*.js` |
 | মাদরাসা — জিম্মাদার UI | `app/madrasa/admin/*.html` | `app/js/madrasa/mdr-*.js` |
 | দফতর হাজিরা + বাকি-হাজিরা lock | `madrasa-daftar.html` | `app/js/pages/madrasa-daftar.js` + `mdr-daftar-attendance-gate.js` |
-| দফতর হিসাব / Excel import / ▦ শীট / Excel মোড | `madrasa-daftar.html`, `madrasa/admin/accounts.html` | `madrasa-daftar-accounts.js`, `madrasa-accounts-sheet.js` (Excel-এর মতো শীট; import-এর পার্সার `MdrAccSheetCore` দিয়ে), `madrasa-accounts-api.js`, `madrasa-accounts-reports.js`; টেমপ্লেট: `scripts/make-hisab-excel-template.py` → `scripts/hisab_excel_protect.py` (নির্দেশনা/বকেয়া/ড্যাশবোর্ড সুরক্ষা; ডাটার শীট খোলা) → `app/madrasa/templates/daftar-hisab-template-v2.xlsx` |
+| দফতর হিসাব / Excel import / ▦ শীট / Excel মোড / ওজিফা রিপোর্ট | `madrasa-daftar.html`, `madrasa/admin/accounts.html` | `madrasa-daftar-accounts.js`, `madrasa-accounts-sheet.js` (Excel-এর মতো শীট; import-এর পার্সার `MdrAccSheetCore` দিয়ে), `madrasa-wazifa-report.js` (ওজিফা রিপোর্ট; RPC `mdr_rel_wazifa_report`), `madrasa-accounts-api.js`, `madrasa-accounts-reports.js`; টেমপ্লেট: `scripts/make-hisab-excel-template.py` → `scripts/hisab_excel_protect.py` (নির্দেশনা/বকেয়া/ড্যাশবোর্ড সুরক্ষা; ডাটার শীট খোলা) → `app/madrasa/templates/daftar-hisab-template-v2.xlsx` |
 | কর্মসূচি | `madrasa-kormosuchi.html`, `madrasa/admin/kormosuchi.html` | `madrasa-kormosuchi.js` |
 | খাদিমিন, দফতর হোম প্যানেল | `madrasa-home.html` | `mdr-home-panels.js`, `mdr-khadimin-supabase.js`, `mdr-daftar-notes.js` |
 | দস্তরখান | `madrasa-home.html` | `mdr-dastarkhan.js` |
@@ -24,7 +24,7 @@
 | নিজাম (রুটিন) | `madrasa-class.html`, `madrasa/admin/schedule.html` | `mdr-class-routine.js` |
 | শিক্ষক হাজিরা (দরস কিয়স্ক) | `madrasa-teacher-hazira.html` (কিয়স্ক), `madrasa/admin/teacher-hazira.html`; হোম কার্ড `#hz-home-card` আছে `madrasa-class.html`-এ; CSS `app/css/teacher-hazira.css` | `mdr-teacher-hazira-{core,kiosk,card,admin}.js`; RPC `mdr_rel_dars_*` → `20260930120000_mdr_teacher_hazira.sql` |
 | পরীক্ষা | `madrasa-class-exams.html`, `madrasa-exams.html`, `madrasa/admin/exams.html` | `mdr-exams-supabase.js`, `madrasa-exams-analytics.js` |
-| ছাত্রের বিবরণ modal, ছবি, ডকুমেন্ট, মাসিক ফি | (সব পেজে shared) | `app/js/shared/mm-student-modal.js`, `mm-student-documents.js`, `mm-student-fee.js` (ফি-সফটওয়্যার → `supabase/functions/mdr-student-fee/`) |
+| ছাত্রের বিবরণ modal, ছবি, ডকুমেন্ট, মাসিক ফি | (সব পেজে shared) | `app/js/shared/mm-student-modal.js`, `mm-student-documents.js`, `mm-student-fee.js` («ওজিফা» ট্যাব; ফি-সফটওয়্যার → `supabase/functions/mdr-student-fee/`) |
 | শিক্ষকের বিবরণ modal | (shared) | `app/js/shared/mm-teacher-modal.js` |
 | পুরনো ছাত্র | `madrasa-alumni.html`, `madrasa/admin/alumni.html` | `app/js/shared/alumni-integration.js` |
 | বর্ষ উন্নীতকরণ | `madrasa-yearend.html` | (page inline) + `mdr-daftar-supabase.js` |
@@ -53,6 +53,7 @@
 | `supabase/migrations/` | DB migration, **একমাত্র** source |
 | `supabase/functions/send-admin-push/` | Web Push Edge Function |
 | `supabase/functions/mdr-student-fee/` | বাইরের ফি-সফটওয়্যার থেকে ছাত্রের মাসিক ফি (চাবি secret `WAZIFA_API_KEY`) |
+| `supabase/functions/mdr-wazifa-sync/` | সব ছাত্রের ওজিফা এনে `mdr_wazifa_snapshot`-এ (রাতে pg_cron, «হালনাগাদ» বোতাম); দুটো function-এর মিল `supabase/functions/_shared/wazifa.ts` |
 | `api/` | Vercel serverless function (AI সহকারী) |
 | `build.js`, `vercel.json` | build ও deploy |
 | `scripts/` | এককালীন data/debug script |

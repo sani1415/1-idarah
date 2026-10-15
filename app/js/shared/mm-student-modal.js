@@ -854,7 +854,7 @@
     }
   }
 
-  /* মাসিক ফি: শুধু জিম্মাদার ও দফতর (সার্ভারও আলাদা করে যাচাই করে) */
+  /* ওজিফা (মাসিক ফি): শুধু জিম্মাদার ও দফতর (সার্ভারও আলাদা করে যাচাই করে) */
   function feeTabAllowed() {
     var S = global.MMSession;
     return !!(S && ((S.isAdmin && S.isAdmin()) || (S.getRole && S.getRole() === 'daftar')));
@@ -1070,34 +1070,6 @@
 
     var attPanel = buildAttendancePanel(API, sid);
 
-    var feeRows = API.Fees.getByClass(s.class_id);
-    var wajPanel;
-    if (!feeRows || !feeRows.length) {
-      wajPanel =
-        '<div class="st-empty">এই বর্ষের জন্য কোনো ওয়াযিফা সারসংক্ষেপ পাওয়া যায়নি।<br><span class="st-note" style="display:inline-block;margin-top:6px">সারসংক্ষেপ বর্ষভিত্তিক; এটি দেখাতে বর্ষে অন্তত এক মাসের এন্টি থাকতে হবে।</span></div>';
-    } else {
-      wajPanel = feeRows
-        .map(function (f) {
-          var unpaid = f.unpaid != null ? f.unpaid : f.total - f.paid;
-          return (
-            '<div class="st-fee-line"><div class="st-fee-mo">' +
-            API.esc(f.month) +
-            '</div>' +
-            '<div>মোট <strong>' +
-            toBn(f.total) +
-            '</strong> · আদায় <strong style="color:var(--green)">' +
-            toBn(f.paid) +
-            '</strong> · বাকি <strong style="color:var(--red)">' +
-            toBn(unpaid) +
-            '</strong>' +
-            (f.arrear ? ' · বকেয়া ৳' + toBn(f.arrear) : '') +
-            '</div>' +
-            (f.note ? '<div class="st-note">' + API.esc(f.note) + '</div>' : '') +
-            '</div>'
-          );
-        })
-        .join('');
-    }
 
     var khList = API.Khuluk.getByStudent(sid);
     var examMap = new Map(API.Exams.getAll().map(function (e) { return [e.id, e]; }));
@@ -1241,14 +1213,11 @@
         '<button type="button" class="st-tab" data-tab="att" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'att\')">হাজিরা</button>' +
-        '<button type="button" class="st-tab" data-tab="waj" role="tab" aria-selected="false" onclick="' +
-        escTab +
-        '(\'waj\')">ওয়াযিফা</button>' +
         '<button type="button" class="st-tab" data-tab="docs" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'docs\')">ডকুমেন্ট</button>' +
         (feeTabAllowed()
-          ? '<button type="button" class="st-tab" data-tab="fee" role="tab" aria-selected="false" onclick="' + escTab + '(\'fee\')">মাসিক ফি</button>'
+          ? '<button type="button" class="st-tab" data-tab="fee" role="tab" aria-selected="false" onclick="' + escTab + '(\'fee\')">ওজিফা</button>'
           : '') +
         '<button type="button" class="st-tab" data-tab="more" role="tab" aria-selected="false" onclick="' +
         escTab +
@@ -1260,14 +1229,11 @@
         '<div class="st-tab-panel" data-panel="att" id="st-panel-att">' +
         attPanel +
         '</div>' +
-        '<div class="st-tab-panel" data-panel="waj" id="st-panel-waj">' +
-        wajPanel +
-        '</div>' +
         '<div class="st-tab-panel" data-panel="docs" id="st-panel-docs">' +
         '<div class="st-note" style="padding:8px 0;">ডকুমেন্ট ট্যাব খুললে তালিকা লোড হবে।</div>' +
         '</div>' +
         (feeTabAllowed()
-          ? '<div class="st-tab-panel" data-panel="fee" id="st-panel-fee"><div class="st-note" style="padding:8px 0;">মাসিক ফি ট্যাব খুললে তথ্য আসবে।</div></div>'
+          ? '<div class="st-tab-panel" data-panel="fee" id="st-panel-fee"><div class="st-note" style="padding:8px 0;">ওজিফা ট্যাব খুললে তথ্য আসবে।</div></div>'
           : '') +
         '<div class="st-tab-panel" data-panel="more" id="st-panel-more">' +
         more +

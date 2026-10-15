@@ -1,5 +1,5 @@
 /**
- * Student detail modal — «মাসিক ফি» tab (জিম্মাদার ও দফতর)।
+ * Student detail modal — «ওজিফা» (মাসিক ফি) tab (জিম্মাদার ও দফতর)।
  * তথ্য আসে বাইরের ফি-সফটওয়্যার থেকে: MMSharedAPI.studentFeeHistory → Edge Function mdr-student-fee।
  * সার্ভার নিজেই অনুমতি যাচাই করে; এখানে ট্যাব শুধু দেখানো/লুকানো।
  */
@@ -101,7 +101,7 @@
   var ERRORS = {
     not_found_in_fee_software: 'ফি-সফটওয়্যারে এই ছাত্রের আইডি পাওয়া যায়নি। ফি-সফটওয়্যারে আইডি বসানো আছে কিনা দেখুন।',
     no_reg_id: 'এই ছাত্রের রেজিস্ট্রেশন আইডি নেই, তাই ফি আনা যায় না।',
-    not_allowed: 'মাসিক ফি শুধু জিম্মাদার ও দফতর দেখতে পারেন।',
+    not_allowed: 'ওজিফা শুধু জিম্মাদার ও দফতর দেখতে পারেন।',
     pin_locked: 'ভুল পিনে লক হয়ে আছে — পরে আবার চেষ্টা করুন।',
     fee_api_not_configured: 'ফি-সফটওয়্যারের সংযোগ এখনো চালু হয়নি।',
     fee_api_unreachable: 'ফি-সফটওয়্যার থেকে উত্তর আসেনি — একটু পরে আবার চেষ্টা করুন।',
@@ -114,7 +114,7 @@
     if (!panel || panel.dataset.feeFor !== String(studentId)) return;
     if (!res || !res.ok) {
       var code = (res && res.error) || '';
-      var msg = ERRORS[code] || 'মাসিক ফি আনা যায়নি — আবার চেষ্টা করুন।';
+      var msg = ERRORS[code] || 'ওজিফার তথ্য আনা যায়নি — আবার চেষ্টা করুন।';
       var retry = /^(fee_api_|network|bad_response)/.test(code) || !ERRORS[code]
         ? '<br><button type="button" class="st-fee-retry" onclick="MMStudentFee.reload()">আবার চেষ্টা করুন</button>' : '';
       panel.innerHTML = '<div class="st-note" style="padding:8px 0;">' + esc(msg) + '</div>' + retry;
@@ -156,7 +156,7 @@
         (sub ? '<div class="st-fee-sub">' + esc(sub) + '</div>' : '') + '</div>' +
         '<div class="st-fee-right"><div class="st-fee-amt">' + taka(m.amount) + '</div>' + badge + '</div></div>';
     }).join('');
-    if (!rows) rows = '<div class="st-note" style="padding:8px 0;">ফি-সফটওয়্যারে এই ছাত্রের কোনো মাসের হিসাব নেই।</div>';
+    if (!rows) rows = '<div class="st-note" style="padding:8px 0;">ফি-সফটওয়্যারে এই ছাত্রের কোনো মাসের ওজিফার হিসাব নেই।</div>';
 
     panel.innerHTML = warn + cards + '<div class="st-fee-list">' + rows + '</div>' +
       '<div class="st-fee-src">তথ্যসূত্র: ফি-সফটওয়্যার (আইডি ' + esc(toBn(res.reg_id || '')) + ')। বদল করতে হলে ফি-সফটওয়্যারেই করুন।</div>';

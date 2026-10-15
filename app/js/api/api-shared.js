@@ -231,6 +231,13 @@ const MMSharedAPI = (() => {
         return { ok: false, error: 'network' };
       }
     },
+    /* ওজিফা রিপোর্ট: সব সক্রিয় ছাত্রের সর্বশেষ snapshot (জিম্মাদার/দফতর) */
+    wazifaReport(actorId, pin) {
+      return rpc('mdr_rel_wazifa_report', { p_actor_id: actorId || null, p_pin: pin });
+    },
+    wazifaRefresh(actorId, pin) {
+      return rpc('mdr_rel_wazifa_refresh', { p_actor_id: actorId || null, p_pin: pin });
+    },
     addStudentDocument(actorId, pin, payload) {
       return rpc('mdr_rel_student_document_add', {
         p_actor_id: actorId || null,
