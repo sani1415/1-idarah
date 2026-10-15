@@ -150,6 +150,8 @@
       // পাতার .content ডেস্কটপ শেলে var(--desk-max)/১১০০–১২০০px-এ বাঁধা (বেশি জোরালো selector-এ) —
       // রিপোর্ট খোলা থাকলে পুরো চওড়া, যেন জুম আউট/বড় মনিটরে তিন কলাম আসে
       '.content:has(.wz-shell){max-width:none !important;}' +
+      // জিম্মাদারের হিসাব পাতার সাদা খোলস (admin-accounts-shell) রিপোর্টের পেছনে আলাদা বক্স না দেখাক
+      '.admin-accounts-shell:has(.wz-shell){background:none !important;border:none !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;}' +
       '.wz-shell{--wz-ok:#3f7a50;--wz-ok-bg:#e8f2e7;--wz-late:#b07a14;--wz-late-bg:#fbf0d6;--wz-due:#b5573a;--wz-due-bg:#fbe7df;' +
         '--wz-card:#fffdf9;--wz-bd:#ece3d2;padding:4px 0 28px;container-type:inline-size;color:var(--ink);}' +
       '.wz-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}' +
