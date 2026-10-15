@@ -14,6 +14,7 @@
 | Auth | app-level লগইন আইডি + ৪ অঙ্কের PIN, যা RPC যাচাই করে। session রাখে `app/js/core/mm-session.js` |
 | Hosting | Vercel static (`public/`) + একটি serverless function (`api/admin-assistant.js`) |
 | Push | Web Push (VAPID), Supabase Edge Function `supabase/functions/send-admin-push/` |
+| বাইরের API | ছাত্রের মাসিক ফি: Edge Function `supabase/functions/mdr-student-fee/` — চাবি শুধু secret `WAZIFA_API_KEY`-এ; অনুমতি `mdr_rel_student_fee_access` (service_role-only) দিয়ে, ব্রাউজারে চাবি যায় না |
 | PWA | service worker + install prompt (`mm-install.js`), auto update check (`app-update.js`)। Capacitor/Android সরানো হয়েছে |
 
 React/Vue/Next বা bundler যোগ করা হবে না, যদি না স্পষ্টভাবে সিদ্ধান্ত হয়।

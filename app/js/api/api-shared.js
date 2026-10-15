@@ -215,6 +215,22 @@ const MMSharedAPI = (() => {
         p_student_id: studentId,
       });
     },
+    /* মাসিক ফি: বাইরের ফি-সফটওয়্যার → Edge Function mdr-student-fee (চাবি সার্ভারে; অনুমতি জিম্মাদার/দফতর) */
+    async studentFeeHistory(actorId, pin, studentId) {
+      const key = getSupabaseKey();
+      if (!cfg.url || !key) return { ok: false, error: 'not_configured' };
+      try {
+        const res = await fetch(String(cfg.url).replace(/\/$/, '') + '/functions/v1/mdr-student-fee', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: key },
+          body: JSON.stringify({ actor_id: actorId || null, pin: pin, student_id: studentId }),
+        });
+        const data = await res.json().catch(() => null);
+        return data || { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: 'network' };
+      }
+    },
     addStudentDocument(actorId, pin, payload) {
       return rpc('mdr_rel_student_document_add', {
         p_actor_id: actorId || null,

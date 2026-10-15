@@ -819,6 +819,7 @@
     if (global.MMStudentDocuments && global.MMStudentDocuments.invalidate) {
       global.MMStudentDocuments.invalidate();
     }
+    if (global.MMStudentFee && global.MMStudentFee.invalidate) global.MMStudentFee.invalidate();
     closePhotoPreview();
     var el = document.getElementById(MODAL_ID);
     if (el) el.classList.remove('open');
@@ -845,6 +846,48 @@
         }
       });
     }
+    if (key === 'fee' && _openSid) {
+      var feeSid = _openSid;
+      loadSiblingScript('mm-student-fee.js', function () { return !!global.MMStudentFee; }, function () {
+        if (global.MMStudentFee && _openSid === feeSid) global.MMStudentFee.onTabOpen(feeSid);
+      });
+    }
+  }
+
+  /* মাসিক ফি: শুধু জিম্মাদার ও দফতর (সার্ভারও আলাদা করে যাচাই করে) */
+  function feeTabAllowed() {
+    var S = global.MMSession;
+    return !!(S && ((S.isAdmin && S.isAdmin()) || (S.getRole && S.getRole() === 'daftar')));
+  }
+
+  /* mm-student-modal.js-এর পাশের ফাইল একবারই লোড — একই ?v= দিয়ে (build.js-এর cache-busting) */
+  function loadSiblingScript(file, isReady, done) {
+    if (isReady()) { done(); return; }
+    loadSiblingScript._q = loadSiblingScript._q || {};
+    var q = loadSiblingScript._q[file];
+    if (q) { q.push(done); return; }
+    q = loadSiblingScript._q[file] = [done];
+    var scripts = document.getElementsByTagName('script');
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      var src = scripts[i].src || '';
+      if (src.indexOf('mm-student-modal') < 0) continue;
+      var base = src.replace(/mm-student-modal\.js(?:\?.*)?$/, '');
+      var ver = (src.match(/[?&]v=([^&#]+)/) || [])[1] || '';
+      var el = document.createElement('script');
+      el.src = base + file + (ver ? '?v=' + ver : '');
+      el.async = false;
+      el.onload = function () {
+        delete loadSiblingScript._q[file];
+        q.forEach(function (fn) { try { fn(); } catch (e) { /* ignore */ } });
+      };
+      el.onerror = function () {
+        delete loadSiblingScript._q[file];
+        console.warn(file + ' load failed');
+      };
+      document.head.appendChild(el);
+      return;
+    }
+    delete loadSiblingScript._q[file];
   }
 
   function ensureDocumentsModule(done) {
@@ -1204,6 +1247,9 @@
         '<button type="button" class="st-tab" data-tab="docs" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'docs\')">ডকুমেন্ট</button>' +
+        (feeTabAllowed()
+          ? '<button type="button" class="st-tab" data-tab="fee" role="tab" aria-selected="false" onclick="' + escTab + '(\'fee\')">মাসিক ফি</button>'
+          : '') +
         '<button type="button" class="st-tab" data-tab="more" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'more\')">মূল্যায়ন</button>' +
@@ -1220,6 +1266,9 @@
         '<div class="st-tab-panel" data-panel="docs" id="st-panel-docs">' +
         '<div class="st-note" style="padding:8px 0;">ডকুমেন্ট ট্যাব খুললে তালিকা লোড হবে।</div>' +
         '</div>' +
+        (feeTabAllowed()
+          ? '<div class="st-tab-panel" data-panel="fee" id="st-panel-fee"><div class="st-note" style="padding:8px 0;">মাসিক ফি ট্যাব খুললে তথ্য আসবে।</div></div>'
+          : '') +
         '<div class="st-tab-panel" data-panel="more" id="st-panel-more">' +
         more +
         '</div></div>';

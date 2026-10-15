@@ -24,7 +24,7 @@
 | নিজাম (রুটিন) | `madrasa-class.html`, `madrasa/admin/schedule.html` | `mdr-class-routine.js` |
 | শিক্ষক হাজিরা (দরস কিয়স্ক) | `madrasa-teacher-hazira.html` (কিয়স্ক), `madrasa/admin/teacher-hazira.html`; হোম কার্ড `#hz-home-card` আছে `madrasa-class.html`-এ; CSS `app/css/teacher-hazira.css` | `mdr-teacher-hazira-{core,kiosk,card,admin}.js`; RPC `mdr_rel_dars_*` → `20260930120000_mdr_teacher_hazira.sql` |
 | পরীক্ষা | `madrasa-class-exams.html`, `madrasa-exams.html`, `madrasa/admin/exams.html` | `mdr-exams-supabase.js`, `madrasa-exams-analytics.js` |
-| ছাত্রের বিবরণ modal, ছবি, ডকুমেন্ট | (সব পেজে shared) | `app/js/shared/mm-student-modal.js`, `mm-student-documents.js` |
+| ছাত্রের বিবরণ modal, ছবি, ডকুমেন্ট, মাসিক ফি | (সব পেজে shared) | `app/js/shared/mm-student-modal.js`, `mm-student-documents.js`, `mm-student-fee.js` (ফি-সফটওয়্যার → `supabase/functions/mdr-student-fee/`) |
 | শিক্ষকের বিবরণ modal | (shared) | `app/js/shared/mm-teacher-modal.js` |
 | পুরনো ছাত্র | `madrasa-alumni.html`, `madrasa/admin/alumni.html` | `app/js/shared/alumni-integration.js` |
 | বর্ষ উন্নীতকরণ | `madrasa-yearend.html` | (page inline) + `mdr-daftar-supabase.js` |
@@ -52,6 +52,7 @@
 | --- | --- |
 | `supabase/migrations/` | DB migration, **একমাত্র** source |
 | `supabase/functions/send-admin-push/` | Web Push Edge Function |
+| `supabase/functions/mdr-student-fee/` | বাইরের ফি-সফটওয়্যার থেকে ছাত্রের মাসিক ফি (চাবি secret `WAZIFA_API_KEY`) |
 | `api/` | Vercel serverless function (AI সহকারী) |
 | `build.js`, `vercel.json` | build ও deploy |
 | `scripts/` | এককালীন data/debug script |
