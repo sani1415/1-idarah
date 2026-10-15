@@ -240,7 +240,7 @@
       : 'সব বর্ষ একসাথে · কিতাবে চাপলে হালনাগাদের ইতিহাস';
 
     if (!classes.length) {
-      el.innerHTML = '<div class="ui-box dars-empty">এ বিভাগে কোনো বর্ষ নেই।</div>';
+      el.innerHTML = '<div class="ui-box">' + MMUI.empty({ icon: 'book', title: 'এ বিভাগে কোনো বর্ষ নেই' }) + '</div>';
       return;
     }
     const panels = all.map(({ cls, books: bs }) => {
@@ -257,7 +257,7 @@
         ${rows}
       </section>`;
     }).join('');
-    el.innerHTML = panels || '<div class="ui-box dars-empty">এই বাছাইয়ে কোনো কিতাব নেই।</div>';
+    el.innerHTML = panels || '<div class="ui-box">' + MMUI.empty({ icon: 'check', title: filter === 'behind' ? 'কোনো কিতাব পিছিয়ে নেই' : 'সব কিতাব হালনাগাদ আছে', sub: 'আবার ঘরে চাপলে সব কিতাব দেখাবে' }) + '</div>';
   }
 
   function openHistoryModal(classId, bookId) {
@@ -283,7 +283,7 @@
   }
   async function initDarsPage() {
     const el = document.getElementById('dars-detail');
-    if (el) el.innerHTML = '<div class="dars-empty">দরস তালিকা লোড হচ্ছে...</div>';
+    if (el) el.innerHTML = MMUI.skeleton({ rows: 4 });
     if (window.MDRSupabaseSync && MMSession.getAdminPin && MMSession.getAdminPin()) {
       try {
         await MDRSupabaseSync.syncAdminDars();

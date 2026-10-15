@@ -190,12 +190,28 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
   .modal--student .st-kv-grid .st-kv-item:nth-child(odd) { border-right: none; }
 }
 
+/* ── লোড হওয়ার ছায়া-কাঠামো ও খালি অবস্থা (MMUI.skeleton / MMUI.empty) ── */
+@keyframes uiShimmer { 0% { background-position: -320px 0; } 100% { background-position: 320px 0; } }
+.ui-sk { display: block; background: linear-gradient(90deg, #efe6d6 0, #f8f2e8 40%, #efe6d6 80%); background-size: 640px 100%; animation: uiShimmer 1.2s infinite linear; border-radius: 8px; }
+.ui-sk-stat { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--ui-radius); background: var(--ui-card); border: 1px solid var(--ui-bd); }
+.ui-sk-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--cream2); }
+.ui-sk-row:last-child { border-bottom: none; }
+.ui-sk-wrap { padding: 4px 0; }
+@media (prefers-reduced-motion: reduce) { .ui-sk { animation: none; } }
+.ui-emptybox, .empty-state { text-align: center; padding: 26px 16px; color: var(--ink3); }
+.ui-emptybox-ic, .empty-state .empty-icon { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 10px; background: var(--ui-info-bg); color: var(--ui-info);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; line-height: 1; }
+.ui-emptybox b { display: block; font-size: 15px; color: var(--ink); }
+.ui-emptybox span, .empty-state .empty-text { display: block; font-size: 13.5px; color: var(--ink3); line-height: 1.55; margin-top: 2px; }
+.ui-emptybox .ui-pill { margin-top: 12px; background: var(--ui-accent); color: #fff; border-color: var(--ui-accent); cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 700; }
+
 /* ── ছাত্র-তালিকা পাতা (mm-list-page.js) ── */
 .lp-filters { --ui-cols: 3; }
 .lp-list { display: grid; grid-template-columns: minmax(0, 1fr); }
 .lp-row { align-items: center; }
 .lp-rank { flex-shrink: 0; min-width: 28px; padding: 2px 8px; border-radius: 999px; background: var(--cream2); color: var(--ink2); font-size: 12px; font-weight: 700; text-align: center; }
 .lp-track { margin-top: 6px; height: 6px; }
+.lp-list > .ui-emptybox, .lp-list > .ui-empty { grid-column: 1 / -1; }
 @container (min-width: 860px) {
   .lp-list { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .lp-list .lp-row:nth-child(odd) { border-right: 1px solid var(--cream2); }

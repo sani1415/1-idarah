@@ -539,7 +539,9 @@
       ? absentRows.map(r => `<div class="ui-row is-link" onclick="MMStudentModal.open('${API.esc(r.sid)}')">
           <span class="ui-row-main"><span class="ui-row-name">${API.esc(r.name)}</span><span class="ui-row-meta">${API.esc(r.cls)} · ${r.reason ? API.esc(r.reason) : 'কারণ লেখা নেই'}</span></span>
           <span class="ui-badge is-bad">অনুপস্থিত</span></div>`).join('')
-      : `<div class="ui-empty">${totalPresent || totalAbsent ? 'এই দিনে কেউ অনুপস্থিত নেই' : 'এই দিনের হাজিরা এখনো নেওয়া হয়নি'}</div>`;
+      : (totalPresent || totalAbsent
+        ? MMUI.empty({ icon: 'check', title: 'কেউ অনুপস্থিত নেই', sub: 'এই দিনে সবাই উপস্থিত' })
+        : MMUI.empty({ icon: 'clock', title: 'হাজিরা এখনো হয়নি', sub: 'এই দিনের হাজিরা নেওয়া হলে এখানে দেখাবে' }));
     renderAttendanceAudit(auditExpanded);
   }
 

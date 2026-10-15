@@ -329,7 +329,7 @@
       return '<div class="wz-top"><div class="wz-head"><h2 class="wz-title">ওজিফা — সময়মতো আদায়</h2>' + (withSync ? syncInfo() : '') + '</div>' +
         '<button type="button" class="wz-back" onclick="closeAccGrid()">' + icon('back', 15) + 'হিসাব</button></div>';
     };
-    if (S.loading && !S.data) { root.innerHTML = '<div class="wz-shell">' + head(false) + '<div class="wz-box wz-empty">লোড হচ্ছে…</div></div>'; return; }
+    if (S.loading && !S.data) { root.innerHTML = '<div class="wz-shell">' + head(false) + (global.MMUI ? global.MMUI.skeleton({ stats: 4, rows: 5 }) : '<div class="wz-box wz-empty">লোড হচ্ছে…</div>') + '</div>'; return; }
     if (S.error && !S.data) {
       root.innerHTML = '<div class="wz-shell">' + head(false) + '<div class="wz-box wz-empty">' + esc(S.error) +
         '<br><button type="button" class="wz-btn" style="margin-top:10px" onclick="MdrWazifaReport.load()">আবার চেষ্টা করুন</button></div></div>';

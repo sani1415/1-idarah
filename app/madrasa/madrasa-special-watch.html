@@ -71,6 +71,7 @@
         { tone: 'deep', icon: 'book', label: 'বর্ষ', sub: 'যে কয় বর্ষে আছে', value: (all) => toBn(new Set(all.map((x) => String(x.clsId))).size) + 'টি' },
       ].concat(DEPTS.length > 1 ? DEPTS.map((d) => ({ tone: d === 'maktab' ? 'info' : 'deep', icon: 'users', label: deptName(d), test: (x) => x.dept === d })) : []),
       sorts: [{ key: 'def', label: 'বর্ষ অনুযায়ী', cmp: MMListPage.SORT_CLASS.cmp }, MMListPage.SORT_NAME],
+      emptyTitle: 'কেউ পর্যবেক্ষণে নেই', emptyIcon: 'check',
       empty: 'এই বিভাগে কোনো ছাত্র বিশেষ পর্যবেক্ষণে নেই। শিক্ষক পর্যায় থেকে চিহ্নিত করলে এখানে দেখা যাবে।',
     });
   }

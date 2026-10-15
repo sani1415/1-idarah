@@ -258,7 +258,7 @@
       return;
     }
 
-    panel.innerHTML = '<div class="st-note" style="padding:8px 0;">ডকুমেন্ট লোড হচ্ছে…</div>';
+    panel.innerHTML = window.MMUI ? MMUI.skeleton({ rows: 2, panel: false }) : '<div class="st-note" style="padding:8px 0;">ডকুমেন্ট লোড হচ্ছে…</div>';
 
     var res;
     try {

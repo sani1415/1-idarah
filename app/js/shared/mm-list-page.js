@@ -8,7 +8,7 @@
  *   buckets: [{ tone, icon, label, sub, test(item) }]   // প্রথম ঘর "সবাই"; চাপলে ছাঁকনি
  *            ({ ..., value(items) } দিলে শুধু তথ্য-ঘর, ছাঁকনি নয়)
  *   sorts: [{ key, label, cmp(a, b) }],
- *   empty: 'কেউ নেই…',
+ *   empty: 'কেউ নেই…', emptyTitle, emptyIcon,
  * })
  */
 (function (global) {
@@ -96,7 +96,8 @@
       byId('cnt').textContent = 'ছাত্র (' + bn(rows.length) + ' জন)';
       byId('list').innerHTML = rows.length
         ? rows.map(rowHtml).join('')
-        : '<div class="ui-empty">' + esc(items.length ? 'এই বাছাইয়ে কেউ নেই।' : (cfg.empty || 'কেউ নেই।')) + '</div>';
+        : (items.length ? '<div class="ui-empty">এই বাছাইয়ে কেউ নেই।</div>'
+          : global.MMUI.empty({ icon: cfg.emptyIcon || 'check', title: cfg.emptyTitle || 'তালিকা খালি', sub: cfg.empty || '' }));
     }
 
     function render() { renderStats(); renderList(); }

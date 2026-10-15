@@ -543,7 +543,7 @@
     if (!root) return;
 
     if (state.loading && !state.data) {
-      root.innerHTML = '<div class="awqat-empty">লোড হচ্ছে…</div>';
+      root.innerHTML = global.MMUI ? global.MMUI.skeleton({ rows: 3 }) : '<div class="awqat-empty">লোড হচ্ছে…</div>';
       return;
     }
 

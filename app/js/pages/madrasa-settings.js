@@ -524,7 +524,7 @@
   }
   async function renderAdmins() {
     if (hasSupabaseAdminSession() && supabaseUsers === null) {
-      document.getElementById('admin-list').innerHTML = '<div style="font-size:13px;color:var(--ink3);">তালিকা লোড হচ্ছে...</div>';
+      document.getElementById('admin-list').innerHTML = MMUI.skeleton({ rows: 3, panel: false });
       try {
         await loadSupabaseUsers(true);
       } catch (e) {
@@ -695,7 +695,7 @@
 
   async function renderTeachers() {
     if (hasSupabaseAdminSession() && supabaseUsers === null) {
-      document.getElementById('teacher-list').innerHTML = '<div style="font-size:13px;color:var(--ink3);">তালিকা লোড হচ্ছে...</div>';
+      document.getElementById('teacher-list').innerHTML = MMUI.skeleton({ rows: 3, panel: false });
       try {
         await loadSupabaseUsers(true);
       } catch (e) {

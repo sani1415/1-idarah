@@ -40,6 +40,7 @@
     .sched-tab { font-size: 13px; padding: 12px 8px; }
   }
 </style>
+<script src="../../js/shared/mm-ui.js"></script>
 </head>
 <body class="ui-skin">
 <div class="topbar">
@@ -258,7 +259,7 @@
       el.innerHTML = '<div class="sched-empty">বর্ষ নির্বাচন করুন।</div>';
       return;
     }
-    el.innerHTML = '<div class="sched-empty">নিজাম লোড হচ্ছে…</div>';
+    el.innerHTML = MMUI.skeleton({ rows: 4 });
     const actor = adminActor();
     try {
       const res = await MMSharedAPI.classRoutineGet(
@@ -324,7 +325,7 @@
 
   async function initSchedulePage() {
     const el = document.getElementById('sched-detail');
-    if (el) el.innerHTML = '<div class="sched-empty">তালিকা লোড হচ্ছে…</div>';
+    if (el) el.innerHTML = MMUI.skeleton({ rows: 4 });
     const actor = adminActor();
     try {
       const res = await MMSharedAPI.adminRoutineBootstrap(actor.id, actor.pin);

@@ -2,6 +2,7 @@
  * সাধারণ নকশা-ভিত্তির ছোট সহায়ক (app/css/mm-ui.css-এর সাথে)।
  * MMUI.icon(name, size) · MMUI.stat({...}) · MMUI.pctTone(p) · MMUI.esc / bn / taka
  * MMUI.confirm(msg, opts) → Promise<boolean> (নিজের CSS নিজে যোগ করে)
+ * MMUI.skeleton({ stats, rows, panel }) / MMUI.skRows(n) — লোডের ছায়া · MMUI.empty({ icon, title, sub, action, onclick })
  */
 (function (global) {
   'use strict';
@@ -128,5 +129,40 @@
     });
   }
 
-  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat, confirm: confirmBox };
+  /* ── লোড হওয়ার সময় ছায়া-কাঠামো ── */
+  function skRows(n) {
+    var h = '';
+    for (var i = 0; i < (n || 3); i++) {
+      h += '<div class="ui-sk-row"><span class="ui-sk" style="width:30px;height:20px"></span><span style="flex:1">' +
+        '<span class="ui-sk" style="height:12px;width:' + (40 + (i * 17) % 35) + '%"></span>' +
+        '<span class="ui-sk" style="height:10px;width:' + (22 + (i * 11) % 20) + '%;margin-top:6px"></span></span></div>';
+    }
+    return h;
+  }
+  /** o: { stats: ঘর-সংখ্যা, rows: সারি-সংখ্যা, panel: true হলে সারিগুলো কার্ডে } */
+  function skeleton(o) {
+    o = o || {};
+    var h = '<div class="ui-sk-wrap" aria-busy="true" aria-label="লোড হচ্ছে">';
+    if (o.stats) {
+      h += '<div class="ui-stats' + (o.stats === 3 ? ' is-3' : '') + '">';
+      for (var i = 0; i < o.stats; i++) {
+        h += '<div class="ui-sk-stat"><span class="ui-sk" style="width:36px;height:36px;border-radius:50%"></span><span style="flex:1">' +
+          '<span class="ui-sk" style="height:10px;width:60%"></span><span class="ui-sk" style="height:18px;width:40%;margin-top:6px"></span></span></div>';
+      }
+      h += '</div>';
+    }
+    if (o.rows !== 0) h += o.panel === false ? skRows(o.rows) : '<section class="ui-box ui-panel">' + skRows(o.rows || 4) + '</section>';
+    return h + '</div>';
+  }
+  /** খালি অবস্থা। o: { icon, title, sub, action, onclick } */
+  function empty(o) {
+    o = o || {};
+    return '<div class="ui-emptybox"><div class="ui-emptybox-ic">' + icon(o.icon || 'info', 26) + '</div>' +
+      '<b>' + esc(o.title || 'কিছু নেই') + '</b>' + (o.sub ? '<span>' + esc(o.sub) + '</span>' : '') +
+      (o.action && o.onclick ? '<button type="button" class="ui-pill" onclick="' + o.onclick + '">' + esc(o.action) + '</button>' : '') +
+      '</div>';
+  }
+
+  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat, confirm: confirmBox,
+    skeleton: skeleton, skRows: skRows, empty: empty };
 })(typeof window !== 'undefined' ? window : this);

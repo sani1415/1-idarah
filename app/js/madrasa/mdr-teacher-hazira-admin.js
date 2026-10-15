@@ -576,7 +576,7 @@
 
   function renderHolidays() {
     var boot = state.boot;
-    if (!boot) return '<div class="hz-empty">লোড হচ্ছে…</div>';
+    if (!boot) return global.MMUI ? global.MMUI.skeleton({ stats: 4, rows: 4 }) : '<div class="hz-empty">লোড হচ্ছে…</div>';
     var canGlobal = !!boot.can_global;
     var scopeOpts = (canGlobal ? '<option value="">সব বর্ষ</option>' : '') + (boot.classes || []).map(function (c) {
       return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>';
@@ -693,7 +693,7 @@
     renderDeptFilters();
     var el = $('hz-panel');
     if (!el) return;
-    if (!state.boot) { el.innerHTML = '<div class="hz-empty">লোড হচ্ছে…</div>'; return; }
+    if (!state.boot) { el.innerHTML = global.MMUI ? global.MMUI.skeleton({ stats: 4, rows: 4 }) : '<div class="hz-empty">লোড হচ্ছে…</div>'; return; }
     if (state.tab === 'today') el.innerHTML = renderToday();
     else if (state.tab === 'report') el.innerHTML = renderReport();
     else if (state.tab === 'teachers') el.innerHTML = renderTeachers();

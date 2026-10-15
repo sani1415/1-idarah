@@ -1981,7 +1981,7 @@
     if (Array.isArray(invHistoryByKey[key])) {
       paintInvHistory(invHistoryByKey[key]);
     } else {
-      list.innerHTML = '<div style="text-align:center;color:var(--ink3);padding:20px 0;font-size:12px;">লোড হচ্ছে…</div>';
+      list.innerHTML = MMUI.skeleton({ rows: 3, panel: false });
     }
 
     if (invHistoryInflight[key]) {
