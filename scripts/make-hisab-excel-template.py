@@ -11,10 +11,13 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.workbook.defined_name import DefinedName
+import sys
 from pathlib import Path
 from datetime import date, timedelta
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hisab_excel_protect import protect_file  # noqa: E402  শীট-সুরক্ষা (সারি মোছা/ঢোকানো/sort বন্ধ)
 OUTS = [
     ROOT / "app" / "madrasa" / "templates" / "daftar-hisab-template-v2.xlsx",
     ROOT / "output" / "daftar-hisab-template.xlsx",
@@ -542,10 +545,12 @@ def main():
         out.parent.mkdir(parents=True, exist_ok=True)
         try:
             wb.save(out)
-            print("saved:", out.as_posix())
+            protect_file(str(out))
+            print("saved + protected:", out.as_posix())
         except PermissionError:
             alt = out.with_name(out.stem + "-latest.xlsx")
             wb.save(alt)
+            protect_file(str(alt))
             print("locked, saved alt:", alt.as_posix())
 
 
