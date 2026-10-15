@@ -1,0 +1,137 @@
+/*
+ * সাধারণ নকশা-ভিত্তি (ওজিফা রিপোর্ট ও হিসাবের প্রথম পাতার ধাঁচ) — সব নতুন সাজানো পাতা এখান থেকে নেয়।
+ * class-এর শুরু `ui-`; রং ও মাপ :root-এর `--ui-*` token-এ। HTML-এ আঁকার সহায়ক: app/js/shared/mm-ui.js (MMUI)।
+ * ব্যবহার ও উদাহরণ: docs/dev/architecture.md → «সাধারণ নকশা-ভিত্তি»।
+ */
+:root {
+  --ui-ok: #3f7a50;   --ui-ok-bg: #e8f2e7;
+  --ui-warn: #b07a14; --ui-warn-bg: #fbf0d6;
+  --ui-bad: #b5573a;  --ui-bad-bg: #fbe7df;
+  --ui-info: #2f6b93; --ui-info-bg: #e4f0f7;
+  --ui-deep: #8f3f2a;
+  --ui-accent: #b5573a;
+  --ui-card: #fffdf9;
+  --ui-bd: #ece3d2;
+  --ui-radius: 16px;
+  --ui-shadow: 0 1px 2px rgba(42,35,24,.04), 0 6px 18px -10px rgba(42,35,24,.12);
+}
+
+/* পাতার .content ডেস্কটপে ১১০০–১২৪০px-এ বাঁধা — .ui-wide থাকলে পুরো চওড়া (জুম আউটে বেশি কলাম) */
+.content:has(.ui-wide) { max-width: none !important; }
+
+/* ── শিরোনাম ── */
+.ui-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.ui-head-l { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-width: 0; }
+.ui-title { font-family: var(--font-bn); font-weight: 700; font-size: 22px; line-height: 1.25; margin: 0; color: var(--ink); }
+.ui-sub { font-size: 13px; color: var(--ink3); }
+.ui-pill { font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ui-bd);
+  background: var(--ui-card); color: var(--ink2); border-radius: 999px; padding: 5px 13px; cursor: pointer; box-shadow: 0 1px 2px rgba(42,35,24,.05); text-decoration: none; }
+.ui-pill:hover { border-color: var(--ui-accent); color: var(--ui-accent); }
+.ui-pill[disabled] { opacity: .55; cursor: default; }
+
+/* ── বাক্স ও প্যানেল ── */
+.ui-box { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: var(--ui-radius); box-shadow: var(--ui-shadow); }
+.ui-panel { overflow: hidden; min-width: 0; }
+.ui-ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--ui-bd); flex-wrap: wrap; }
+.ui-ph h3 { font-family: var(--font-bn); font-size: 16px; font-weight: 700; margin: 0; color: var(--ink); }
+.ui-ph small { font-size: 12px; color: var(--ink3); }
+.ui-empty { padding: 18px; text-align: center; color: var(--ink3); font-size: 13px; }
+.ui-note { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; color: var(--ink3); margin: 0 2px 10px; line-height: 1.45; }
+.ui-note svg { flex-shrink: 0; margin-top: 2px; }
+.ui-note strong { color: var(--ink2); }
+
+/* ── রঙিন ঘর (stat card) ── */
+.ui-stats { display: grid; grid-template-columns: repeat(var(--ui-cols, 4), minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
+.ui-stat { position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; text-align: left; font: inherit; color: var(--ink);
+  background: var(--ui-card); border: 1.5px solid var(--ui-bd); border-radius: 14px; padding: 10px 12px; min-width: 0; box-shadow: 0 1px 2px rgba(42,35,24,.04); }
+button.ui-stat { cursor: pointer; transition: box-shadow .15s, border-color .15s; -webkit-tap-highlight-color: transparent; }
+button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
+.ui-stat-ic { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--ink3); }
+.ui-stat-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ui-stat-lbl { font-size: 12.5px; font-weight: 600; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-stat-val { font-family: var(--font-bn); font-size: 22px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-stat-sub { font-size: 12px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-stat-bar { height: 4px; border-radius: 2px; background: rgba(42,35,24,.07); overflow: hidden; margin-top: 5px; }
+.ui-stat-bar > * { height: 100%; border-radius: 2px; background: currentColor; transition: width .5s ease; }
+.ui-stat.is-ok   { background: linear-gradient(135deg, var(--ui-ok-bg), var(--ui-card) 70%); }
+.ui-stat.is-bad  { background: linear-gradient(135deg, var(--ui-bad-bg), var(--ui-card) 70%); }
+.ui-stat.is-warn { background: linear-gradient(135deg, var(--ui-warn-bg), var(--ui-card) 70%); }
+.ui-stat.is-info { background: linear-gradient(135deg, var(--ui-info-bg), var(--ui-card) 70%); }
+.ui-stat.is-deep { background: linear-gradient(135deg, #f6e3dc, var(--ui-card) 70%); }
+.ui-stat.is-ok .ui-stat-ic { background: var(--ui-ok); }     .ui-stat.is-ok .ui-stat-val, .ui-stat.is-ok .ui-stat-bar { color: var(--ui-ok); }
+.ui-stat.is-bad .ui-stat-ic { background: var(--ui-bad); }   .ui-stat.is-bad .ui-stat-val, .ui-stat.is-bad .ui-stat-bar { color: var(--ui-bad); }
+.ui-stat.is-warn .ui-stat-ic { background: var(--ui-warn); } .ui-stat.is-warn .ui-stat-val, .ui-stat.is-warn .ui-stat-bar { color: var(--ui-warn); }
+.ui-stat.is-info .ui-stat-ic { background: var(--ui-info); } .ui-stat.is-info .ui-stat-val, .ui-stat.is-info .ui-stat-bar { color: var(--ui-info); }
+.ui-stat.is-deep .ui-stat-ic { background: var(--ui-deep); } .ui-stat.is-deep .ui-stat-val, .ui-stat.is-deep .ui-stat-bar { color: var(--ui-deep); }
+.ui-stat.is-on { box-shadow: 0 8px 22px -12px rgba(42,35,24,.35); border-color: var(--ink3); }
+.ui-stat.is-ok.is-on { border-color: var(--ui-ok); } .ui-stat.is-bad.is-on { border-color: var(--ui-bad); }
+.ui-stat.is-warn.is-on { border-color: var(--ui-warn); } .ui-stat.is-info.is-on { border-color: var(--ui-info); } .ui-stat.is-deep.is-on { border-color: var(--ui-deep); }
+
+/* ── ট্যাব ও চিপ ── */
+.ui-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.ui-tabs::-webkit-scrollbar { display: none; }
+.ui-tab { flex: 1 0 auto; font: inherit; font-size: 14px; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: none; background: transparent; color: var(--ink2); cursor: pointer; white-space: nowrap; }
+.ui-tab:hover { background: var(--cream2); }
+.ui-tab.is-on { background: var(--ui-accent); color: #fff; box-shadow: 0 4px 12px -6px rgba(181,87,58,.7); }
+.ui-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.ui-chip { font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--ui-bd); background: #fff; color: var(--ink2); cursor: pointer; white-space: nowrap; }
+.ui-chip.is-on { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
+.ui-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; background: var(--cream2); color: var(--ink2); }
+.ui-badge.is-ok { background: var(--ui-ok-bg); color: var(--ui-ok); }
+.ui-badge.is-bad { background: var(--ui-bad-bg); color: var(--ui-bad); }
+.ui-badge.is-warn { background: var(--ui-warn-bg); color: var(--ui-warn); }
+.ui-badge.is-info { background: var(--ui-info-bg); color: var(--ui-info); }
+
+/* ── ফিল্টার কার্ড ── */
+.ui-filters { display: grid; grid-template-columns: repeat(var(--ui-cols, 4), minmax(0, 1fr)); gap: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.ui-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ui-field > span { font-size: 11.5px; font-weight: 600; color: var(--ink3); }
+.ui-field select, .ui-field input, .ui-input { font: inherit; font-size: 14px; height: 36px; padding: 0 10px; border: 1px solid var(--ui-bd); border-radius: 10px;
+  background: #fff; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
+.ui-field select:focus, .ui-field input:focus, .ui-input:focus { outline: none; border-color: var(--ui-accent); box-shadow: 0 0 0 3px rgba(181,87,58,.14); }
+
+/* ── তালিকার সারি ── */
+.ui-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--cream2); }
+.ui-row:last-child { border-bottom: none; }
+.ui-row.is-link { cursor: pointer; }
+.ui-row.is-link:hover { background: var(--cream); }
+.ui-row-main { min-width: 0; flex: 1; }
+.ui-row-name { font-weight: 700; font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-row-meta { font-size: 12.5px; color: var(--ink3); margin-top: 2px; }
+.ui-row-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; text-align: right; }
+
+/* ── টেবিল ও % বার ── */
+.ui-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ui-tbl th, .ui-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--cream2); text-align: right; white-space: nowrap; }
+.ui-tbl th:first-child, .ui-tbl td:first-child { text-align: left; white-space: normal; }
+.ui-tbl th { font-size: 12.5px; font-weight: 700; color: var(--ink3); background: var(--cream); }
+.ui-tbl tbody tr:last-child td { border-bottom: none; }
+.ui-tbl tbody tr.is-link { cursor: pointer; }
+.ui-tbl tbody tr.is-link:hover td { background: var(--cream); }
+.ui-tbl tfoot td { font-weight: 800; background: var(--cream); border-bottom: none; border-top: 1px solid var(--ui-bd); }
+.ui-track { display: block; width: 100%; min-width: 60px; height: 8px; border-radius: 4px; background: var(--cream2); overflow: hidden; }
+.ui-fill { display: block; height: 100%; border-radius: 4px; background: #c9973a; transition: width .4s ease; }
+.ui-ok { color: var(--ui-ok); } .ui-warn { color: var(--ui-warn); } .ui-bad { color: var(--ui-bad); }
+.ui-fill.ui-ok { background: var(--ui-ok); } .ui-fill.ui-warn { background: #d29a2c; } .ui-fill.ui-bad { background: var(--ui-bad); }
+
+/* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */
+.ui-cq { container-type: inline-size; }
+.ui-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+@container (min-width: 860px) { .ui-grid.is-2, .ui-grid.is-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@container (min-width: 1200px) { .ui-grid.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (max-width: 1100px) { .ui-stats.is-6 { --ui-cols: 3; } }
+
+@media (max-width: 760px) {
+  .ui-stats, .ui-filters { --ui-cols: 2; }
+}
+@media (max-width: 640px) {
+  .ui-title { font-size: 19px; }
+  .ui-stats { gap: 8px; }
+  .ui-stat { padding: 8px 10px; gap: 8px; }
+  .ui-stat-ic { width: 30px; height: 30px; }
+  .ui-stat-val { font-size: 19px; }
+  .ui-filters { padding: 10px; gap: 8px; }
+  .ui-row { padding: 10px 12px; }
+  .ui-tbl th, .ui-tbl td { padding: 8px; }
+  .ui-hide-sm { display: none !important; }
+}

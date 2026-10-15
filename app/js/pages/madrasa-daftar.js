@@ -243,6 +243,16 @@
     const todayRecs = isToday ? existing : API.Attendance.getByDate(API.today());
     const saved     = new Set(todayRecs.map(r => r.student_id));
     const missing   = active.filter(s => !saved.has(s.id));
+    const stMiss = document.getElementById('st-missing');
+    if (stMiss) {
+      stMiss.textContent = toBn(missing.length);
+      const missClasses = new Set(missing.map(s => s.class_id)).size;
+      document.getElementById('st-missing-sub').textContent = missing.length ? toBn(missClasses) + 'টি বর্ষে' : 'সব সম্পন্ন ✓';
+      document.getElementById('hs-missing').className = 'ui-stat ' + (missing.length ? 'is-warn' : 'is-ok');
+    }
+    const stHol = document.getElementById('st-holiday-sub');
+    if (stHol) stHol.textContent = h ? 'বিরতি ' + toBn(h) + ' জন' : (pct ? 'উপস্থিতি ' + toBn(pct) + '%' : '');
+    renderClassStatus(existing);
     const nb = document.getElementById('notice-body');
     if (missing.length === 0) {
       nb.innerHTML = '<span class="notice-ok">✓ আজ সকল সক্রিয় ছাত্রের উপস্থিতি সেভ হয়েছে</span> · <strong>' + toBn(active.length) + '</strong> জন';
@@ -266,14 +276,46 @@
     updateHeroFilterClasses();
   }
 
+  /* ডানের «বর্ষভিত্তিক অবস্থা»: নির্বাচিত দিনে প্রতি বর্ষে উপস্থিত/মোট, কতজনের হাজিরা সেভ বাকি */
+  function renderClassStatus(existing) {
+    const box = document.getElementById('dh-class-status');
+    if (!box) return;
+    const saved = new Set(existing.map(r => r.student_id));
+    const active = getAttendanceStudents();
+    const rows = API.Classes.getAll().map(cls => {
+      const arr = active.filter(s => s.class_id === cls.id);
+      if (!arr.length) return '';
+      let p = 0, a = 0, unsaved = 0;
+      arr.forEach(s => {
+        const st = currentAttStatus(s.id, existing);
+        if (st === 'present') p++; else if (st === 'absent') a++;
+        if (!saved.has(s.id)) unsaved++;
+      });
+      const marked = p + a;
+      const pct = marked ? Math.round(p / marked * 100) : 0;
+      const tone = pct >= 90 ? 'ui-ok' : (pct >= 75 ? 'ui-warn' : 'ui-bad');
+      const badge = unsaved === 0
+        ? '<span class="ui-badge is-ok">✓ সেভ</span>'
+        : (unsaved === arr.length && !marked ? '<span class="ui-badge is-warn">নেওয়া হয়নি</span>'
+          : (unsaved === arr.length ? '<span class="ui-badge is-warn">সেভ বাকি</span>' : '<span class="ui-badge is-warn">বাকি ' + toBn(unsaved) + '</span>'));
+      const on = attClassFilter === cls.id;
+      return '<button type="button" class="dh-cls' + (on ? ' is-on' : '') + '" onclick="setAttClassFilter(\'' + (on ? 'all' : cls.id) + '\')">' +
+        '<span class="dh-cls-top"><b>' + API.esc(cls.name) + '</b>' + badge + '</span>' +
+        '<span class="dh-cls-bar"><span class="ui-track"><span class="ui-fill ' + tone + '" style="width:' + (marked ? pct : 0) + '%"></span></span>' +
+        '<small>' + (marked ? toBn(p) + '/' + toBn(arr.length) + ' উপস্থিত' + (a ? ' · ' + toBn(a) + ' অনুপস্থিত' : '') : toBn(arr.length) + ' জন') + '</small></span>' +
+        '</button>';
+    }).join('');
+    box.innerHTML = rows || '<div class="ui-empty">কোনো বর্ষ নেই</div>';
+  }
+
   function updateHeroFilterClasses() {
     const p = document.getElementById('hs-filter-present');
     const a = document.getElementById('hs-filter-absent');
     const t = document.getElementById('hs-filter-total');
     if (!p || !a || !t) return;
-    p.classList.toggle('hs-on', qFilter === 'present');
-    a.classList.toggle('hs-on', qFilter === 'absent');
-    t.classList.toggle('hs-on', qFilter === 'all');
+    p.classList.toggle('is-on', qFilter === 'present');
+    a.classList.toggle('is-on', qFilter === 'absent');
+    t.classList.toggle('is-on', qFilter === 'all');
     p.setAttribute('aria-pressed', qFilter === 'present' ? 'true' : 'false');
     a.setAttribute('aria-pressed', qFilter === 'absent' ? 'true' : 'false');
     t.setAttribute('aria-pressed', qFilter === 'all' ? 'true' : 'false');
@@ -384,6 +426,8 @@
   /* ── FILTER HELPERS ── */
   function setAttClassFilter(v) {
     attClassFilter = v || 'all';
+    const sel = document.getElementById('class-filter-sel');
+    if (sel && sel.value !== attClassFilter) sel.value = attClassFilter;
     renderAttendance();
   }
   function setAttSearch(v) {

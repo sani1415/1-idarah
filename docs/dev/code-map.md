@@ -40,7 +40,7 @@
 
 - **`core/`**: app-wide foundation। এতে আছে `mm-session` (auth/session, restricted-admin nav hide), `mm-boot`, `mm-shell` (ডেস্কটপে ≥1024px নিচের নেভকে বাঁ পাশের sidebar বানায়; layout CSS আছে `style.css` → "DESKTOP APP SHELL"), `mm-permissions`, `mm-push`, `mm-install`, `mm-back` (ইনস্টল করা অ্যাপে Android Back: modal বন্ধ → মেনুর প্রথম আইটেম → বন্ধের জিজ্ঞাসা; পেজ নিজের ধাপ যোগ করতে `window.MMBackHandler` দেয়; `build.js` সব পেজে inject করে), `app-update`, `mm-hijri` / `hijri-utils` (তারিখ), `monitor-mode` (stub)।
 - **`api/`**: Supabase RPC wrapper, অর্থাৎ `api-shared.js`, `api-mdr.js`, `api.js`। RPC নাম বদলালে এখানকার wrapper আর `supabase/migrations/` একসাথে আপডেট করতে হবে।
-- **`shared/`**: একাধিক module-এ ব্যবহৃত UI/helper।
+- **`shared/`**: একাধিক module-এ ব্যবহৃত UI/helper। সাধারণ নকশা-ভিত্তির সহায়ক `mm-ui.js` (CSS: `app/css/mm-ui.css`; নিয়ম: [architecture.md](architecture.md#frontend-conventions))।
 - **`madrasa/`**: মাদরাসার সব feature। `madrasa-*` গুলো পুরনো feature file, `mdr-*` গুলো Supabase-যুগের file।
 - **`dept/`**: `dept-api`, `dept-supabase-sync`, `dept-units`।
 - **`khedmat/`**: `khedmat-api`।
