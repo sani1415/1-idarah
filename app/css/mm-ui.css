@@ -41,6 +41,7 @@
 .ui-note strong { color: var(--ink2); }
 
 /* ── রঙিন ঘর (stat card) ── */
+.ui-stats.is-3 { --ui-cols: 3; }
 .ui-stats { display: grid; grid-template-columns: repeat(var(--ui-cols, 4), minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
 .ui-stat { position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; text-align: left; font: inherit; color: var(--ink);
   background: var(--ui-card); border: 1.5px solid var(--ui-bd); border-radius: 14px; padding: 10px 12px; min-width: 0; box-shadow: 0 1px 2px rgba(42,35,24,.04); }
@@ -131,7 +132,7 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 @container (max-width: 1100px) { .ui-stats.is-6 { --ui-cols: 3; } }
 
 @media (max-width: 760px) {
-  .ui-stats, .ui-stats.is-6, .ui-filters { --ui-cols: 2; }
+  .ui-stats, .ui-stats.is-6, .ui-stats.is-3, .ui-filters { --ui-cols: 2; }
 }
 @media (max-width: 640px) {
   .ui-title { font-size: 19px; }

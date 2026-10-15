@@ -128,6 +128,11 @@ var _qardGiveInlineOpen = false; /* করজ বিস্তারিত মড
     cs.textContent = `
 body.page-daftar #panel-fees{margin-left:-12px;margin-right:-12px}
 .acc-shell{padding-top:2px}
+body #modal-account-details.acc-acct-wide .modal{width:min(1100px,calc(100vw - 32px));max-width:none}
+.acc-detail-stats{margin-bottom:10px}
+.acc-detail-stats .ui-stat-val{font-size:19px}
+.acc-due-bar{width:22%;min-width:70px}
+@media (max-width:640px){.acc-due-bar{display:none}}
 .acc-add-btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:2px 4px 8px}
 .acc-add-btns.has-month{gap:6px;padding-bottom:6px}
 .acc-add-btns.acc-readonly{grid-template-columns:1fr;align-items:stretch}
@@ -631,7 +636,23 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
 .acc-ws-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;align-items:start}
 .acc-ws-menu{flex-direction:column;overflow:visible;position:sticky;top:10px;padding:6px}
 .acc-ws-menu-item{width:100%;text-align:left;padding:10px 12px;font-size:13px}
-}`;
+}
+/* রিপোর্ট — নতুন ধাঁচের রং ও কার্ড (mm-ui token; রিপোর্টের নিজস্ব CSS-এর উপর) */
+.acc-ws .acc-ws-title{font-size:22px;font-weight:700;color:var(--ink)}
+.acc-ws .acc-ws-back{border-radius:999px;border-color:var(--ui-bd,#ece3d2);font-weight:700;box-shadow:0 1px 2px rgba(42,35,24,.05)}
+.acc-ws .acc-ws-menu{background:var(--ui-card,#fffdf9);border-color:var(--ui-bd,#ece3d2)}
+.acc-ws .acc-ws-menu-item{font-size:13.5px;font-weight:600;color:var(--ink2)}
+.acc-ws .acc-ws-menu-item.active{color:#fff;background:var(--ui-accent,#b5573a);box-shadow:0 4px 12px -6px rgba(181,87,58,.7);font-weight:700}
+.acc-ws .rpt-menu-card,.acc-ws .rpt-card,.acc-ws .rpt-stat{background:var(--ui-card,#fffdf9);border-color:var(--ui-bd,#ece3d2);border-radius:14px;box-shadow:0 1px 2px rgba(42,35,24,.04),0 6px 18px -10px rgba(42,35,24,.12)}
+.acc-ws .rpt-menu-card{transition:border-color .15s,box-shadow .15s}
+.acc-ws .rpt-menu-card:hover{border-color:var(--ui-accent,#b5573a)}
+.acc-ws .rpt-menu-card strong{font-size:14.5px}
+.acc-ws .rpt-menu-card span{font-size:12px}
+.acc-ws .rpt-stat-val{font-size:18px}
+.acc-ws .rpt-stat-lbl{font-size:12px}
+.acc-ws .rpt-tbl{font-size:12.5px}
+.acc-ws .rpt-tbl th{background:var(--cream);font-size:12px;font-weight:700;color:var(--ink3)}
+.acc-ws .rpt-bar-lbl{font-size:12px}`;
     document.head.appendChild(cs);
   }
 
@@ -1741,9 +1762,26 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
           fillQardCategorySelectPair('acc-qard-inline-cat-pick', 'acc-qard-inline-cat-text');
         }
       } else {
-        root.innerHTML = filters + tableHtml;
+        root.innerHTML = acctDetailStats(account, rows, total) + filters + tableHtml;
       }
     }
+  }
+
+  /* হিসাব বিভাগের বিস্তারিত: উপরে রঙিন ঘর (mm-ui) — এই বাছাইয়ে মোট, এন্ট্রি, বর্তমান বকেয়া, সবচেয়ে বড় খাত */
+  function acctDetailStats(account, rows, total) {
+    var U = window.MMUI;
+    if (!U) return '';
+    var due = A.Dues.getAll().filter(function (d) { return d.account === account; })
+      .reduce(function (s, d) { return s + Math.max(0, A.num(d.due)); }, 0);
+    var byCat = {};
+    rows.forEach(function (r) { var c = A.clean(r.category, '') || 'অন্যান্য'; byCat[c] = (byCat[c] || 0) + A.num(r.amount); });
+    var topCat = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; })[0];
+    return '<div class="ui-stats acc-detail-stats">' +
+      U.stat({ tone: 'bad', icon: 'down', label: 'মোট ব্যয়', value: '৳' + fa(total), sub: (_detailMonthFs.length || _detailCatFs.length || _detailSupFs.length || _detailSearch) ? 'ফিল্টার অনুযায়ী' : 'সব মাস' }) +
+      U.stat({ tone: 'info', icon: 'cal', label: 'এন্ট্রি', value: bn(rows.length) + 'টি' }) +
+      U.stat({ tone: 'warn', icon: 'alert', label: 'বর্তমান বকেয়া', value: '৳' + fa(due), sub: due ? 'চাপলে বকেয়া' : 'কোনো বকেয়া নেই', onclick: due ? "openAccDueDetails('" + esc(account) + "')" : '' }) +
+      U.stat({ tone: 'deep', icon: 'star', label: 'সবচেয়ে বড় খাত', value: topCat ? esc(topCat) : '—', sub: topCat ? '৳' + fa(byCat[topCat]) + (total ? ' · ' + bn(Math.round(byCat[topCat] * 100 / total)) + '%' : '') : '' }) +
+      '</div>';
   }
 
   /* খাত-ভিত্তিক করজে হাসানা আদায় সারসংক্ষেপ — card + inline expand */
@@ -1814,6 +1852,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (detailsModal) {
       detailsModal.classList.remove('acc-income-detail-open');
       detailsModal.classList.toggle('acc-qard-detail-open', account === 'qard');
+      detailsModal.classList.toggle('acc-acct-wide', account !== 'qard');
     }
     _detailAccount = account;
     _qardTab = (account === 'qard' && (tab === 'recovery' || tab === 'entries')) ? tab : 'entries';
@@ -1865,6 +1904,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (modal) {
       modal.classList.toggle('acc-income-detail-open', _metricModalKind === 'income' || _metricModalKind === 'expense');
       modal.classList.remove('acc-qard-detail-open');
+      modal.classList.toggle('acc-acct-wide', _metricModalKind === 'dues');
     }
     _detailAccount = '';
     if (title) {
@@ -2523,6 +2563,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var dues = A.Dues.getAll().filter(function (d) { return A.num(d.due) > 0; });
     if (_dueAccFs.length) dues = dues.filter(function (d) { return _dueAccFs.indexOf(d.account) >= 0; });
     if (!dues.length) return filterBar + '<div class="acc-empty">এই হিসাব বিভাগে কোনো বকেয়া নেই</div>';
+    dues.sort(function (a, b) { return A.num(b.due) - A.num(a.due); });
+    var maxDue = Math.max.apply(null, dues.map(function (d) { return A.num(d.due); }).concat([1]));
     var rows = dues.map(function (d) {
       var isDue = A.num(d.due) > 0;
       var supplier = A.clean(d.supplier, 'সরবরাহকারী');
@@ -2531,13 +2573,21 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         '<td>৳' + fa(d.total) + '</td>' +
         '<td style="color:var(--green)">৳' + fa(d.paid) + '</td>' +
         '<td style="color:' + (isDue ? 'var(--red)' : 'var(--green)') + ';font-weight:700">' + (isDue ? '' : '✓') + '৳' + fa(Math.abs(A.num(d.due))) + '</td>' +
+        '<td class="acc-due-bar"><span class="ui-track"><span class="ui-fill ui-bad" style="width:' + Math.round(A.num(d.due) / maxDue * 100) + '%"></span></span></td>' +
         (readOnly ? '' : '<td>' + (isDue ? '<button class="acc-pay-btn" onclick="payDue(\'' + esc(d.id) + '\')">পরিশোধ</button>' : '') + '</td>') +
         '</tr>';
     }).join('');
     var totalDue = dues.reduce(function (s, d) { return s + Math.max(0, A.num(d.due)); }, 0);
-    return filterBar +
-      '<div style="font-size:12px;color:var(--ink3);margin-bottom:8px">মোট বকেয়া: <strong style="color:var(--red)">৳' + fa(totalDue) + '</strong></div>' +
-      '<div style="overflow-x:auto"><table class="acc-sum-tbl"><thead><tr><th>সরবরাহকারী</th><th>মোট</th><th>দেওয়া</th><th>বকেয়া</th>' + (readOnly ? '' : '<th></th>') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    var U = window.MMUI;
+    var dueStats = U
+      ? '<div class="ui-stats is-3 acc-detail-stats">' +
+          U.stat({ tone: 'bad', icon: 'alert', label: 'মোট বকেয়া', value: '৳' + fa(totalDue) }) +
+          U.stat({ tone: 'info', icon: 'users', label: 'সরবরাহকারী', value: bn(dues.length) + ' জন', sub: 'যাদের কাছে বকেয়া' }) +
+          U.stat({ tone: 'warn', icon: 'star', label: 'সবচেয়ে বেশি', value: '৳' + fa(A.num(dues[0].due)), sub: esc(A.clean(dues[0].supplier, '')) }) +
+        '</div>'
+      : '<div style="font-size:12px;color:var(--ink3);margin-bottom:8px">মোট বকেয়া: <strong style="color:var(--red)">৳' + fa(totalDue) + '</strong></div>';
+    return filterBar + dueStats +
+      '<div style="overflow-x:auto"><table class="acc-sum-tbl"><thead><tr><th>সরবরাহকারী</th><th>মোট</th><th>দেওয়া</th><th>বকেয়া</th><th class="acc-due-bar"></th>' + (readOnly ? '' : '<th></th>') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   /* ══════════════ SETTINGS ══════════════ */
