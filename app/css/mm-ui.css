@@ -163,6 +163,7 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .ui-skin .tab-pills .pill.active { background: var(--ui-accent); color: #fff; box-shadow: 0 4px 12px -6px rgba(181,87,58,.7); }
 .ui-skin .settings-section { background: var(--ui-card); border: 1px solid var(--ui-bd); border-radius: 16px; box-shadow: var(--ui-shadow); }
 .ui-skin .settings-title { font-family: var(--font-bn); font-size: 16px; }
+.ui-skin .dept-tab-btn.active, .ui-skin .dept-tab-btn[aria-selected="true"], .ui-skin .dars-tab.active, .ui-skin .sched-tab.active,
 .ui-skin .dept-settings-tab.active, .ui-skin .cls-ov-tab.active { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; }
 
 /* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */

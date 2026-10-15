@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mm-ui.css">
 <style>
   .group-card { background:#fff; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:10px; }
   .group-name { font-family:'Tiro Bangla',serif; font-size:16px; font-weight:700; color:var(--ink2); }
@@ -26,7 +27,7 @@
   .card-actions .add-btn { margin:0; font-size:12px; padding:9px 4px; }
 </style>
 </head>
-<body>
+<body class="ui-skin">
 
 <div class="topbar">
   <div class="topbar-left">
@@ -42,14 +43,7 @@
 
 <div class="content">
   <div class="panel active" id="panel-home">
-    <div style="background:linear-gradient(135deg,#1a6b3c,#27ae60);border-radius:var(--radius);padding:16px;color:#fff;margin:8px 0 14px;">
-      <div style="font-size:13px;opacity:.6;margin-bottom:10px;">হিফজ বিভাগ · সামগ্রিক</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="total-hifz">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">হাফেজ ছাত্র</div></div>
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="total-groups">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">সক্রিয় ফরিক</div></div>
-        <div><div style="font-family:'Tiro Bangla',serif;font-size:22px;font-weight:700;" id="avg-para">—</div><div style="font-size:10px;opacity:.7;margin-top:2px;">গড় পারা</div></div>
-      </div>
-    </div>
+    <div class="ui-stats is-3"><div class="ui-stat is-ok"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.2c2.4.1 4.1 1.7 4.7 4.3"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">হাফেজ ছাত্র</span><span class="ui-stat-val" id="total-hifz">—</span></span></div><div class="ui-stat is-info"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">সক্রিয় ফরিক</span><span class="ui-stat-val" id="total-groups">—</span></span></div><div class="ui-stat is-warn"><span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></span><span class="ui-stat-txt"><span class="ui-stat-lbl">গড় পারা</span><span class="ui-stat-val" id="avg-para">—</span></span></div></div>
     <button class="add-btn" style="background:var(--green);" onclick="openModal('add-group')">＋ নতুন ফরিক তৈরি করুন</button>
     <div class="sec-header"><span class="sec-title">সক্রিয় ফরিকসমূহ</span></div>
     <div id="group-list"></div>
