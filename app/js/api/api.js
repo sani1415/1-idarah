@@ -1387,21 +1387,6 @@ const API = (() => {
   };
 
   /* ══════════════════════════════
-     FEES SUMMARY
-     ══════════════════════════════ */
-  const Fees = {
-    getByClass: cid => load(KEYS.fees).filter(f => f.class_id === cid).sort((a,b) => b.month.localeCompare(a.month)),
-    getLatest: cid => { const list = load(KEYS.fees).filter(f => f.class_id === cid).sort((a,b) => b.month.localeCompare(a.month)); return list[0] || null; },
-    add(data) {
-      const list = load(KEYS.fees);
-      const entry = { id: uid(), date: today(), ...data };
-      list.push(entry);
-      save(KEYS.fees, list);
-      return entry;
-    }
-  };
-
-  /* ══════════════════════════════
      EXAMS & RESULTS
      ══════════════════════════════ */
   const Exams = {
@@ -1620,7 +1605,7 @@ const API = (() => {
 
   /* ── PUBLIC API ── */
   return {
-    Students, Classes, Teachers, Attendance, KitabProgress, Khuluk, Logs, Fees, Exams,
+    Students, Classes, Teachers, Attendance, KitabProgress, Khuluk, Logs, Exams,
     Settings, Sessions, Holidays,
     persistLoadArr, persistSaveArr,
     hydrateSessionCache, clearSessionCache, isSessionCacheWarm, isDaftarSessionCacheWarm, hasSessionCacheEntry,

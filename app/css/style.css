@@ -1178,9 +1178,6 @@ body {
   line-height: 1.45;
   padding: 8px 10px;
 }
-.st-fee-line { font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--cream2); }
-.st-fee-line:last-child { border-bottom: none; }
-.st-fee-mo { font-weight: 700; color: var(--ink2); font-family: 'Tiro Bangla', serif; margin-bottom: 4px; }
 .st-empty { text-align: center; padding: 20px 12px; color: var(--ink3); font-size: 12px; }
 .st-empty--sm { padding: 10px 8px; text-align: left; }
 .st-logline { font-size: 11px; padding: 6px 0; border-bottom: 1px solid var(--cream2); color: var(--ink2); }

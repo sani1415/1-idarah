@@ -14,7 +14,7 @@
 
   var S = {
     data: null, loading: false, error: '', month: null, view: 'due',
-    dept: '', classId: '', q: '', polling: null, pollUntil: 0, root: null,
+    dept: '', classId: '', q: '', sort: 'amount', limit: 40, polling: null, pollUntil: 0, root: null,
   };
 
   /* ── ছোট সহায়ক ── */
@@ -126,56 +126,134 @@
   }
 
   /* ── আঁকা ── */
+  var ICON = {
+    check: '<path d="M5 12.5l4.2 4.2L19 7"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    alert: '<path d="M12 7v6"/><path d="M12 16.8v.2"/>',
+    users: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.2c2.4.1 4.1 1.7 4.7 4.3"/>',
+    info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><path d="M12 8v.2"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+    refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+    chev: '<path d="M9.5 6l6 6-6 6"/>',
+    back: '<path d="M14.5 6l-6 6 6 6"/>',
+  };
+  function icon(name, size) {
+    var z = size || 18;
+    return '<svg aria-hidden="true" width="' + z + '" height="' + z + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</svg>';
+  }
+
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
     st.id = STYLE_ID;
     st.textContent =
-      '.wz-shell{padding:4px 0 24px;}' +
-      '.wz-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;}' +
-      '.wz-back{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--cream);border-radius:10px;padding:7px 12px;cursor:pointer;}' +
-      '.wz-title{font-weight:800;font-size:17px;color:var(--ink);}' +
-      '.wz-sub{font-size:11px;color:var(--ink3);margin-top:2px;}' +
-      '.wz-sync{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--ink3);margin:0 0 12px;}' +
-      '.wz-btn{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--cream);border-radius:9px;padding:6px 11px;cursor:pointer;color:var(--ink);}' +
-      '.wz-btn[disabled]{opacity:.55;cursor:default;}' +
-      '.wz-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}' +
-      '.wz-filters select,.wz-filters input{font:inherit;font-size:13px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;min-width:0;width:100%;box-sizing:border-box;}' +
-      '.wz-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}' +
-      '.wz-card{border:1px solid var(--cream2);background:var(--cream);border-radius:12px;padding:9px 10px;cursor:pointer;text-align:left;font:inherit;min-width:0;}' +
-      '.wz-card.is-on{outline:2px solid var(--gold);}' +
-      '.wz-card-lbl{font-size:11px;color:var(--ink3);font-weight:600;}' +
-      '.wz-card-val{font-size:20px;font-weight:800;margin-top:2px;}' +
-      '.wz-card-sub{font-size:11px;color:var(--ink3);margin-top:1px;}' +
-      '.wz-c-ontime .wz-card-val{color:var(--green);}' +
-      '.wz-c-late .wz-card-val{color:var(--gold-deep,#9a6b12);}' +
-      '.wz-c-due .wz-card-val{color:var(--red);}' +
-      '.wz-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px;}' +
-      '.wz-tab{font:inherit;font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;}' +
-      '.wz-tab.is-on{background:var(--ink);color:#fff;border-color:var(--ink);}' +
-      '.wz-list{border:1px solid var(--cream2);border-radius:12px;background:#fff;overflow:hidden;}' +
-      '.wz-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--cream2);}' +
+      '.wz-shell{--wz-ok:#3f7a50;--wz-ok-bg:#e8f2e7;--wz-late:#b07a14;--wz-late-bg:#fbf0d6;--wz-due:#b5573a;--wz-due-bg:#fbe7df;' +
+        '--wz-card:#fffdf9;--wz-bd:#ece3d2;padding:4px 0 28px;container-type:inline-size;color:var(--ink);}' +
+      '.wz-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}' +
+      '.wz-title{font-family:var(--font-bn);font-weight:700;font-size:26px;line-height:1.25;color:var(--ink);margin:0;}' +
+      '.wz-sync{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink3);margin-top:6px;}' +
+      '.wz-pill{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--wz-bd);' +
+        'background:var(--wz-card);color:var(--ink2);border-radius:999px;padding:6px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(42,35,24,.05);}' +
+      '.wz-pill:hover{border-color:var(--wz-due);color:var(--wz-due);}' +
+      '.wz-pill[disabled]{opacity:.55;cursor:default;}' +
+      '.wz-back{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wz-bd);' +
+        'background:var(--wz-card);color:var(--ink2);border-radius:12px;padding:8px 12px;cursor:pointer;flex-shrink:0;}' +
+      '.wz-btn{font:inherit;font-size:13px;border:1px solid var(--wz-bd);background:var(--wz-card);border-radius:10px;padding:7px 12px;cursor:pointer;color:var(--ink);}' +
+      '.wz-box{background:var(--wz-card);border:1px solid var(--wz-bd);border-radius:16px;box-shadow:0 1px 2px rgba(42,35,24,.04),0 6px 18px -10px rgba(42,35,24,.12);}' +
+      '.wz-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:14px 16px;margin-bottom:14px;}' +
+      '.wz-f{display:flex;flex-direction:column;gap:5px;min-width:0;}' +
+      '.wz-f>span{font-size:12px;font-weight:600;color:var(--ink3);}' +
+      '.wz-filters select,.wz-filters input{font:inherit;font-size:14px;height:40px;padding:0 10px;border:1px solid var(--wz-bd);border-radius:10px;' +
+        'background:#fff;color:var(--ink);min-width:0;width:100%;box-sizing:border-box;}' +
+      '.wz-filters select:focus,.wz-filters input:focus{outline:none;border-color:var(--wz-due);box-shadow:0 0 0 3px rgba(181,87,58,.14);}' +
+      '.wz-search{position:relative;}' +
+      '.wz-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-muted);pointer-events:none;}' +
+      '.wz-filters .wz-search input{padding-left:34px;}' +
+      '.wz-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px;}' +
+      '.wz-card{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;text-align:left;font:inherit;color:var(--ink);' +
+        'background:var(--wz-card);border:1.5px solid var(--wz-bd);border-radius:16px;padding:14px;cursor:pointer;min-width:0;' +
+        'box-shadow:0 1px 2px rgba(42,35,24,.04);transition:border-color .15s,box-shadow .15s;}' +
+      '.wz-card:hover{box-shadow:0 6px 18px -10px rgba(42,35,24,.25);}' +
+      '.wz-ic{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;}' +
+      '.wz-card-txt{display:flex;flex-direction:column;min-width:0;position:relative;z-index:1;}' +
+      '.wz-card-lbl{font-size:13px;font-weight:600;color:var(--ink2);}' +
+      '.wz-card-val{font-family:var(--font-bn);font-size:28px;font-weight:700;line-height:1.15;}' +
+      '.wz-card-sub{font-size:12.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.wz-ghost{position:absolute;right:-6px;bottom:-10px;opacity:.13;pointer-events:none;}' +
+      '.wz-t-ok{background:linear-gradient(135deg,var(--wz-ok-bg),var(--wz-card) 70%);}' +
+      '.wz-t-ok .wz-ic{background:var(--wz-ok);}.wz-t-ok .wz-card-val,.wz-t-ok .wz-ghost{color:var(--wz-ok);}' +
+      '.wz-t-late{background:linear-gradient(135deg,var(--wz-late-bg),var(--wz-card) 70%);}' +
+      '.wz-t-late .wz-ic{background:var(--wz-late);}.wz-t-late .wz-card-val,.wz-t-late .wz-ghost{color:var(--wz-late);}' +
+      '.wz-t-due{background:linear-gradient(135deg,var(--wz-due-bg),var(--wz-card) 70%);}' +
+      '.wz-t-due .wz-ic{background:var(--wz-due);}.wz-t-due .wz-card-val,.wz-t-due .wz-ghost{color:var(--wz-due);}' +
+      '.wz-t-reg{background:linear-gradient(135deg,#f6e3dc,var(--wz-card) 70%);}' +
+      '.wz-t-reg .wz-ic{background:#8f3f2a;}.wz-t-reg .wz-card-val,.wz-t-reg .wz-ghost{color:#8f3f2a;}' +
+      '.wz-card.is-on.wz-t-ok{border-color:var(--wz-ok);}.wz-card.is-on.wz-t-late{border-color:var(--wz-late);}' +
+      '.wz-card.is-on.wz-t-due{border-color:var(--wz-due);}.wz-card.is-on.wz-t-reg{border-color:#8f3f2a;}' +
+      '.wz-card.is-on{box-shadow:0 8px 22px -12px rgba(42,35,24,.35);}' +
+      '.wz-note-line{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--ink3);margin:0 2px 12px;}' +
+      '.wz-note-line svg{flex-shrink:0;margin-top:1px;}' +
+      '.wz-tabs{display:flex;gap:4px;padding:5px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;}' +
+      '.wz-tabs::-webkit-scrollbar{display:none;}' +
+      '.wz-tab{flex:1 0 auto;font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:11px;border:none;background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap;}' +
+      '.wz-tab:hover{background:var(--cream2);}' +
+      '.wz-tab.is-on{background:var(--wz-due);color:#fff;box-shadow:0 4px 12px -6px rgba(181,87,58,.7);}' +
+      '.wz-main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start;}' +
+      '.wz-panel{overflow:hidden;min-width:0;}' +
+      '.wz-ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--wz-bd);flex-wrap:wrap;}' +
+      '.wz-ph h3{font-family:var(--font-bn);font-size:16px;font-weight:700;margin:0;color:var(--ink);}' +
+      '.wz-ph select{font:inherit;font-size:13px;height:34px;padding:0 8px;border:1px solid var(--wz-bd);border-radius:9px;background:#fff;color:var(--ink2);}' +
+      '.wz-list{max-height:none;overflow:auto;}' +
+      '.wz-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--cream2);}' +
       '.wz-row:last-child{border-bottom:none;}' +
-      '.wz-name{font-weight:700;color:var(--ink);font-size:14px;}' +
-      '.wz-name a{color:inherit;text-decoration:none;border-bottom:1px dashed var(--line);cursor:pointer;}' +
-      '.wz-meta{font-size:11px;color:var(--ink3);margin-top:2px;}' +
-      '.wz-right{text-align:right;flex-shrink:0;font-size:13px;}' +
-      '.wz-amt{font-weight:800;}' +
-      '.wz-amt.due{color:var(--red);}' +
-      '.wz-note{font-size:11px;color:var(--ink3);margin-top:2px;}' +
-      '.wz-empty{padding:18px;text-align:center;color:var(--ink3);font-size:13px;}' +
-      '.wz-sec{font-weight:800;font-size:14px;margin:18px 0 8px;color:var(--ink2);}' +
-      '.wz-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid var(--cream2);border-radius:12px;overflow:hidden;}' +
-      '.wz-table th,.wz-table td{padding:7px 8px;border-bottom:1px solid var(--cream2);text-align:right;}' +
-      '.wz-table th:first-child,.wz-table td:first-child{text-align:left;}' +
-      '.wz-table th{background:var(--cream);font-weight:700;color:var(--ink2);}' +
-      '.wz-bar{display:inline-block;height:6px;border-radius:3px;background:var(--green);vertical-align:middle;margin-left:6px;}' +
-      '.wz-warn{background:var(--red-light);color:var(--red);border-radius:10px;padding:8px 10px;font-size:12px;margin-bottom:10px;}' +
-      '@media (max-width:640px){.wz-filters{grid-template-columns:1fr 1fr;}.wz-cards{grid-template-columns:1fr 1fr;}.wz-hide-sm{display:none;}}';
+      '.wz-row.is-link{cursor:pointer;}' +
+      '.wz-row.is-link:hover{background:var(--cream);}' +
+      '.wz-who{min-width:0;}' +
+      '.wz-name{font-weight:700;color:var(--ink);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.wz-meta{font-size:12.5px;color:var(--ink3);margin-top:2px;}' +
+      '.wz-end{display:flex;align-items:center;gap:8px;flex-shrink:0;}' +
+      '.wz-right{text-align:right;font-size:13px;}' +
+      '.wz-chev{color:var(--ink-muted);display:flex;}' +
+      '.wz-amt{font-weight:800;font-size:15px;}' +
+      '.wz-amt.due{color:var(--wz-due);}.wz-amt.ok{color:var(--wz-ok);}.wz-amt.late{color:var(--wz-late);}' +
+      '.wz-note{font-size:12px;color:var(--ink3);margin-top:1px;}' +
+      '.wz-more{display:block;width:100%;font:inherit;font-size:14px;font-weight:600;color:var(--wz-due);background:var(--cream);border:none;border-top:1px solid var(--cream2);padding:12px;cursor:pointer;}' +
+      '.wz-empty{padding:22px;text-align:center;color:var(--ink3);font-size:14px;}' +
+      '.wz-table{width:100%;border-collapse:collapse;font-size:13.5px;}' +
+      '.wz-table th,.wz-table td{padding:10px 12px;border-bottom:1px solid var(--cream2);text-align:right;white-space:nowrap;}' +
+      '.wz-table th:first-child,.wz-table td:first-child{text-align:left;white-space:normal;}' +
+      '.wz-table th{font-size:12.5px;font-weight:700;color:var(--ink3);background:var(--cream);}' +
+      '.wz-table tbody tr:last-child td{border-bottom:none;}' +
+      '.wz-table tfoot td{font-weight:800;background:var(--cream);border-bottom:none;border-top:1px solid var(--wz-bd);}' +
+      '.wz-dept{color:var(--ink3);font-size:11px;font-weight:500;margin-left:4px;}' +
+      '.wz-track{display:block;width:100%;min-width:70px;height:8px;border-radius:4px;background:var(--cream2);overflow:hidden;}' +
+      '.wz-fill{display:block;height:100%;border-radius:4px;}' +
+      '.wz-g{color:var(--wz-ok);}.wz-a{color:var(--wz-late);}.wz-r{color:var(--wz-due);}' +
+      '.wz-fill.wz-g{background:var(--wz-ok);}.wz-fill.wz-a{background:#d29a2c;}.wz-fill.wz-r{background:var(--wz-due);}' +
+      '.wz-pct{font-weight:800;}' +
+      '.wz-scroll{overflow-x:auto;}' +
+      '.wz-months{margin-top:14px;}' +
+      '.wz-warn{background:var(--red-light);color:var(--red);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;}' +
+      '@container (min-width:860px){' +
+        '.wz-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}' +
+        '.wz-list{max-height:640px;}' +
+      '}' +
+      '@media (max-width:760px){.wz-filters{grid-template-columns:1fr 1fr;}.wz-cards{grid-template-columns:1fr 1fr;gap:10px;}}' +
+      '@media (max-width:640px){' +
+        '.wz-title{font-size:21px;}' +
+        '.wz-filters{padding:12px;gap:10px;}' +
+        '.wz-card{flex-direction:column;align-items:flex-start;gap:8px;padding:12px;}' +
+        '.wz-ic{width:34px;height:34px;}' +
+        '.wz-card-val{font-size:24px;}' +
+        '.wz-row{padding:11px 12px;}' +
+        '.wz-ph{padding:12px;}' +
+        '.wz-table th,.wz-table td{padding:9px 8px;}' +
+        '.wz-hide-sm{display:none;}' +
+      '}';
     document.head.appendChild(st);
   }
 
-  function syncLine() {
+  function syncInfo() {
     var sy = (S.data && S.data.sync) || {};
     var total = students().filter(function (s) { return s.reg_id; }).length;
     var running = sy.started_at && !sy.finished_at && (Date.now() - new Date(sy.started_at).getTime() < 20 * 60000);
@@ -183,14 +261,15 @@
     students().forEach(function (s) { if (s.fetched_at && (!latest || s.fetched_at > latest)) latest = s.fetched_at; });
     var txt = running
       ? 'হালনাগাদ চলছে… ' + bn(sy.done_this_run || 0) + '/' + bn(total) + ' জন'
-      : (latest ? 'ফি-সফটওয়্যার থেকে শেষ হালনাগাদ: ' + ago(sy.finished_at || latest) : 'এখনো হালনাগাদ হয়নি');
-    return '<div class="wz-sync"><span>' + esc(txt) + ' · প্রতি রাতে নিজে হালনাগাদ হয়</span>' +
-      '<button type="button" class="wz-btn" onclick="MdrWazifaReport.refresh()"' + (running ? ' disabled' : '') + '>↻ এখনই হালনাগাদ</button></div>';
+      : (latest ? 'শেষ হালনাগাদ: ' + ago(sy.finished_at || latest) : 'এখনো হালনাগাদ হয়নি');
+    return '<div class="wz-sync"><span title="প্রতি রাতে নিজে হালনাগাদ হয়">' + esc(txt) + '</span>' +
+      '<button type="button" class="wz-pill" onclick="MdrWazifaReport.refresh()"' + (running ? ' disabled' : '') + '>' + icon('refresh', 15) + 'হালনাগাদ</button></div>';
   }
 
   function filtersHtml(now) {
     var opts = monthOptions(now);
     if (!S.month && opts.length) S.month = { y: opts[0].y, m: opts[0].m };
+    var field = function (label, inner, cls) { return '<label class="wz-f' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span>' + inner + '</label>'; };
     var mSel = '<select onchange="MdrWazifaReport.set(\'month\', this.value)">' + opts.map(function (o) {
       var on = S.month && S.month.y === o.y && S.month.m === o.m;
       var cur = now && o.k === key(now.y, now.m);
@@ -206,29 +285,41 @@
     var cSel = '<select onchange="MdrWazifaReport.set(\'classId\', this.value)"><option value="">সব জামাত</option>' +
       Object.keys(classes).sort(function (a, b) { return (classes[a].sort || 0) - (classes[b].sort || 0); })
         .map(function (c) { return '<option value="' + esc(c) + '"' + (S.classId === c ? ' selected' : '') + '>' + esc(classes[c].name) + '</option>'; }).join('') + '</select>';
-    var search = '<input type="search" placeholder="নাম বা আইডি" value="' + esc(S.q) + '" oninput="MdrWazifaReport.search(this.value)">';
-    return '<div class="wz-filters">' + mSel + dSel + cSel + search + '</div>';
+    var search = '<div class="wz-search">' + icon('search', 16) +
+      '<input type="search" placeholder="নাম বা আইডি দিয়ে খুঁজুন…" value="' + esc(S.q) + '" oninput="MdrWazifaReport.search(this.value)"></div>';
+    return '<div class="wz-box wz-filters">' + field('মাস', mSel) + field('বিভাগ', dSel) + field('জামাত', cSel) + field('খুঁজুন', search) + '</div>';
   }
 
   function rowHtml(st, right) {
-    var open = typeof global.openStudentDetail === 'function'
-      ? '<a onclick="openStudentDetail(\'' + esc(st.id) + '\')">' + esc(st.name || '—') + '</a>' : esc(st.name || '—');
-    return '<div class="wz-row"><div><div class="wz-name">' + open + '</div>' +
+    var can = typeof global.openStudentDetail === 'function';
+    return '<div class="wz-row' + (can ? ' is-link' : '') + '"' + (can ? ' onclick="openStudentDetail(\'' + esc(st.id) + '\')"' : '') + '>' +
+      '<div class="wz-who"><div class="wz-name">' + esc(st.name || '—') + '</div>' +
       '<div class="wz-meta">' + esc(bn(st.reg_id || '')) + (st.class_name ? ' · ' + esc(st.class_name) : '') + '</div></div>' +
-      '<div class="wz-right">' + right + '</div></div>';
+      '<div class="wz-end"><div class="wz-right">' + right + '</div>' + (can ? '<span class="wz-chev">' + icon('chev', 16) + '</span>' : '') + '</div></div>';
+  }
+
+  var SORTS = { amount: 'বেশি বাকি আগে', months: 'বেশি মাস বাকি আগে', name: 'নাম অনুযায়ী' };
+  function sortRows(arr, getDue, getMonths) {
+    var by = S.sort;
+    return arr.sort(function (a, b) {
+      if (by === 'name') return String(a.st.name || '').localeCompare(String(b.st.name || ''), 'bn');
+      if (by === 'months') return getMonths(b) - getMonths(a) || getDue(b) - getDue(a);
+      return getDue(b) - getDue(a) || getMonths(b) - getMonths(a);
+    });
   }
 
   function render() {
     var root = S.root;
     if (!root || !root.isConnected) return;
     ensureStyles();
-    var head = '<div class="wz-top"><div><div class="wz-title">ওজিফা — সময়মতো আদায়</div>' +
-      '<div class="wz-sub">ফি-সফটওয়্যারের তথ্য · সময়মতো = যে মাসের ওজিফা সেই মাসের মধ্যেই পরিশোধ</div></div>' +
-      '<button type="button" class="wz-back" onclick="closeAccGrid()">← হিসাব</button></div>';
-    if (S.loading && !S.data) { root.innerHTML = '<div class="wz-shell">' + head + '<div class="wz-empty">লোড হচ্ছে…</div></div>'; return; }
+    var head = function (withSync) {
+      return '<div class="wz-top"><div><h2 class="wz-title">ওজিফা — সময়মতো আদায়</h2>' + (withSync ? syncInfo() : '') + '</div>' +
+        '<button type="button" class="wz-back" onclick="closeAccGrid()">' + icon('back', 15) + 'হিসাব</button></div>';
+    };
+    if (S.loading && !S.data) { root.innerHTML = '<div class="wz-shell">' + head(false) + '<div class="wz-box wz-empty">লোড হচ্ছে…</div></div>'; return; }
     if (S.error && !S.data) {
-      root.innerHTML = '<div class="wz-shell">' + head + '<div class="wz-empty">' + esc(S.error) +
-        '<br><button type="button" class="wz-btn" style="margin-top:8px" onclick="MdrWazifaReport.load()">আবার চেষ্টা করুন</button></div></div>';
+      root.innerHTML = '<div class="wz-shell">' + head(false) + '<div class="wz-box wz-empty">' + esc(S.error) +
+        '<br><button type="button" class="wz-btn" style="margin-top:10px" onclick="MdrWazifaReport.load()">আবার চেষ্টা করুন</button></div></div>';
       return;
     }
     var now = nowHijri();
@@ -236,7 +327,6 @@
     var list = filtered();
     var sel = S.month;
     var groups = { ontime: [], late: [], due: [], pending: [], none: [], nodata: [], regular: [] };
-    var amtPaid = 0, amtDue = 0;
     list.forEach(function (st) {
       if (!st.status) { groups.nodata.push({ st: st }); return; }
       if (st.status === 'not_found') { groups.nodata.push({ st: st, nf: true }); return; }
@@ -246,69 +336,101 @@
       var ms = monthStatus(st, sel.y, sel.m, now);
       ms.ds = ds;
       (groups[ms.s] || groups.none).push({ st: st, ms: ms });
-      if (ms.s === 'ontime' || ms.s === 'late') amtPaid += ms.amount || 0;
-      if (ms.s === 'due' || ms.s === 'pending') amtDue += ms.unpaid || 0;
     });
-    groups.regular.sort(function (a, b) { return b.ds.dueMonths - a.ds.dueMonths || b.ds.due - a.ds.due; });
     var isCur = sel && now && key(sel.y, sel.m) === key(now.y, now.m);
     var unpaidKey = isCur ? 'pending' : 'due';
     if (S.view === 'due' || S.view === 'pending') S.view = unpaidKey;
+    if (S.view === 'nodata' && !groups.nodata.length) S.view = unpaidKey;
+    var sum = function (arr, f) { return arr.reduce(function (s, x) { return s + (f(x) || 0); }, 0); };
+    var unpaidLbl = isCur ? 'এখনো দেয়নি' : 'বাকি';
 
-    var card = function (k, cls, label, n, sub) {
-      return '<button type="button" class="wz-card ' + cls + (S.view === k ? ' is-on' : '') + '" onclick="MdrWazifaReport.set(\'view\', \'' + k + '\')">' +
-        '<div class="wz-card-lbl">' + label + '</div><div class="wz-card-val">' + bn(n) + '</div>' + (sub ? '<div class="wz-card-sub">' + sub + '</div>' : '') + '</button>';
+    var card = function (k, tone, ic, label, n, sub) {
+      return '<button type="button" class="wz-card wz-t-' + tone + (S.view === k ? ' is-on' : '') + '" onclick="MdrWazifaReport.set(\'view\', \'' + k + '\')">' +
+        '<span class="wz-ic">' + icon(ic, 20) + '</span>' +
+        '<span class="wz-card-txt"><span class="wz-card-lbl">' + label + '</span><span class="wz-card-val">' + bn(n) + '</span>' +
+        (sub ? '<span class="wz-card-sub">' + sub + '</span>' : '') + '</span>' +
+        '<span class="wz-ghost">' + icon(ic, 64) + '</span></button>';
     };
     var cards = '<div class="wz-cards">' +
-      card('ontime', 'wz-c-ontime', 'সময়মতো', groups.ontime.length, taka(groups.ontime.reduce(function (s, x) { return s + (x.ms.amount || 0); }, 0))) +
-      card('late', 'wz-c-late', 'দেরিতে', groups.late.length, taka(groups.late.reduce(function (s, x) { return s + (x.ms.amount || 0); }, 0))) +
-      card(unpaidKey, 'wz-c-due', isCur ? 'এখনো দেয়নি' : 'বাকি', groups[unpaidKey].length, taka(amtDue)) +
-      card('regular', 'wz-c-due', 'নিয়মিত বাকিদার', groups.regular.length, '২ বা বেশি মাস বাকি') +
+      card('ontime', 'ok', 'check', 'সময়মতো', groups.ontime.length, taka(sum(groups.ontime, function (x) { return x.ms.amount; }))) +
+      card('late', 'late', 'clock', 'দেরিতে', groups.late.length, taka(sum(groups.late, function (x) { return x.ms.amount; }))) +
+      card(unpaidKey, 'due', 'alert', unpaidLbl, groups[unpaidKey].length, taka(sum(groups[unpaidKey], function (x) { return x.ms.unpaid; }))) +
+      card('regular', 'reg', 'users', 'নিয়মিত বাকিদার', groups.regular.length, '২ বা বেশি মাস বাকি') +
       '</div>';
 
-    var notes = '';
-    if (isCur) notes += '<div class="wz-sub" style="margin:-4px 0 10px">চলতি মাস এখনো শেষ হয়নি — যারা দেয়নি তারা «এখনো দেয়নি»; মাস শেষে «বাকি» হবে।</div>';
+    var note = isCur
+      ? 'চলতি মাস এখনো শেষ হয়নি — যারা দেয়নি তারা «এখনো দেয়নি»; মাস শেষে «বাকি» হবে।'
+      : 'সময়মতো = যে মাসের ওজিফা সেই মাসের মধ্যেই পরিশোধ।';
+    var notes = '<div class="wz-note-line">' + icon('info', 15) + '<span>' + note + '</span></div>';
 
-    var tabs = '<div class="wz-tabs">' + [
-      [unpaidKey, isCur ? 'এখনো দেয়নি' : 'বাকি', groups[unpaidKey].length],
+    var tabList = [
+      [unpaidKey, unpaidLbl, groups[unpaidKey].length],
       ['late', 'দেরিতে', groups.late.length], ['ontime', 'সময়মতো', groups.ontime.length],
-      ['regular', 'নিয়মিত বাকিদার', groups.regular.length], ['nodata', 'তথ্য নেই', groups.nodata.length],
-    ].map(function (t) {
-      return '<button type="button" class="wz-tab' + (S.view === t[0] ? ' is-on' : '') + '" onclick="MdrWazifaReport.set(\'view\', \'' + t[0] + '\')">' + t[1] + ' (' + bn(t[2]) + ')</button>';
+      ['regular', 'নিয়মিত বাকিদার', groups.regular.length],
+    ];
+    if (groups.nodata.length) tabList.push(['nodata', 'তথ্য নেই', groups.nodata.length]);
+    var tabs = '<div class="wz-box wz-tabs" role="tablist">' + tabList.map(function (t) {
+      var on = S.view === t[0];
+      return '<button type="button" role="tab" aria-selected="' + on + '" class="wz-tab' + (on ? ' is-on' : '') + '" onclick="MdrWazifaReport.set(\'view\', \'' + t[0] + '\')">' + t[1] + ' (' + bn(t[2]) + ')</button>';
     }).join('') + '</div>';
 
     var rows = '';
     var cur = groups[S.view] || [];
+    var sortable = false;
     if (S.view === 'ontime' || S.view === 'late') {
-      rows = cur.map(function (x) {
+      rows = cur.slice().sort(function (a, b) { return String(a.st.name || '').localeCompare(String(b.st.name || ''), 'bn'); }).map(function (x) {
         var p = x.ms.paid;
         // ফি-সফটওয়্যারের তারিখে কখনো ৩১–৩৩ দিন আসে — অসম্ভব দিন হলে শুধু মাস
         var when = p ? 'পরিশোধ: ' + (p.d >= 1 && p.d <= 30 ? bn(p.d) + ' ' : '') + monthName(p.m) + ' ' + bn(p.y) : 'পরিশোধিত';
-        var note = S.view === 'late' ? (x.ms.lateBy === 1 ? 'পরের মাসে দিয়েছে' : bn(x.ms.lateBy) + ' মাস পরে দিয়েছে') : '';
-        return rowHtml(x.st, '<div class="wz-amt">' + taka(x.ms.amount) + '</div><div class="wz-note">' + esc(when) + '</div>' + (note ? '<div class="wz-note">' + note + '</div>' : ''));
-      }).join('');
+        var late = S.view === 'late' ? (x.ms.lateBy === 1 ? 'পরের মাসে দিয়েছে' : bn(x.ms.lateBy) + ' মাস পরে দিয়েছে') : '';
+        return rowHtml(x.st, '<div class="wz-amt ' + (S.view === 'late' ? 'late' : 'ok') + '">' + taka(x.ms.amount) + '</div><div class="wz-note">' + esc(when) + '</div>' +
+          (late ? '<div class="wz-note">' + late + '</div>' : ''));
+      }).slice(0, S.limit).join('');
     } else if (S.view === 'regular') {
-      rows = cur.map(function (x) {
+      sortable = true;
+      rows = sortRows(cur.slice(), function (x) { return x.ds.due; }, function (x) { return x.ds.dueMonths; }).map(function (x) {
         return rowHtml(x.st, '<div class="wz-amt due">' + taka(x.ds.due) + '</div><div class="wz-note">' + bn(x.ds.dueMonths) + ' মাসের ওজিফা বাকি</div>');
-      }).join('');
+      }).slice(0, S.limit).join('');
     } else if (S.view === 'nodata') {
       rows = cur.map(function (x) {
         return rowHtml(x.st, '<div class="wz-note">' + (x.nf ? 'ফি-সফটওয়্যারে আইডি নেই' : 'এখনো আনা হয়নি') + '</div>');
-      }).join('');
+      }).slice(0, S.limit).join('');
     } else {
-      rows = cur.sort(function (a, b) { return b.ms.ds.due - a.ms.ds.due; }).map(function (x) {
+      sortable = true;
+      rows = sortRows(cur.slice(), function (x) { return x.ms.ds.due; }, function (x) { return x.ms.ds.dueMonths; }).map(function (x) {
         var more = x.ms.ds.dueMonths > (S.view === 'due' ? 1 : 0) ? 'মোট বাকি ' + taka(x.ms.ds.due) + ' (' + bn(x.ms.ds.dueMonths) + ' মাস)' : '';
         return rowHtml(x.st, '<div class="wz-amt due">' + taka(x.ms.unpaid) + '</div>' + (more ? '<div class="wz-note">' + more + '</div>' : ''));
-      }).join('');
+      }).slice(0, S.limit).join('');
     }
     if (!rows) rows = '<div class="wz-empty">এই তালিকায় কেউ নেই</div>';
+    else if (cur.length > S.limit) {
+      rows += '<button type="button" class="wz-more" onclick="MdrWazifaReport.more()">আরও দেখুন (' + bn(cur.length - S.limit) + ' জন বাকি)</button>';
+    }
+    var titles = {
+      due: 'বাকি থাকা শিক্ষার্থী', pending: 'এখনো দেয়নি এমন শিক্ষার্থী', late: 'দেরিতে দেওয়া শিক্ষার্থী',
+      ontime: 'সময়মতো দেওয়া শিক্ষার্থী', regular: 'নিয়মিত বাকিদার', nodata: 'যাদের তথ্য নেই',
+    };
+    var sortSel = sortable ? '<select aria-label="সাজানো" onchange="MdrWazifaReport.set(\'sort\', this.value)">' + Object.keys(SORTS).map(function (k) {
+      return '<option value="' + k + '"' + (S.sort === k ? ' selected' : '') + '>' + SORTS[k] + '</option>';
+    }).join('') + '</select>' : '';
+    var panel = '<section class="wz-box wz-panel"><div class="wz-ph"><h3>' + (titles[S.view] || '') + ' (' + bn(cur.length) + ' জন)</h3>' + sortSel + '</div>' +
+      '<div class="wz-list">' + rows + '</div></section>';
 
-    root.innerHTML = '<div class="wz-shell">' + head + syncLine() +
+    root.innerHTML = '<div class="wz-shell">' + head(true) +
       (S.error ? '<div class="wz-warn">' + esc(S.error) + '</div>' : '') +
-      filters + cards + notes + tabs + '<div class="wz-list">' + rows + '</div>' +
-      classTable(list, now) + monthTable(list, now) + '</div>';
+      filters + cards + notes + tabs +
+      '<div class="wz-main">' + panel + classTable(list, now) + '</div>' +
+      monthTable(list, now) + '</div>';
   }
 
-  // জামাতভিত্তিক: নির্বাচিত মাসে সময়মতো / দেরিতে / বাকি
+  function pctTone(p) { return p >= 70 ? 'wz-g' : (p >= 50 ? 'wz-a' : 'wz-r'); }
+  function pctCells(ok, n) {
+    var pct = n ? Math.round(ok * 100 / n) : 0, t = pctTone(pct);
+    return '<td class="wz-hide-sm" style="width:28%"><span class="wz-track"><span class="wz-fill ' + t + '" style="width:' + pct + '%"></span></span></td>' +
+      '<td class="wz-pct ' + t + '">' + bn(pct) + '%</td>';
+  }
+
+  // জামাতভিত্তিক: নির্বাচিত মাসে কতজন সময়মতো
   function classTable(list, now) {
     if (!S.month) return '';
     var by = {};
@@ -324,22 +446,31 @@
     var keys = Object.keys(by).filter(function (k) { return by[k].n; }).sort(function (a, b) {
       return by[a].dept === by[b].dept ? by[a].sort - by[b].sort : (by[a].dept < by[b].dept ? -1 : 1);
     });
-    if (keys.length < 2) return '';
-    return '<div class="wz-sec">জামাতভিত্তিক — ' + esc(monthName(S.month.m) + ' ' + bn(S.month.y)) + '</div>' +
-      '<table class="wz-table"><thead><tr><th>জামাত</th><th>সময়মতো</th><th>দেরিতে</th><th>বাকি</th><th class="wz-hide-sm">সময়মতো %</th></tr></thead><tbody>' +
-      keys.map(function (k) {
-        var b = by[k], pct = Math.round(b.ontime * 100 / b.n);
-        return '<tr><td>' + esc(b.name) + (b.dept && DEPT_BN[b.dept] ? ' <span style="color:var(--ink3);font-size:10px">' + DEPT_BN[b.dept] + '</span>' : '') + '</td><td>' + bn(b.ontime) + '</td><td>' + bn(b.late) + '</td><td>' + bn(b.due) + '</td>' +
-          '<td class="wz-hide-sm">' + bn(pct) + '%<span class="wz-bar" style="width:' + Math.max(2, Math.round(pct * 0.6)) + 'px"></span></td></tr>';
-      }).join('') + '</tbody></table>';
+    if (!keys.length) return '';
+    var depts = {};
+    keys.forEach(function (k) { depts[by[k].dept] = 1; });
+    var showDept = Object.keys(depts).length > 1;
+    var tot = { n: 0, ontime: 0 };
+    var body = keys.map(function (k) {
+      var b = by[k];
+      tot.n += b.n; tot.ontime += b.ontime;
+      return '<tr><td>' + esc(b.name) + (showDept && DEPT_BN[b.dept] ? '<span class="wz-dept">' + DEPT_BN[b.dept] + '</span>' : '') + '</td>' +
+        '<td>' + bn(b.n) + '</td><td>' + bn(b.ontime) + '</td>' + pctCells(b.ontime, b.n) + '</tr>';
+    }).join('');
+    return '<section class="wz-box wz-panel"><div class="wz-ph"><h3>জামাতভিত্তিক ওজিফা আদায়ের চিত্র</h3>' +
+      '<span class="wz-meta">' + esc(monthName(S.month.m) + ' ' + bn(S.month.y)) + '</span></div>' +
+      '<div class="wz-scroll"><table class="wz-table"><thead><tr><th>জামাত</th><th>মোট শিক্ষার্থী</th><th>সময়মতো</th><th class="wz-hide-sm"></th><th>শতকরা হার</th></tr></thead>' +
+      '<tbody>' + body + '</tbody>' +
+      (keys.length > 1 ? '<tfoot><tr><td>মোট</td><td>' + bn(tot.n) + '</td><td>' + bn(tot.ontime) + '</td>' + pctCells(tot.ontime, tot.n) + '</tr></tfoot>' : '') +
+      '</table></div></section>';
   }
 
   // মাসভিত্তিক: এই শিক্ষাবর্ষের প্রতিটি মাসে কতজন সময়মতো
   function monthTable(list, now) {
     var opts = monthOptions(now).slice(0, 12);
     if (opts.length < 2) return '';
-    return '<div class="wz-sec">মাসভিত্তিক চিত্র</div>' +
-      '<table class="wz-table"><thead><tr><th>মাস</th><th>সময়মতো</th><th>দেরিতে</th><th>বাকি</th><th class="wz-hide-sm">আদায়</th></tr></thead><tbody>' +
+    return '<section class="wz-box wz-panel wz-months"><div class="wz-ph"><h3>মাসভিত্তিক চিত্র</h3></div>' +
+      '<div class="wz-scroll"><table class="wz-table"><thead><tr><th>মাস</th><th>সময়মতো</th><th>দেরিতে</th><th>বাকি</th><th class="wz-hide-sm">আদায়</th><th>সময়মতো %</th></tr></thead><tbody>' +
       opts.map(function (o) {
         var c = { ontime: 0, late: 0, due: 0, n: 0, paid: 0 };
         list.forEach(function (st) {
@@ -352,8 +483,10 @@
           else c.due++;
         });
         var cur = now && o.k === key(now.y, now.m);
-        return '<tr><td>' + esc(monthName(o.m) + ' ' + bn(o.y)) + (cur ? ' (চলতি)' : '') + '</td><td>' + bn(c.ontime) + '</td><td>' + bn(c.late) + '</td><td>' + bn(c.due) + '</td><td class="wz-hide-sm">' + taka(c.paid) + '</td></tr>';
-      }).join('') + '</tbody></table>';
+        var pct = c.n ? Math.round(c.ontime * 100 / c.n) : 0;
+        return '<tr><td>' + esc(monthName(o.m) + ' ' + bn(o.y)) + (cur ? ' (চলতি)' : '') + '</td><td>' + bn(c.ontime) + '</td><td>' + bn(c.late) + '</td><td>' + bn(c.due) + '</td>' +
+          '<td class="wz-hide-sm">' + taka(c.paid) + '</td><td class="wz-pct ' + pctTone(pct) + '">' + bn(pct) + '%</td></tr>';
+      }).join('') + '</tbody></table></div></section>';
   }
 
   /* ── ডেটা ── */
@@ -403,10 +536,13 @@
       if (k === 'month') { var p = String(v).split('-'); S.month = { y: Number(p[0]), m: Number(p[1]) }; }
       else if (k === 'dept') { S.dept = v; S.classId = ''; }
       else S[k] = v;
+      if (k !== 'sort') S.limit = 40;
       render();
     },
+    more: function () { S.limit += 100; render(); },
     search: function (v) {
       S.q = v;
+      S.limit = 40;
       clearTimeout(_searchT);
       _searchT = setTimeout(function () {
         var el = S.root && S.root.querySelector('.wz-filters input');

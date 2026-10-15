@@ -281,40 +281,6 @@
 <script src="../js/shared/daftar-bottom-nav.js"></script>
 <script>MMDaftarBottomNav.mount(document.getElementById('daftar-nav-root'), { active: /^#(fees|accounts|reports)$/.test(location.hash) ? 'accounts' : 'daftar', spaDaftar: true, pathPrefix: '' });</script>
 
-<!-- FEES MODAL -->
-<div class="modal-bg" id="modal-add-fees">
-  <div class="modal">
-    <div class="modal-title">বেতন সারসংক্ষেপ <button class="modal-close" onclick="closeModal('add-fees')">✕</button></div>
-    <div class="form-group">
-      <label class="form-label">বর্ষ</label>
-      <select class="form-input form-select" id="fee-class"></select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">মাস</label>
-      <input class="form-input" id="fee-month" type="month">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">মোট ছাত্র</label>
-        <input class="form-input" id="fee-total" type="number">
-      </div>
-      <div class="form-group">
-        <label class="form-label">আদায় করেছে</label>
-        <input class="form-input" id="fee-paid" type="number">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">বকেয়া পরিমাণ (টাকা)</label>
-      <input class="form-input" id="fee-arrear" type="number" placeholder="০">
-    </div>
-    <div class="form-group">
-      <label class="form-label">মন্তব্য / বিলম্বকারীদের নাম</label>
-      <textarea class="form-input form-textarea" id="fee-note" placeholder="যেমন: আব্দুর রহমান ২ মাস বাকি..."></textarea>
-    </div>
-    <button class="submit-btn gold" onclick="saveFees()">সংরক্ষণ করুন</button>
-  </div>
-</div>
-
 <!-- ACCOUNT DETAILS MODAL -->
 <div class="modal-bg" id="modal-account-details">
   <div class="modal modal-wide">

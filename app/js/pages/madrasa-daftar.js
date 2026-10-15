@@ -10,7 +10,6 @@
   let attClassFilter  = 'all';
   let attSearchText   = '';
   let qFilter         = 'all';
-  let feeHistoryClassId = null;
   let absentModalMode = null;
   /** ক্যালেন্ডারে দেখা মাস (গ্রিড); দিনে ক্লিক বা “দ্রুত তারিখ” দিয়ে `daftarAttDate` বদলায় */
   let auditView = { y: new Date().getFullYear(), m: new Date().getMonth() };
@@ -655,59 +654,6 @@
       }
     }
     if (window.MDRDaftarAttendanceGate) MDRDaftarAttendanceGate.refresh();
-  }
-
-  /* ── FEES ── */
-  function renderFees() {
-    const classes = API.Classes.getAll();
-    const sel     = document.getElementById('fee-history-class');
-    const prev    = feeHistoryClassId || sel.value;
-    sel.innerHTML = classes.map(c => `<option value="${c.id}">${API.esc(c.name)}</option>`).join('');
-    if (prev && classes.some(c => c.id === prev)) sel.value = prev;
-    else { const p = classes.find(c => API.Students.getByClass(c.id).length) || classes[0]; if (p) sel.value = p.id; }
-    feeHistoryClassId = sel.value;
-    renderFeeHistory();
-    document.getElementById('fee-class').innerHTML = classes.map(c => `<option value="${c.id}">${API.esc(c.name)}</option>`).join('');
-  }
-
-  function renderFeeHistory() {
-    const cid  = document.getElementById('fee-history-class').value;
-    feeHistoryClassId = cid;
-    const rows = API.Fees.getByClass(cid);
-    const el   = document.getElementById('fee-history-list');
-    if (!rows.length) {
-      el.innerHTML = '<div class="empty-state"><span class="empty-icon">💰</span><div class="empty-text">এই বর্ষে কোনো ওয়াযিফা সারসংক্ষেপ নেই</div></div>';
-      return;
-    }
-    el.innerHTML = rows.map(f => {
-      const unpaid = f.unpaid != null ? f.unpaid : (f.total - f.paid);
-      return `<div class="card-static" style="margin-bottom:6px;">
-        <div style="font-family:'Tiro Bangla',serif;font-size:14px;font-weight:700;margin-bottom:6px;">${API.esc(f.month)}</div>
-        <div style="display:flex;gap:12px;font-size:13px;flex-wrap:wrap;">
-          <span>মোট: <strong>${toBn(f.total)}</strong></span>
-          <span style="color:var(--green)">আদায়: <strong>${toBn(f.paid)}</strong></span>
-          <span style="color:var(--red)">বাকি: <strong>${toBn(unpaid)}</strong></span>
-          ${f.arrear ? `<span style="color:var(--red)">বকেয়া: ৳ ${toBn(f.arrear)}</span>` : ''}
-        </div>
-        ${f.note ? `<div style="font-size:12px;color:var(--ink3);margin-top:5px;">${API.esc(f.note)}</div>` : ''}
-      </div>`;
-    }).join('');
-  }
-
-  function saveFees() {
-    if (mmMutationBlocked(showToast)) return;
-    const class_id = document.getElementById('fee-class').value;
-    const month    = document.getElementById('fee-month').value;
-    const total    = parseInt(document.getElementById('fee-total').value) || 0;
-    const paid     = parseInt(document.getElementById('fee-paid').value) || 0;
-    const arrear   = parseInt(document.getElementById('fee-arrear').value) || 0;
-    const note     = document.getElementById('fee-note').value;
-    if (!month) { showToast('মাস আবশ্যক'); return; }
-    API.Fees.add({ month, class_id, total, paid, unpaid: total - paid, arrear, note });
-    closeModal('add-fees');
-    showToast('সংরক্ষিত হয়েছে ✓');
-    feeHistoryClassId = class_id;
-    renderAccounts();
   }
 
   /* ── PANEL ── */
