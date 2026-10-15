@@ -10,37 +10,39 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../css/style.css?v=20260717-photo-toolbar">
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
+<link rel="stylesheet" href="../../css/mm-ui.css">
 <style>
-  .filter-card { background:#fff; border-radius:var(--radius); padding:10px; box-shadow:var(--shadow); margin:8px 0 12px; }
-  .filter-line { display:grid; grid-template-columns:.78fr 1.05fr .9fr 1.35fr; gap:6px; align-items:center; }
-  .filter-line .form-input { min-width:0; font-size:11px; padding:8px 8px; }
-  .filter-line .form-select { padding-right:22px; }
-  .student-row { display:flex; align-items:center; gap:10px; background:#fff; border-radius:12px; padding:9px 10px; box-shadow:0 1px 5px rgba(0,0,0,.06); margin-bottom:7px; }
-  .student-roll { min-width:36px; padding:4px 7px; border-radius:999px; background:var(--cream2); color:var(--ink3); text-align:center; font-size:11px; font-weight:700; }
-  .student-main { flex:1; min-width:0; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
-  .student-name { border:none; background:none; padding:0; margin:0; font:inherit; font-family:'Tiro Bangla',serif; font-size:14px; font-weight:800; color:var(--ink); cursor:pointer; text-align:left; }
-  .student-name:hover { color:var(--blue); text-decoration:underline; }
-  .student-id { font-size:10px; color:var(--ink3); white-space:nowrap; }
-  .student-id::before { content:'·'; margin-right:5px; opacity:.55; }
-  .student-class { font-size:10px; color:var(--ink2); background:var(--gold-light); border-radius:999px; padding:3px 8px; white-space:nowrap; }
-  .list-count { font-size:12px; color:var(--ink3); margin:4px 2px 10px; }
-  .empty-note { background:#fff; border-radius:var(--radius); padding:22px 12px; text-align:center; color:var(--ink3); box-shadow:var(--shadow); font-size:13px; }
-  @media (min-width:1024px) {
-    .filter-card { padding:14px; margin-top:0; }
-    .filter-line { gap:10px; }
-    .filter-line .form-input { font-size:14px; padding:10px 12px; }
-    #student-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:10px; }
-    #student-list .student-row { margin-bottom:0; padding:12px 14px; border:1px solid var(--desk-line); box-shadow:none; transition:border-color .15s, box-shadow .18s var(--ease-out); }
-    #student-list .student-row:hover { border-color:rgba(201,149,42,.35); box-shadow:0 8px 20px -12px rgba(26,18,8,.25); }
-    #student-list .empty-note { grid-column:1 / -1; }
-    .student-name { font-size:15px; }
-    .student-id, .student-class { font-size:12px; }
+  .st-list { overflow: hidden; }
+  .st-list-inner { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .st-roll { min-width: 34px; padding: 3px 7px; border-radius: 999px; background: var(--cream2); color: var(--ink3); text-align: center; font-size: 11.5px; font-weight: 700; flex-shrink: 0; }
+  .st-row { gap: 10px; justify-content: flex-start; }
+  .st-row .ui-row-main { display: flex; flex-direction: column; }
+  .st-cls { display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--cream2); padding: 9px 14px; cursor: pointer; }
+  .st-cls:last-child { border-bottom: none; }
+  .st-cls:hover { background: var(--cream); }
+  .st-cls.is-on { background: var(--ui-bad-bg); box-shadow: inset 3px 0 0 var(--ui-accent); }
+  .st-cls-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .st-cls-top small { color: var(--ink3); font-size: 12px; }
+  .st-cls .ui-track { margin-top: 6px; height: 6px; }
+  .st-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+  .st-side { position: sticky; top: 12px; }
+  .st-search { position: relative; }
+  .st-search svg { position: absolute; left: 10px; bottom: 10px; color: var(--ink-muted); pointer-events: none; }
+  .st-search input { padding-left: 32px !important; }
+  @container (min-width: 900px) {
+    .st-main { grid-template-columns: minmax(0, 1fr) 280px; }
+    .st-list-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .st-list-inner .ui-row:nth-child(odd) { border-right: 1px solid var(--cream2); }
   }
-  @media (max-width:420px) {
-    .filter-card { padding:8px; }
-    .filter-line { gap:4px; grid-template-columns:.72fr 1fr .78fr 1.15fr; }
-    .filter-line .form-input { font-size:10px; padding:7px 5px; }
+  @container (min-width: 1300px) { .st-list-inner { grid-template-columns: repeat(3, minmax(0, 1fr)); } .st-list-inner .ui-row { border-right: 1px solid var(--cream2); } }
+  @container (max-width: 899px) {
+    .st-side { order: -1; position: static; }
+    .st-side .ui-ph small { display: none; }
+    #class-breakdown { display: flex; gap: 8px; overflow-x: auto; padding: 8px 10px 10px; }
+    .st-cls { flex: 0 0 150px; border: 1px solid var(--ui-bd); border-radius: 12px; padding: 8px 10px; background: #fff; }
+    .st-cls:last-child { border-bottom: 1px solid var(--ui-bd); }
   }
+  @media (max-width: 640px) { .st-head .ui-title { display: none; } }
 </style>
 </head>
 <body>
@@ -55,23 +57,28 @@
 </div>
 
 <div class="content content-nav-pad">
-  <div class="filter-card">
-    <div class="filter-line">
-      <select class="form-input form-select" id="dept-filter" onchange="switchDept(this.value)"></select>
-      <select class="form-input form-select" id="class-filter" onchange="renderStudents()">
-        <option value="">সব বর্ষ/শ্রেণি</option>
-      </select>
-      <select class="form-input form-select" id="sort-filter" onchange="renderStudents()">
-        <option value="class_roll">বর্ষ ও পরিচিতি অনুযায়ী</option>
-        <option value="name">নাম অনুযায়ী</option>
-        <option value="id">স্থায়ী দাখেলা অনুযায়ী</option>
-      </select>
-      <input class="form-input" id="search-box" placeholder="নাম / দাখেলা / পরিচিতি" oninput="renderStudents()">
-    </div>
+  <div class="ui-wide ui-cq">
+  <div class="ui-head st-head">
+    <div class="ui-head-l"><h2 class="ui-title">বর্তমান ছাত্র তালিকা</h2><span class="ui-sub" id="list-count">—</span></div>
   </div>
-
-  <div class="list-count" id="list-count">—</div>
-  <div id="student-list"></div>
+  <div class="ui-stats" id="st-stats"></div>
+  <div class="ui-box ui-filters">
+    <label class="ui-field"><span>বিভাগ</span><select id="dept-filter" onchange="switchDept(this.value)"></select></label>
+    <label class="ui-field"><span>বর্ষ/শ্রেণি</span><select id="class-filter" onchange="renderStudents()"><option value="">সব বর্ষ/শ্রেণি</option></select></label>
+    <label class="ui-field"><span>সাজানো</span><select id="sort-filter" onchange="renderStudents()">
+      <option value="class_roll">বর্ষ ও পরিচিতি অনুযায়ী</option>
+      <option value="name">নাম অনুযায়ী</option>
+      <option value="id">স্থায়ী দাখেলা অনুযায়ী</option>
+    </select></label>
+    <label class="ui-field st-search"><span>খুঁজুন</span>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+      <input id="search-box" type="search" placeholder="নাম / দাখেলা / পরিচিতি / ফোন" oninput="renderStudents()"></label>
+  </div>
+  <div class="st-main">
+    <section class="ui-box ui-panel st-list"><div class="ui-ph"><h3 id="list-title">ছাত্র</h3><small>নামে চাপলে বিবরণ</small></div><div class="st-list-inner" id="student-list"></div></section>
+    <aside class="ui-box ui-panel st-side"><div class="ui-ph"><h3>বর্ষভিত্তিক ছাত্র</h3><small>চাপলে শুধু সেই বর্ষ</small></div><div id="class-breakdown"></div></aside>
+  </div>
+  </div>
   <div class="pb-safe"></div>
 </div>
 
@@ -166,22 +173,52 @@
   function renderStudents() {
     const cMap = classMap();
     const list = filteredStudents();
+    const cid = document.getElementById('class-filter').value;
     document.getElementById('list-count').textContent = `${deptLabel(currentDept)} — ${bnNum(list.length)} জন বর্তমান ছাত্র`;
+    document.getElementById('list-title').textContent = (cid && cMap[cid] ? cMap[cid].name : 'ছাত্র') + ` (${bnNum(list.length)} জন)`;
+    renderBreakdown();
     if (!list.length) {
-      document.getElementById('student-list').innerHTML = '<div class="empty-note">এই filter-এ কোনো ছাত্র নেই।</div>';
+      document.getElementById('student-list').innerHTML = '<div class="ui-empty">এই বাছাইয়ে কোনো ছাত্র নেই।</div>';
       return;
     }
     document.getElementById('student-list').innerHTML = list.map(s => {
       const cls = cMap[s.class_id] || {};
-      return `<div class="student-row">
-        <div class="student-roll">${API.escBn(s.roll || '—')}</div>
-        <div class="student-main">
-          <button class="student-name" onclick="MMStudentModal.open('${API.esc(s.id)}')">${API.esc(s.name)}</button>
-          <span class="student-id">${API.escBn(s.permanent_id || '—')}</span>
-        </div>
-        ${currentDept === 'all' ? `<div class="student-class">${API.esc(deptLabel(cls.dept) + ' · ' + (cls.name || '—'))}</div>` : ''}
+      return `<div class="ui-row is-link st-row" onclick="MMStudentModal.open('${API.esc(s.id)}')">
+        <span class="st-roll">${API.escBn(s.roll || '—')}</span>
+        <span class="ui-row-main"><span class="ui-row-name">${API.esc(s.name)}</span>
+        <span class="ui-row-meta">দাখেলা ${API.escBn(s.permanent_id || '—')}${cid ? '' : ' · ' + API.esc((currentDept === 'all' ? deptLabel(cls.dept) + ' — ' : '') + (cls.name || '—'))}</span></span>
       </div>`;
     }).join('');
+  }
+  /* উপরের ঘর আর ডানের বর্ষভিত্তিক সংখ্যা — বিভাগ অনুযায়ী (বর্ষ/খোঁজা বাছাই বাদে) */
+  function renderBreakdown() {
+    const all = activeStudents();
+    const depts = new Set(scopeDepts());
+    const classes = API.Classes.getAll().filter(c => depts.has(c.dept));
+    const cid = document.getElementById('class-filter').value;
+    const counts = {};
+    all.forEach(s => { counts[s.class_id] = (counts[s.class_id] || 0) + 1; });
+    const max = Math.max(1, ...Object.values(counts));
+    document.getElementById('class-breakdown').innerHTML = classes.filter(c => counts[c.id]).map(c => {
+      const on = cid === c.id;
+      return `<button type="button" class="st-cls${on ? ' is-on' : ''}" onclick="pickClass('${API.esc(on ? '' : c.id)}')">
+        <span class="st-cls-top"><b>${API.esc(c.name)}</b><small>${bnNum(counts[c.id])} জন</small></span>
+        <span class="ui-track"><span class="ui-fill" style="width:${Math.round(counts[c.id] / max * 100)}%"></span></span></button>`;
+    }).join('') || '<div class="ui-empty">কোনো বর্ষ নেই</div>';
+    const U = window.MMUI;
+    const cMap = classMap();
+    const kitab = all.filter(s => (cMap[s.class_id] || {}).dept === 'kitab').length;
+    const maktab = all.filter(s => (cMap[s.class_id] || {}).dept === 'maktab').length;
+    const hifz = all.filter(s => s.hifz).length;
+    document.getElementById('st-stats').innerHTML =
+      U.stat({ tone: 'info', icon: 'users', label: 'মোট ছাত্র', value: bnNum(all.length), sub: deptLabel(currentDept) }) +
+      U.stat({ tone: 'ok', icon: 'book', label: 'কিতাব বিভাগ', value: bnNum(kitab), sub: bnNum(classes.filter(c => c.dept === 'kitab').length) + 'টি বর্ষ' }) +
+      U.stat({ tone: 'warn', icon: 'star', label: 'মক্তব বিভাগ', value: bnNum(maktab), sub: bnNum(classes.filter(c => c.dept === 'maktab').length) + 'টি শ্রেণি' }) +
+      U.stat({ tone: 'deep', icon: 'cal', label: 'হিফজে', value: bnNum(hifz), sub: 'হিফজে নির্বাচিত' });
+  }
+  function pickClass(id) {
+    document.getElementById('class-filter').value = id;
+    renderStudents();
   }
   function renderAll() {
     renderDeptFilter();
@@ -199,6 +236,7 @@
   }
   MMLoading.run(initPage);
 </script>
+<script src="../../js/shared/mm-ui.js"></script>
 <script src="../../js/shared/admin-nav.js"></script>
 </body>
 </html>
