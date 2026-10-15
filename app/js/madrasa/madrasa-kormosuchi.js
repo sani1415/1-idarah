@@ -435,14 +435,12 @@ function renderPage() {
     setTxt('prog-title', dbReady ? 'কোনো কর্মসূচি নেই' : 'ডাটাবেজ সংযোগ নেই');
     setTxt('prog-note', dbReady ? 'নতুন কর্মসূচি তৈরি করলে এখানে হিসাব দেখা যাবে।' : (loadError || 'Supabase সংযোগ বা সেশন পাওয়া যায়নি।'));
     setTxt('prog-tag', dbReady ? (readOnly ? 'শুধু দেখা যাবে' : 'প্রস্তুত') : 'অফলাইন নয়');
-    document.getElementById('kpi-grid').innerHTML = [
+    renderKpis([
       ['মোট আয়', money(0), 'g'],
       ['মোট ব্যয়', money(0), 'r'],
       ['অবশিষ্ট', money(0), 'g'],
       ['আয় এন্ট্রি', bn(0) + 'টি', 'o'],
-    ].map(([lbl, val, cls]) =>
-      `<div class="kpi-card"><span>${lbl}</span><b class="${cls}">${API.esc(val)}</b></div>`
-    ).join('');
+    ]);
     renderRoot();
     return;
   }
@@ -453,16 +451,30 @@ function renderPage() {
   setTxt2('prog-tag', p.status + (p.date ? ' · ' + p.date : ''));
 
   const hasShares = programHasShares(p);
-  document.getElementById('kpi-grid').innerHTML = [
+  renderKpis([
     ['মোট আয়',   money(s.income),  'g'],
     ['মোট ব্যয়', money(s.cost),    'r'],
     ['অবশিষ্ট',  money(s.balance), s.balance >= 0 ? 'g' : 'r'],
     [hasShares ? 'হিস্যা' : 'আয় এন্ট্রি', hasShares ? bn(s.shares) + ' হিস্যা' : bn(s.incCount) + 'টি', 'o'],
-  ].map(([lbl, val, cls]) =>
-    `<div class="kpi-card"><span>${lbl}</span><b class="${cls}">${API.esc(val)}</b></div>`
-  ).join('');
+  ]);
 
   renderRoot();
+}
+
+/* উপরের চার ঘর — mm-ui রঙিন ঘর (MMUI না থাকলে পুরনো kpi-card) */
+function renderKpis(items) {
+  const el = document.getElementById('kpi-grid');
+  if (!el) return;
+  const U = window.MMUI;
+  if (!U) {
+    el.innerHTML = items.map(([lbl, val, cls]) =>
+      `<div class="kpi-card"><span>${lbl}</span><b class="${cls}">${API.esc(val)}</b></div>`).join('');
+    return;
+  }
+  el.className = 'ui-stats kp-stats';
+  const ICONS = ['up', 'down', 'wallet', 'users'];
+  el.innerHTML = items.map(([lbl, val, cls], i) =>
+    U.stat({ tone: cls === 'g' ? 'ok' : cls === 'r' ? 'bad' : 'warn', icon: ICONS[i] || 'info', label: lbl, value: API.esc(val) })).join('');
 }
 
 function renderRoot() {
