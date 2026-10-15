@@ -627,7 +627,7 @@
 
   async function removeHoliday(key) {
     var p = String(key).split('|');
-    if (!global.confirm('এই ছুটি বাতিল করবেন?')) return;
+    if (!await global.MMUI.confirm('এই ছুটি বাতিল করবেন?')) return;
     await withSaving(async function () {
       var a = actor();
       var res = await API.darsAdminHolidaySet(a.id, a.pin, p[0], p[1] || null, false, null);

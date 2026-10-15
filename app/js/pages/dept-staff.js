@@ -805,7 +805,7 @@
     const id = editingTxnId || activeTxnId;
     const t = txnById(id);
     if (!t) return;
-    if (!confirm('এই লেনদেন ডিলিট করবেন?')) return;
+    if (!await MMUI.confirm('এই লেনদেন ডিলিট করবেন?')) return;
     try {
       if (canDirectModify(t)) {
         await DeptSync.deleteTransaction(staffUserId, staffPin, deptId, t.id);
@@ -851,7 +851,7 @@
   async function deleteActiveTxn() {
     const t = txnById(activeTxnId);
     if (!t) return;
-    if (!confirm('এই লেনদেন ডিলিট করবেন?')) return;
+    if (!await MMUI.confirm('এই লেনদেন ডিলিট করবেন?')) return;
     try {
       if (canDirectModify(t)) {
         await DeptSync.deleteTransaction(staffUserId, staffPin, deptId, t.id);
@@ -1504,7 +1504,7 @@
     const inv = inventoryForProduct(id);
     const qty = inv ? Number(inv.quantity || 0) : 0;
     if (qty <= 0.000001) {
-      if (!confirm('এই পণ্য তালিকা থেকে বাদ দেবেন?')) return;
+      if (!await MMUI.confirm('এই পণ্য তালিকা থেকে বাদ দেবেন?')) return;
       const ok = await removeProduct(id, 'keep_stock');
       if (ok) closeModal('modal-product');
       return;
@@ -2236,7 +2236,7 @@
   async function deleteInv(id) {
     const item = DeptAPI.Inventory.getByDept(deptId).find(i => String(i.id) === String(id));
     if (!item) { showToast('মজুদ পাওয়া যায়নি'); return; }
-    if (!confirm(invDeleteConfirmMessage(item))) return;
+    if (!await MMUI.confirm(invDeleteConfirmMessage(item))) return;
     try {
       await DeptSync.deleteInventoryItem(staffUserId, staffPin, deptId, item.id, 'মজুদ তালিকা থেকে মুছে ফেলা');
     } catch (e) {

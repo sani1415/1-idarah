@@ -73,6 +73,7 @@
   .undo-box { margin-top:20px; padding:14px; background:var(--red-light); border:1px solid #fca5a5; border-radius:var(--radius-sm); text-align:center; }
   .undo-btn { margin-top:10px; padding:10px 20px; background:#dc2626; border:none; border-radius:var(--radius-xs); font-family:'Tiro Bangla',serif; font-size:12px; font-weight:700; color:#fff; cursor:pointer; }
 </style>
+<script src="../js/shared/mm-ui.js"></script>
 </head>
 <body class="page-daftar ui-skin">
 
@@ -447,10 +448,10 @@
     goStep(5);
   }
 
-  function undoYearEnd() {
+  async function undoYearEnd() {
     const raw = localStorage.getItem('mm_yearend_backup');
     if (!raw) { showToast('ব্যাকআপ পাওয়া যায়নি'); return; }
-    if (!confirm('সত্যিই পূর্বাবস্থায় ফিরে যাবেন? বর্তমান সব পরিবর্তন বাতিল হবে।')) return;
+    if (!await MMUI.confirm('সত্যিই পূর্বাবস্থায় ফিরে যাবেন? বর্তমান সব পরিবর্তন বাতিল হবে।')) return;
     const bk = JSON.parse(raw);
     if (bk.students) localStorage.setItem('mm_students', bk.students);
     if (bk.withdrawals) localStorage.setItem('mm_withdrawals', bk.withdrawals);

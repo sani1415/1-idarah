@@ -595,7 +595,7 @@
       toast('মুছার মতো ছবি নেই');
       return;
     }
-    if (!confirm('এই ছাত্রের ছবি মুছে ফেলবেন?')) return;
+    if (!await MMUI.confirm('এই ছাত্রের ছবি মুছে ফেলবেন?')) return;
     _photoBusy = true;
     try {
       var auth = await authorizePhoto();
@@ -791,7 +791,7 @@
       toast('বিদায়ের কারণ লিখুন');
       return;
     }
-    if (!confirm('এই ছাত্রকে সক্রিয় তালিকা থেকে সরিয়ে বিদায়/ইনঅ্যাকটিভ করবেন?')) return;
+    if (!await MMUI.confirm('এই ছাত্রকে সক্রিয় তালিকা থেকে সরিয়ে বিদায়/ইনঅ্যাকটিভ করবেন?')) return;
 
     var previous = { active: s.active, status: s.status, left_date: s.left_date, left_reason: s.left_reason };
     API.Students.markInactive(_openSid, reason, API.today());

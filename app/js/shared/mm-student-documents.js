@@ -309,7 +309,7 @@
       toast('শুধু দপ্তর দায়িত্বশীল মুছতে পারবেন');
       return;
     }
-    if (!confirm('এই ডকুমেন্টটি মুছে ফেলবেন?')) return;
+    if (!await MMUI.confirm('এই ডকুমেন্টটি মুছে ফেলবেন?')) return;
     var a = actor();
     if (!a || !global.MMSharedAPI) return;
     try {

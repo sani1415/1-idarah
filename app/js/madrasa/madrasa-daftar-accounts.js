@@ -2633,7 +2633,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     }
   };
   window.delAccCategory = async function (name) {
-    if (!confirm('"' + name + '" খাত মুছবেন?')) return;
+    if (!await MMUI.confirm('"' + name + '" খাত মুছবেন?')) return;
     try {
       await A.Categories.del(name);
       if (isSettingsModalOpen()) renderAccSettingsModal();
@@ -3839,7 +3839,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var realDelN = impRemoved().length;
     var addN = totalOk - impCount('rekey');
     if (!totalOk && !deletes.length) { showToast('সংরক্ষণের মতো কোনো সঠিক সারি নেই'); return; }
-    if (realDelN && !confirm(bn(realDelN) + 'টি পুরনো এন্ট্রি ফাইলে আর নেই — অ্যাপ থেকে মুছে যাবে («মুছে যাবে» ট্যাবে তালিকা)।\n\nসংরক্ষণ করবেন?')) return;
+    if (realDelN && !await MMUI.confirm(bn(realDelN) + 'টি পুরনো এন্ট্রি ফাইলে আর নেই — অ্যাপ থেকে মুছে যাবে («মুছে যাবে» ট্যাবে তালিকা)।\n\nসংরক্ষণ করবেন?')) return;
     if (!A.remoteReady || !A.remoteReady()) { showToast('সার্ভার সংযোগ নেই — নেট/লগইন দেখে আবার চেষ্টা করুন'); return; }
     _impBusy = true;
     var btn = document.getElementById('acc-imp-save');
@@ -3920,7 +3920,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     var q = on
       ? 'Excel মোড চালু করবেন? এরপর দফতর অ্যাপে সরাসরি হিসাব লিখতে পারবে না, শুধু Excel আপলোড চলবে।'
       : 'Excel মোড বন্ধ করবেন? এরপর দফতর অ্যাপে সরাসরি (ফর্ম ও ▦ শীট) হিসাব লিখতে পারবে।\n\nমনে রাখবেন: যেদিন থেকে অ্যাপে লেখা শুরু, সেদিন থেকে Excel-এ আর লেখা যাবে না।';
-    if (!confirm(q)) return;
+    if (!await MMUI.confirm(q)) return;
     try {
       var now = await A.setExcelMode(on);
       showToast(now ? 'Excel মোড চালু হয়েছে ✓' : 'Excel মোড বন্ধ — এখন অ্যাপে সরাসরি লেখা যাবে ✓');
@@ -4050,7 +4050,7 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       else showToast('অনুরোধ পাঠানো যায়নি');
       return;
     }
-    if (!confirm('এই এন্ট্রি মুছে ফেলবেন?')) return;
+    if (!await MMUI.confirm('এই এন্ট্রি মুছে ফেলবেন?')) return;
     try {
       if (type === 'expense') {
         var sup = A.clean(entry.supplier, '');

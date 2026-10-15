@@ -1059,10 +1059,10 @@
     rerender(false);
   }
 
-  function onMonthChange() {
+  async function onMonthChange() {
     var m = Number(document.getElementById('accg-month').value);
     var y = Number(document.getElementById('accg-year').value);
-    if (dirtyCount() && !confirm('সংরক্ষণ না করা পরিবর্তন বাদ যাবে। মাস বদলাবেন?')) {
+    if (dirtyCount() && !await MMUI.confirm('সংরক্ষণ না করা পরিবর্তন বাদ যাবে। মাস বদলাবেন?')) {
       document.getElementById('accg-month').value = String(S.monthNo);
       document.getElementById('accg-year').value = String(S.year);
       return;
@@ -1113,8 +1113,8 @@
   });
   window.addEventListener('resize', function () { if (S.dd) paintDD(); });
 
-  function resetGrid() {
-    if (dirtyCount() && !confirm('সংরক্ষণ না করা সব পরিবর্তন বাদ দেবেন?')) return;
+  async function resetGrid() {
+    if (dirtyCount() && !await MMUI.confirm('সংরক্ষণ না করা সব পরিবর্তন বাদ দেবেন?')) return;
     S.rows = null;
     rerender(false);
   }
@@ -1182,8 +1182,9 @@
     });
     S.lists = null;
     if (gone) return false;
-    var ok = confirm('এই মাসের হিসাব শীট খোলার পর অন্য কোনো ডিভাইস থেকে বদলানো হয়েছে।\n\n' +
-      'OK = তবুও আমার পরিবর্তন সংরক্ষণ করুন\nবাতিল = এখন সংরক্ষণ নয় (পরে «বাতিল» বোতাম চাপলে নতুন অবস্থা দেখাবে)');
+    var ok = await MMUI.confirm('এই মাসের হিসাব শীট খোলার পর অন্য কোনো ডিভাইস থেকে বদলানো হয়েছে।\n\n' +
+      'তবুও আপনার পরিবর্তন সংরক্ষণ করবেন? «এখন নয়» চাপলে কিছু সংরক্ষণ হবে না; পরে «বাতিল» বোতাম চাপলে নতুন অবস্থা দেখাবে।',
+      { ok: 'তবুও সংরক্ষণ করুন', cancel: 'এখন নয়', danger: false });
     if (ok) S.sig = monthSig();
     return ok;
   }
@@ -1216,7 +1217,7 @@
       return;
     }
     if (!all.length && !dels.length) { showToast('সংরক্ষণের মতো কোনো পরিবর্তন নেই'); return; }
-    if (dels.length && !confirm(bn(dels.length) + 'টি সারি মুছে যাবে। চালিয়ে যাবেন?')) return;
+    if (dels.length && !await MMUI.confirm(bn(dels.length) + 'টি সারি মুছে যাবে। চালিয়ে যাবেন?')) return;
     if (!A.remoteReady || !A.remoteReady()) { showToast('সার্ভার সংযোগ নেই — নেট/লগইন দেখে আবার চেষ্টা করুন'); return; }
 
     S.busy = true;
@@ -1283,8 +1284,8 @@
     }
   }
 
-  window.closeAccGridSafe = function () {
-    if (dirtyCount() && !confirm('সংরক্ষণ না করা পরিবর্তন বাদ যাবে। শীট বন্ধ করবেন?')) return;
+  window.closeAccGridSafe = async function () {
+    if (dirtyCount() && !await MMUI.confirm('সংরক্ষণ না করা পরিবর্তন বাদ যাবে। শীট বন্ধ করবেন?')) return;
     S.rows = null;
     closeDD();
     if (typeof window.closeAccGrid === 'function') window.closeAccGrid();

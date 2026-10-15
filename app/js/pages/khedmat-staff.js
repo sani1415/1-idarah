@@ -226,7 +226,7 @@
   async function deleteBen() {
     if (mmMutationBlocked(showToast)) return;
     const ben = KhAPI.Beneficiaries.getById(activeBenId);
-    if (!ben || !confirm('এই মাখদুম ও তার সব কার্যক্রম ডিলিট হবে। নিশ্চিত?')) return;
+    if (!ben || !await MMUI.confirm('এই মাখদুম ও তার সব কার্যক্রম ডিলিট হবে। নিশ্চিত?')) return;
     try {
       await KhAPI.Beneficiaries.delete(activeBenId, khActorId, khPin);
       closeBenDetail();
@@ -285,7 +285,7 @@
 
   async function deleteAct(id) {
     if (mmMutationBlocked(showToast)) return;
-    if (!confirm('এই কার্যক্রম ডিলিট হবে। নিশ্চিত?')) return;
+    if (!await MMUI.confirm('এই কার্যক্রম ডিলিট হবে। নিশ্চিত?')) return;
     try {
       await KhAPI.Activities.delete(id, khActorId, khPin);
       refreshDetail();
@@ -589,7 +589,7 @@
 
   async function deleteFin(id) {
     if (mmMutationBlocked(showToast)) return;
-    if (!confirm('এই লেনদেন ডিলিট হবে। নিশ্চিত?')) return;
+    if (!await MMUI.confirm('এই লেনদেন ডিলিট হবে। নিশ্চিত?')) return;
     try {
       await KhAPI.Finance.delete(id, khActorId, khPin);
       renderFin();
@@ -640,7 +640,7 @@
 
   async function deleteLog(id) {
     if (mmMutationBlocked(showToast)) return;
-    if (!confirm('এই লগ ডিলিট হবে। নিশ্চিত?')) return;
+    if (!await MMUI.confirm('এই লগ ডিলিট হবে। নিশ্চিত?')) return;
     try {
       await KhAPI.DailyLogs.delete(id, khActorId, khPin);
       renderLog();

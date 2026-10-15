@@ -869,7 +869,7 @@
     const id = kind === 'teacher' ? editingTeacherProfileId : editingStaffId;
     const user = id ? getManagedUser(id) : null;
     if (!IS_MAIN_ADMIN || !user) { showToast('এই কাজের অনুমতি নেই'); return; }
-    if (!confirm(user.name + ' — সব ডিভাইস থেকে লগআউট করবেন? পরের বার তাঁকে আবার PIN দিয়ে লগইন করতে হবে।')) return;
+    if (!await MMUI.confirm(user.name + ' — সব ডিভাইস থেকে লগআউট করবেন? পরের বার তাঁকে আবার PIN দিয়ে লগইন করতে হবে।')) return;
     try {
       const res = await MMSharedAPI.adminRevokeUserSessions(MMSession.getAdminPin(), id);
       if (!res || !res.ok) { showToast(userSaveErrorMessage(res && res.error) || 'লগআউট করা যায়নি'); return; }
@@ -1006,7 +1006,7 @@
     if (entryCount > 0) {
       msg = `এই কিতাবে ${entryCount}টি অগ্রগতি রেকর্ড আছে। মুছলে কিতাব ও সংশ্লিষ্ট অগ্রগতি চলে যাবে।\n\nনিশ্চিত?`;
     }
-    if (!confirm(msg)) return;
+    if (!await MMUI.confirm(msg)) return;
     if (window.MMSharedAPI && MMSharedAPI.deleteBook && MMSession.getAdminPin()) {
       const res = await MMSharedAPI.deleteBook(settingsActorId(), MMSession.getAdminPin(), id);
       if (!res || !res.ok) { showToast(userSaveErrorMessage(res && res.error)); return; }

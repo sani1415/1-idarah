@@ -499,7 +499,7 @@
     const msg = rc
       ? '"'+ex.name+'" মুছলে '+toBn(rc)+' জনের ফলাফলও মুছবে। নিশ্চিত?'
       : '"'+ex.name+'" পরীক্ষা মুছে ফেলবেন?';
-    if (!confirm(msg)) return;
+    if (!await MMUI.confirm(msg)) return;
     setBusy(true);
     try {
       await MDRExamsSync.deleteExam(eid);

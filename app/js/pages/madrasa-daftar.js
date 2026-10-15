@@ -321,9 +321,9 @@
     t.setAttribute('aria-pressed', qFilter === 'all' ? 'true' : 'false');
   }
 
-  function trySetDaftarAttDate(iso) {
+  async function trySetDaftarAttDate(iso) {
     if (iso === daftarAttDate) return;
-    if (hasPendingEdits() && !confirm('সংরক্ষণ না করেই তারিখ বদলাতে চান? এখনকার হাজিরা বদল মুছে যাবে।')) {
+    if (hasPendingEdits() && !await MMUI.confirm('সংরক্ষণ না করেই তারিখ বদলাতে চান? এখনকার হাজিরা বদল মুছে যাবে।')) {
       const inp = document.getElementById('daftar-att-date');
       if (inp) inp.value = daftarAttDate;
       return;

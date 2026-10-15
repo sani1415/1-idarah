@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/mm-ui.css">
 <link rel="stylesheet" href="css/main-admin-nav.css">
 <link rel="stylesheet" href="css/chat-page.css">
+<script src="js/shared/mm-ui.js"></script>
 </head>
 <body class="ui-skin">
 <script>
@@ -665,7 +666,7 @@
   async function deleteOwnMsg(mid) {
     const m = ChatAPI.getThread(activeThread).find(x => x.id === mid);
     if (!m || !ChatAPI.canModifyOwn(m, isAdmin, chatActorId())) { notifToast('১৫ মিনিট পেরিয়ে গেছে — আর মোছা যাবে না।'); renderMsgs(); return; }
-    if (!confirm('এই বার্তা দুই পক্ষের কাছ থেকেই মুছে যাবে। মুছবেন?')) return;
+    if (!await MMUI.confirm('এই বার্তা দুই পক্ষের কাছ থেকেই মুছে যাবে। মুছবেন?')) return;
     let res = null;
     try { res = await ChatAPI.deleteOwnRemote(chatActorId(), chatPin(), mid, isAdmin); } catch (e) { console.warn('Chat delete failed', e); }
     if (!res || !res.ok) { alert(ownMsgError(res)); return; }

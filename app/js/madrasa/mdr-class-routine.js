@@ -12,7 +12,7 @@
     escapeHtml: function (s) { return String(s || ''); },
     toBn: function (n) { return String(n); },
     formatDateTime: function (iso) { return String(iso || ''); },
-    confirm: function (msg) { return global.confirm(msg); },
+    confirm: function (msg) { return global.MMUI && global.MMUI.confirm ? global.MMUI.confirm(msg) : global.confirm(msg); },
   };
 
   var state = {
@@ -406,7 +406,7 @@
   async function deleteVersion(routineId, versionNo) {
     if (!routineId) return;
     var msg = 'ভার্সন ' + toBn(versionNo || '') + ' মুছে ফেলবেন? এটি ফিরিয়ে আনা যাবে না।';
-    if (!hooks.confirm(msg)) return;
+    if (!await hooks.confirm(msg)) return;
     var actor = hooks.getActor();
     if (!actor) return;
     state.saving = true;

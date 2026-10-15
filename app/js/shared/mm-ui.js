@@ -1,6 +1,7 @@
 /**
  * সাধারণ নকশা-ভিত্তির ছোট সহায়ক (app/css/mm-ui.css-এর সাথে)।
  * MMUI.icon(name, size) · MMUI.stat({...}) · MMUI.pctTone(p) · MMUI.esc / bn / taka
+ * MMUI.confirm(msg, opts) → Promise<boolean> (নিজের CSS নিজে যোগ করে)
  */
 (function (global) {
   'use strict';
@@ -55,5 +56,77 @@
       (o.sub ? '<span class="ui-stat-sub">' + o.sub + '</span>' : '') + '</span></' + tag + '>';
   }
 
-  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat };
+  /* ── নিশ্চিতকরণ বাক্স: ব্রাউজারের confirm()-এর বদলে ──
+     MMUI.confirm(msg, { title, ok, cancel, danger, note }) → Promise<boolean>
+     msg-এ "\n\n" থাকলে প্রথম অংশ শিরোনাম, বাকিটা বিবরণ। */
+  var CONFIRM_CSS =
+    '.mmc-bg{position:fixed;inset:0;z-index:10050;background:rgba(42,35,24,.42);display:flex;align-items:center;justify-content:center;padding:16px;animation:mmcIn .12s ease-out}' +
+    '.mmc{width:100%;max-width:440px;max-height:calc(100vh - 32px);overflow:auto;background:var(--ui-card,#fffdf8);border-radius:20px;box-shadow:0 28px 80px rgba(26,18,8,.3);padding:22px 20px 16px;text-align:center;font-family:var(--font-bn,inherit)}' +
+    '.mmc-ic{width:54px;height:54px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;background:var(--ui-warn-bg,#fbefd6);color:var(--ui-warn,#b07a12)}' +
+    '.mmc.is-danger .mmc-ic{background:var(--ui-bad-bg,#fbe6e1);color:var(--ui-bad,#b5573a)}' +
+    '.mmc h3{margin:0 0 6px;font-size:18px;font-weight:700;color:var(--ink,#2a2318);line-height:1.45}' +
+    '.mmc p{margin:0;font-size:14px;color:var(--ink2,#4a4032);line-height:1.6;white-space:pre-line}' +
+    '.mmc-note{margin-top:12px;background:var(--ui-bad-bg,#fbe6e1);color:var(--ui-bad,#b5573a);border-radius:12px;padding:9px 12px;font-size:13px;text-align:left;white-space:pre-line}' +
+    '.mmc-bt{display:flex;gap:8px;margin-top:16px}' +
+    '.mmc-bt button{flex:1;min-height:42px;border-radius:12px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;padding:6px 10px}' +
+    '.mmc-c{background:#fff;border:1px solid var(--ui-bd,#e8dcc6);color:var(--ink2,#4a4032)}' +
+    '.mmc-o{background:var(--ui-accent,#b5573a);border:none;color:#fff}' +
+    '.mmc-bt button:focus-visible{outline:3px solid rgba(181,87,58,.35);outline-offset:2px}' +
+    '@keyframes mmcIn{from{opacity:0}to{opacity:1}}';
+  var DANGER_RE = /মুছ|ডিলিট|বাদ |বাদ দ|বাতিল|সরিয়ে|লগআউট|পূর্বাবস্থা/;
+  function confirmBox(msg, o) {
+    o = o || {};
+    if (typeof document === 'undefined' || !document.body) return Promise.resolve(global.confirm(msg));
+    if (!document.getElementById('mmc-css')) {
+      var st = document.createElement('style');
+      st.id = 'mmc-css';
+      st.textContent = CONFIRM_CSS;
+      document.head.appendChild(st);
+    }
+    var text = String(msg == null ? '' : msg);
+    var parts = text.split(/\n\s*\n/);
+    var title = o.title || '';
+    var body = text;
+    if (!title) {
+      if (parts.length > 1) { title = parts.shift(); body = parts.join('\n\n'); }
+      else if (text.length <= 70) { title = text; body = ''; }
+      else title = 'নিশ্চিত করুন';
+    }
+    var danger = o.danger != null ? !!o.danger : DANGER_RE.test(text);
+    var prevFocus = document.activeElement;
+    return new Promise(function (resolve) {
+      var bg = document.createElement('div');
+      bg.className = 'mmc-bg';
+      bg.innerHTML = '<div class="mmc' + (danger ? ' is-danger' : '') + '" role="alertdialog" aria-modal="true" aria-labelledby="mmc-t">' +
+        '<div class="mmc-ic">' + icon('alert', 26) + '</div>' +
+        '<h3 id="mmc-t">' + esc(title) + '</h3>' +
+        (body ? '<p>' + esc(body) + '</p>' : '') +
+        (o.note ? '<div class="mmc-note">⚠ ' + esc(o.note) + '</div>' : '') +
+        '<div class="mmc-bt"><button type="button" class="mmc-c">' + esc(o.cancel || 'না, থাক') + '</button>' +
+        '<button type="button" class="mmc-o">' + esc(o.ok || (danger ? 'হ্যাঁ, নিশ্চিত' : 'হ্যাঁ')) + '</button></div></div>';
+      function done(v) {
+        document.removeEventListener('keydown', onKey, true);
+        if (bg.parentNode) bg.parentNode.removeChild(bg);
+        try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
+        resolve(v);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+        else if (e.key === 'Tab') {
+          var bs = bg.querySelectorAll('button');
+          var i = Array.prototype.indexOf.call(bs, document.activeElement);
+          e.preventDefault();
+          bs[(i + (e.shiftKey ? bs.length - 1 : 1)) % bs.length].focus();
+        }
+      }
+      bg.querySelector('.mmc-c').onclick = function () { done(false); };
+      bg.querySelector('.mmc-o').onclick = function () { done(true); };
+      bg.addEventListener('click', function (e) { if (e.target === bg) done(false); });
+      document.addEventListener('keydown', onKey, true);
+      document.body.appendChild(bg);
+      bg.querySelector(danger ? '.mmc-c' : '.mmc-o').focus();
+    });
+  }
+
+  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat, confirm: confirmBox };
 })(typeof window !== 'undefined' ? window : this);

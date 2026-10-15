@@ -34,6 +34,7 @@
   .modal-note { background:var(--cream); border:1px solid rgba(26,18,8,.08); border-radius:12px; padding:10px; font-size:12px; color:var(--ink3); line-height:1.7; margin-bottom:10px; }
   @media (max-width:420px) { .toolbar { grid-template-columns:1fr; } .toolbar .wide { grid-column:auto; } }
 </style>
+<script src="../js/shared/mm-ui.js"></script>
 </head>
 <body class="ui-skin">
 <div class="topbar">
@@ -260,10 +261,10 @@
     if (!classCode) { showToast('বর্তমান মূল বর্ষ নির্বাচন করুন'); return; }
     if (!roll) { showToast('পরিচিতি দিন'); return; }
     if (state.current.source === 'moktob_backup' && !/^0\d+$/.test(studentId)) {
-      if (!confirm('মক্তব ছাত্রের স্থায়ী দাখেলা সাধারণত 0 দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
+      if (!await MMUI.confirm('মক্তব ছাত্রের স্থায়ী দাখেলা সাধারণত 0 দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
     }
     if (state.current.source === 'moktob_backup' && !roll.startsWith('ম')) {
-      if (!confirm('মক্তব ছাত্রের পরিচিতি সাধারণত “ম” দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
+      if (!await MMUI.confirm('মক্তব ছাত্রের পরিচিতি সাধারণত “ম” দিয়ে শুরু হবে। তারপরও সংরক্ষণ করবেন?')) return;
     }
     try {
       setLoading(true);
@@ -287,7 +288,7 @@
   }
 
   async function skipCandidate(id) {
-    if (!confirm('এই ছাত্রকে pending তালিকা থেকে বাদ দেবেন? পরে SQL দিয়ে ফিরিয়ে আনা যাবে।')) return;
+    if (!await MMUI.confirm('এই ছাত্রকে pending তালিকা থেকে বাদ দেবেন? পরে SQL দিয়ে ফিরিয়ে আনা যাবে।')) return;
     try {
       setLoading(true);
       await MMMadrasaAPI.skipImportCandidate(state.pin, id);
