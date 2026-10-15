@@ -386,6 +386,7 @@ body.page-daftar #modal-account-entry .modal,body.page-admin-accounts #modal-acc
 .acc-item-table th:nth-child(5),.acc-item-table td:nth-child(5){width:116px}
 .acc-item-table th:nth-child(6),.acc-item-table td:nth-child(6){width:118px}
 .acc-item-amt-val{font-weight:900;color:var(--red);font-size:14px}
+.acc-item-price-val{font-weight:700;color:var(--ink3);font-size:13px;white-space:nowrap}
 .acc-item-table th:nth-child(7),.acc-item-table td:nth-child(7){width:42px;text-align:center}
 @media (max-width:640px){#modal-account-entry .modal{width:min(100%,calc(100vw - 16px));height:min(92vh,calc(100vh - 16px));padding:18px 14px 22px}#modal-account-entry .form-row,#modal-account-entry .acc-entry-top-row{grid-template-columns:1fr;gap:10px}.acc-item-wrap{max-width:100%;overflow:auto}.acc-item-table th:nth-child(2),.acc-item-table td:nth-child(2){width:210px}}
 .acc-ms-section-head{font-size:11px;font-weight:800;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
@@ -657,12 +658,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
         '<td><input class="form-input" value="' + esc(item.description) + '" placeholder="পণ্য / বিবরণ" list="acc-desc-dl" oninput="updateAccItem(' + i + ',\'description\',this.value)"></td>' +
         '<td><input class="form-input acc-num-input" value="' + (item.quantity || '') + '" type="text" inputmode="decimal" placeholder="০" oninput="updateAccItem(' + i + ',\'quantity\',this.value)"></td>' +
         '<td><select class="form-input form-select" onchange="updateAccItem(' + i + ',\'unit\',this.value)">' + unitOptions(item.unit) + '</select></td>' +
-        '<td><input class="form-input acc-num-input" value="' + (item.unitPrice || '') + '" type="text" inputmode="decimal" placeholder="০" oninput="updateAccItem(' + i + ',\'unitPrice\',this.value)"></td>' +
-        '<td><span class="acc-item-amt-val" id="acc-item-amt-' + i + '">' + fa(item.amount || '') + '</span></td>' +
+        '<td><input class="form-input acc-num-input" value="' + (item.amount || '') + '" type="text" inputmode="decimal" placeholder="০" oninput="updateAccItem(' + i + ',\'amount\',this.value)"></td>' +
+        '<td><span class="acc-item-price-val" id="acc-item-price-' + i + '">' + (item.unitPrice ? fa(item.unitPrice) : '—') + '</span></td>' +
         '<td>' + (_items.length > 1 ? '<button type="button" class="acc-item-del" onclick="removeAccItem(' + i + ')">✕</button>' : '') + '</td>' +
       '</tr>';
     }).join('');
-    c.innerHTML = '<div class="acc-item-wrap"><table class="acc-item-table"><thead><tr><th>খাত</th><th>বিবরণ</th><th>পরিমাণ</th><th>মাপ</th><th>একক মূল্য</th><th>মোট</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    c.innerHTML = '<div class="acc-item-wrap"><table class="acc-item-table"><thead><tr><th>খাত</th><th>বিবরণ</th><th>পরিমাণ</th><th>মাপ</th><th>মোট টাকা</th><th>একক মূল্য (অটো)</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     _updateGrandTotal();
   }
 
@@ -676,14 +677,15 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
   window.removeAccItem  = function (i) { _items.splice(i, 1); if (!_items.length) _items.push(_blank()); _renderItems(); };
   window.updateAccItem  = function (i, field, val) {
     if (!_items[i]) return;
-    if (field === 'quantity' || field === 'unitPrice') val = sanitizeNumStr(val);
+    /* Excel-এর মতো: মোট টাকা লেখা হয়, পরিমাণ থাকলে একক মূল্য = মোট ÷ পরিমাণ (অটো) */
+    if (field === 'quantity' || field === 'amount') val = sanitizeNumStr(val);
     _items[i][field] = val;
-    if (field === 'quantity' || field === 'unitPrice') {
+    if (field === 'quantity' || field === 'amount') {
       var q = parseFloat(_items[i].quantity) || 0;
-      var p = parseFloat(_items[i].unitPrice) || 0;
-      _items[i].amount = q * p;
-      var el = document.getElementById('acc-item-amt-' + i);
-      if (el) el.textContent = fa(_items[i].amount);
+      var a = parseFloat(_items[i].amount) || 0;
+      _items[i].unitPrice = q && a ? String(Math.round(a / q * 100) / 100) : '';
+      var el = document.getElementById('acc-item-price-' + i);
+      if (el) el.textContent = _items[i].unitPrice ? fa(_items[i].unitPrice) : '—';
     }
     _updateGrandTotal();
   };
@@ -3325,6 +3327,8 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
       var price = sanitizeNumStr(get(iPrice));
       var amt = parseFloat(sanitizeNumStr(get(iAmt))) || 0;
       if (!amt) amt = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
+      /* একক মূল্যের অটো-ঘর ফাঁকা (সূত্র এখনো হিসাব হয়নি বা অ্যাপের শীট) — Excel-এর মতোই মোট ÷ পরিমাণ */
+      if (!(parseFloat(price) > 0) && amt && parseFloat(qty) > 0) price = String(Math.round(amt / parseFloat(qty) * 100) / 100);
       var pay = impResolvePay(get(iPay));
       var supplier = get(iSup);
       row.data = {
