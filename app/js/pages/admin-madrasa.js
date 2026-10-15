@@ -1016,8 +1016,9 @@
   async function hydrateCommandDeckSources() {
     const pin = MMSession.getAdminPin && MMSession.getAdminPin();
     try {
+      /* অন্য ডিভাইস/Excel আপলোডের পরিবর্তন লোকাল ক্যাশ জানে না — পুরনো (যেমন ফাঁকা) কপি না দেখাতে সবসময় সার্ভার থেকে */
       if (window.MdrAccAPI && MdrAccAPI.bootstrapRemote) {
-        await MdrAccAPI.bootstrapRemote();
+        await MdrAccAPI.bootstrapRemote({ force: true });
       }
     } catch (e) {
       console.warn('accounts dashboard cache failed', e);
