@@ -12,20 +12,6 @@
 <link rel="stylesheet" href="../../css/mm-ui.css">
 <link rel="stylesheet" href="../../css/main-admin-nav.css">
 <style>
-  .att-summary-row { display:flex; gap:8px; margin-bottom:14px; }
-  .att-sum-card { flex:1; background:#fff; border-radius:var(--radius-sm); padding:10px 8px; text-align:center; box-shadow:var(--shadow); border:1px solid rgba(26,18,8,.05); }
-  .att-sum-val { font-family:'Tiro Bangla',serif; font-size:18px; font-weight:700; display:block; line-height:1.15; }
-  .att-sum-lbl { font-size:9px; color:var(--ink3); margin-top:3px; display:block; }
-  .att-table { width:100%; border-collapse:collapse; font-family:'Tiro Bangla',serif; font-size:12px; }
-  .att-table thead th { background:var(--thead-bg); color:var(--thead-fg); padding:7px 8px; text-align:left; font-size:10px; font-weight:600; white-space:nowrap; }
-  .att-table thead th:not(:first-child) { text-align:center; }
-  .att-table tbody td { padding:8px; border-bottom:1px solid var(--cream2); color:var(--ink2); vertical-align:middle; }
-  .att-table tbody tr:last-child td { border-bottom:none; }
-  .att-table .cls-name { font-family:'Tiro Bangla',serif; font-size:13px; font-weight:700; color:var(--ink); }
-  .att-table .num-cell { text-align:center; font-family:'Tiro Bangla',serif; font-size:13px; font-weight:700; }
-  .att-table .pct-cell { text-align:center; }
-  .pct-bar { height:5px; background:var(--cream2); border-radius:3px; overflow:hidden; margin-top:3px; }
-  .pct-fill { height:100%; border-radius:3px; }
   .hero-date-card { background:#fff; border-radius:var(--radius-sm); box-shadow:var(--shadow); overflow:hidden; margin-bottom:12px; }
   .date-nav { display:flex; align-items:center; background:var(--sel-bg); color:var(--sel-fg); border-bottom:1px solid var(--sel-line); }
   .date-nav-btn { flex:0 0 42px; height:42px; background:none; border:none; cursor:pointer; font-family:'Tiro Bangla',serif; font-size:18px; color:rgba(94,67,12,.6); }
@@ -63,13 +49,13 @@
   .audit-date-jump { margin-top:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .audit-date-jump label { font-size:10px; color:var(--ink3); }
   .audit-date-jump .form-input { padding:6px 8px; font-size:12px; max-width:100%; }
-  .dept-tab { display:flex; gap:6px; margin-bottom:14px; }
-  .dept-tab-btn { flex:1; padding:10px; border:1px solid var(--cream3); border-radius:var(--radius-sm); text-align:center; font-family:'Tiro Bangla',serif; font-size:12px; font-weight:600; cursor:pointer; background:#fff; color:var(--ink3); transition:all .15s; }
-  .dept-tab-btn.active { background:var(--sel-bg); color:var(--sel-fg); border-color:var(--sel-line); }
-  .att-table tbody tr.cls-row { cursor:pointer; transition:background .12s; }
-  .att-table tbody tr.cls-row:hover { background:rgba(0,0,0,.03); }
-  .att-table tbody tr.cls-row:active { background:rgba(0,0,0,.06); }
-  .att-table tbody tr.dept-section-row td { background:var(--cream2); color:var(--ink2); font-size:10px; font-weight:700; padding:6px 8px; border-bottom:1px solid var(--cream3); }
+  @container (min-width: 760px) { .ad-grid { grid-template-columns: minmax(0, 1fr) 300px; } }
+  .ad-bar-col { width: 26%; }
+  .ad-tbl .dept-section-row td { background: var(--cream2); color: var(--ink2); font-size: 12px; font-weight: 700; padding: 6px 12px; text-align: left; }
+  .ad-tbl td.ad-p { color: var(--ui-ok); }
+  .ad-tbl td.ad-a { color: var(--ui-bad); }
+  #ad-absent-list { max-height: 560px; overflow-y: auto; }
+  @media (max-width: 560px) { .ad-bar-col, .ad-tbl td.ad-bar { display: none; } }
   /* class overlay */
   .cls-overlay { position:fixed; inset:0; z-index:200; background:var(--bg,#faf6ef); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
   .cls-overlay.is-open { transform:translateX(0); }
@@ -110,7 +96,7 @@
   </div>
 </div>
 
-<div class="content" style="padding-bottom: var(--app-content-pad-bottom);">
+<div class="content ui-cq" style="padding-bottom: var(--app-content-pad-bottom);">
 
   <div class="hero-date-card">
     <div class="date-nav" id="date-nav" aria-expanded="false">
@@ -140,26 +126,29 @@
     </div>
   </div>
 
-  <div class="att-summary-row">
-    <div class="att-sum-card"><span class="att-sum-val" id="s-total" style="color:var(--ink);">—</span><span class="att-sum-lbl">মোট ছাত্র</span></div>
-    <div class="att-sum-card"><span class="att-sum-val" id="s-present" style="color:var(--green);">—</span><span class="att-sum-lbl">উপস্থিত</span></div>
-    <div class="att-sum-card"><span class="att-sum-val" id="s-absent" style="color:var(--red);">—</span><span class="att-sum-lbl">অনুপস্থিত</span></div>
-    <div class="att-sum-card"><span class="att-sum-val" id="s-pct" style="color:var(--gold);">—</span><span class="att-sum-lbl">উপস্থিতির হার</span></div>
+  <div class="ui-stats" id="ad-stats"></div>
+
+  <div class="ui-box ui-tabs" id="dept-tabs">
+    <button type="button" class="ui-tab is-on" id="dtab-all" onclick="switchDept('all')">সামগ্রিক</button>
+    <button type="button" class="ui-tab" id="dtab-kitab" onclick="switchDept('kitab')">কিতাব বিভাগ</button>
+    <button type="button" class="ui-tab" id="dtab-maktab" onclick="switchDept('maktab')">মক্তব বিভাগ</button>
   </div>
 
-  <div class="dept-tab">
-    <div class="dept-tab-btn active" id="dtab-all" onclick="switchDept('all')">সামগ্রিক</div>
-    <div class="dept-tab-btn" id="dtab-kitab" onclick="switchDept('kitab')">কিতাব বিভাগ</div>
-    <div class="dept-tab-btn" id="dtab-maktab" onclick="switchDept('maktab')">মক্তব বিভাগ</div>
-  </div>
-
-  <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;">
-    <div style="overflow-x:auto;">
-      <table class="att-table">
-        <thead><tr><th>বর্ষ</th><th>মোট</th><th>উপস্থিত</th><th>অনুপস্থিত</th><th>হার</th></tr></thead>
-        <tbody id="att-table-body"></tbody>
-      </table>
-    </div>
+  <div class="ui-grid ad-grid">
+    <section class="ui-box ui-panel">
+      <div class="ui-ph"><h3>বর্ষভিত্তিক হাজিরা</h3><small>বর্ষে চাপলে বিস্তারিত</small></div>
+      <div style="overflow-x:auto;">
+        <table class="ui-tbl ad-tbl">
+          <thead><tr><th>বর্ষ</th><th>মোট</th><th>উপস্থিত</th><th>অনুপস্থিত</th><th class="ad-bar-col"></th><th>হার</th></tr></thead>
+          <tbody id="att-table-body"></tbody>
+          <tfoot id="att-table-foot"></tfoot>
+        </table>
+      </div>
+    </section>
+    <section class="ui-box ui-panel" id="ad-absent-panel">
+      <div class="ui-ph"><h3>আজ অনুপস্থিত</h3><small id="ad-absent-count"></small></div>
+      <div id="ad-absent-list"></div>
+    </section>
   </div>
 
 </div>
@@ -198,6 +187,7 @@
 <script src="../../js/core/mm-shell.js"></script>
 <script src="../../js/madrasa/mdr-supabase-sync.js"></script>
 <script src="../../js/core/mm-hijri.js"></script>
+<script src="../../js/shared/mm-ui.js"></script>
 <script src="../../js/shared/mm-student-modal.js"></script>
 <script src="../../js/shared/mam-overlay.js"></script>
 <script>
@@ -473,12 +463,13 @@
   }
   function syncDeptTabs() {
     const allowed = MMSession.getAllowedMadrasaDepts();
-    document.getElementById('dtab-all').classList.toggle('active', currentDept === 'all');
-    document.getElementById('dtab-kitab').classList.toggle('active', currentDept === 'kitab');
-    document.getElementById('dtab-maktab').classList.toggle('active', currentDept === 'maktab');
+    document.getElementById('dtab-all').classList.toggle('is-on', currentDept === 'all');
+    document.getElementById('dtab-kitab').classList.toggle('is-on', currentDept === 'kitab');
+    document.getElementById('dtab-maktab').classList.toggle('is-on', currentDept === 'maktab');
     document.getElementById('dtab-all').style.display = allowed.length > 1 ? '' : 'none';
     document.getElementById('dtab-kitab').style.display = allowed.includes('kitab') ? '' : 'none';
     document.getElementById('dtab-maktab').style.display = allowed.includes('maktab') ? '' : 'none';
+    document.getElementById('dept-tabs').style.display = allowed.length > 1 ? '' : 'none';
   }
 
   async function renderWithDateLoad() {
@@ -486,39 +477,69 @@
     render();
   }
 
+  function pctTone(p) { return p >= 80 ? 'ui-ok' : p >= 60 ? 'ui-warn' : 'ui-bad'; }
+  function scrollToAbsent() {
+    const el = document.getElementById('ad-absent-panel');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   function render() {
     renderDateHeader();
 
     const allClasses = getScopedClasses();
-    let totalStudents = 0, totalPresent = 0, totalAbsent = 0;
+    let totalStudents = 0, totalPresent = 0, totalAbsent = 0, takenStudents = 0;
     let lastDept = '';
+    const missing = [];
+    const absentRows = [];
     const rows = allClasses.map(cls => {
       const students = API.Students.getByClass(cls.id);
       const attRecs  = API.Attendance.getByClassDate(cls.id, currentDate);
       const present  = attRecs.filter(a => API.Attendance.statusOf(a) === 'present').length;
-      const absent   = attRecs.filter(a => API.Attendance.statusOf(a) === 'absent').length;
+      const absentRecs = attRecs.filter(a => API.Attendance.statusOf(a) === 'absent');
+      const absent   = absentRecs.length;
       const pct      = students.length ? Math.round(present / students.length * 100) : 0;
-      const pctColor = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--gold)' : 'var(--red)';
+      const tone     = pctTone(pct);
       totalStudents += students.length; totalPresent += present; totalAbsent += absent;
-      const section = currentDept === 'all' && cls.dept !== lastDept ? `<tr class="dept-section-row"><td colspan="5">${deptLabel(cls.dept)}</td></tr>` : '';
+      if (students.length && !attRecs.length) missing.push(cls.name);
+      if (attRecs.length) takenStudents += students.length;
+      const byId = {};
+      students.forEach(s => { byId[String(s.id)] = s; if (s.supabase_id) byId[String(s.supabase_id)] = s; });
+      absentRecs.forEach(a => {
+        const st = byId[String(a.student_id)];
+        absentRows.push({ sid: st ? st.id : a.student_id, name: st ? st.name : '—', cls: cls.name, reason: String(a.absent_reason || '').trim() });
+      });
+      const section = currentDept === 'all' && cls.dept !== lastDept ? `<tr class="dept-section-row"><td colspan="6">${deptLabel(cls.dept)}</td></tr>` : '';
       lastDept = cls.dept;
-      return section + `<tr class="cls-row" onclick="openClassOverlay('${cls.id}')">
-        <td class="cls-name">${API.esc(cls.name)}</td>
-        <td class="num-cell">${toBn(students.length)}</td>
-        <td class="num-cell" style="color:var(--green);">${attRecs.length ? toBn(present) : '—'}</td>
-        <td class="num-cell" style="color:var(--red);">${attRecs.length ? toBn(absent) : '—'}</td>
-        <td class="pct-cell">
-          ${attRecs.length ? `<div style="font-family:'Tiro Bangla',serif;font-size:12px;font-weight:700;color:${pctColor};">${toBn(pct)}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${pctColor};"></div></div>` : '<span style="color:var(--ink3);font-size:11px;">এন্ট্রি নেই</span>'}
-        </td>
+      return section + `<tr class="is-link" onclick="openClassOverlay('${API.esc(cls.id)}')">
+        <td><b>${API.esc(cls.name)}</b></td>
+        <td>${toBn(students.length)}</td>
+        <td class="ad-p">${attRecs.length ? toBn(present) : '—'}</td>
+        <td class="ad-a">${attRecs.length ? toBn(absent) : '—'}</td>
+        <td class="ad-bar">${attRecs.length ? `<span class="ui-track"><span class="ui-fill ${tone}" style="width:${pct}%"></span></span>` : ''}</td>
+        <td>${attRecs.length ? `<b class="${tone}">${toBn(pct)}%</b>` : (students.length ? '<span class="ui-badge is-warn">হাজিরা হয়নি</span>' : '<span style="color:var(--ink3)">ছাত্র নেই</span>')}</td>
       </tr>`;
     }).join('');
 
-    document.getElementById('att-table-body').innerHTML = rows || `<tr><td colspan="5" style="text-align:center;color:var(--ink3);padding:20px;">কোনো বর্ষ নেই</td></tr>`;
-    document.getElementById('s-total').textContent    = toBn(totalStudents);
-    document.getElementById('s-present').textContent  = toBn(totalPresent);
-    document.getElementById('s-absent').textContent   = toBn(totalAbsent);
-    const overallPct = totalStudents ? Math.round(totalPresent / totalStudents * 100) : 0;
-    document.getElementById('s-pct').textContent = toBn(overallPct) + '%';
+    const overallPct = takenStudents ? Math.round(totalPresent / takenStudents * 100) : 0;
+    document.getElementById('att-table-body').innerHTML = rows || `<tr><td colspan="6" class="ui-empty">কোনো বর্ষ নেই</td></tr>`;
+    document.getElementById('att-table-foot').innerHTML = rows
+      ? `<tr><td>মোট</td><td>${toBn(totalStudents)}</td><td>${toBn(totalPresent)}</td><td>${toBn(totalAbsent)}</td><td class="ad-bar"></td><td>${toBn(overallPct)}%</td></tr>`
+      : '';
+
+    const missSub = missing.length
+      ? missing.slice(0, 3).map(n => API.esc(n)).join(', ') + (missing.length > 3 ? ' …' : '')
+      : 'সব বর্ষে হাজিরা হয়েছে';
+    document.getElementById('ad-stats').innerHTML =
+      MMUI.stat({ tone: 'info', icon: 'users', label: 'মোট ছাত্র', value: toBn(totalStudents) }) +
+      MMUI.stat({ tone: 'ok', icon: 'check', label: 'উপস্থিত', value: toBn(totalPresent), sub: toBn(overallPct) + '% উপস্থিতি' }) +
+      MMUI.stat({ tone: 'bad', icon: 'alert', label: 'অনুপস্থিত', value: toBn(totalAbsent), sub: totalAbsent ? 'চাপলে তালিকা' : '', onclick: totalAbsent ? 'scrollToAbsent()' : '' }) +
+      MMUI.stat({ tone: missing.length ? 'warn' : 'ok', icon: 'clock', label: 'হাজিরা হয়নি', value: missing.length ? toBn(missing.length) + 'টি বর্ষ' : '০', sub: missSub });
+
+    document.getElementById('ad-absent-count').textContent = absentRows.length ? toBn(absentRows.length) + ' জন' : '';
+    document.getElementById('ad-absent-list').innerHTML = absentRows.length
+      ? absentRows.map(r => `<div class="ui-row is-link" onclick="MMStudentModal.open('${API.esc(r.sid)}')">
+          <span class="ui-row-main"><span class="ui-row-name">${API.esc(r.name)}</span><span class="ui-row-meta">${API.esc(r.cls)} · ${r.reason ? API.esc(r.reason) : 'কারণ লেখা নেই'}</span></span>
+          <span class="ui-badge is-bad">অনুপস্থিত</span></div>`).join('')
+      : `<div class="ui-empty">${totalPresent || totalAbsent ? 'এই দিনে কেউ অনুপস্থিত নেই' : 'এই দিনের হাজিরা এখনো নেওয়া হয়নি'}</div>`;
     renderAttendanceAudit(auditExpanded);
   }
 
