@@ -114,6 +114,15 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .ui-ok { color: var(--ui-ok); } .ui-warn { color: var(--ui-warn); } .ui-bad { color: var(--ui-bad); }
 .ui-fill.ui-ok { background: var(--ui-ok); } .ui-fill.ui-warn { background: #d29a2c; } .ui-fill.ui-bad { background: var(--ui-bad); }
 
+/* ── পরীক্ষা বিশ্লেষণ (madrasa-exams-analytics.js) ── */
+.exa-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.exa-bar { width: 26%; min-width: 70px; }
+.exa-bands { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 9px; }
+.exa-band { display: grid; grid-template-columns: 96px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 13px; }
+.exa-band b { text-align: right; }
+.exa-sep { border-top: 1px solid var(--ui-bd); }
+@media (max-width: 640px) { .exa-bar { display: none; } }
+
 /* ── বিন্যাস: পাশাপাশি কার্ড (জায়গা অনুযায়ী) ── */
 .ui-cq { container-type: inline-size; }
 .ui-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
