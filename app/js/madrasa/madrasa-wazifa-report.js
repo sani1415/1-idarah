@@ -147,6 +147,8 @@
     var st = document.createElement('style');
     st.id = STYLE_ID;
     st.textContent =
+      // পাতার .content সাধারণত ১১০০px-এ বাঁধা — রিপোর্ট খোলা থাকলে পুরো চওড়া (জুম আউটে বেশি কলাম আসে)
+      'html body .content:has(.wz-shell){max-width:none;}' +
       '.wz-shell{--wz-ok:#3f7a50;--wz-ok-bg:#e8f2e7;--wz-late:#b07a14;--wz-late-bg:#fbf0d6;--wz-due:#b5573a;--wz-due-bg:#fbe7df;' +
         '--wz-card:#fffdf9;--wz-bd:#ece3d2;padding:4px 0 28px;container-type:inline-size;color:var(--ink);}' +
       '.wz-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}' +
