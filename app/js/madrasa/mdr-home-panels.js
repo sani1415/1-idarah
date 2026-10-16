@@ -736,11 +736,14 @@
   }
 
   function getAbsentDepts() {
-    return getAbsentScopeDepts().filter((dept) => dept === _absDept);
+    const scope = getAbsentScopeDepts();
+    if (_absDept === 'all') return scope;
+    return scope.filter((dept) => dept === _absDept);
   }
 
   function setAbsentDept(dept) {
-    if (!getAbsentScopeDepts().includes(dept)) return;
+    const scope = getAbsentScopeDepts();
+    if (!(dept === 'all' && scope.length > 1) && !scope.includes(dept)) return;
     _absDept = dept;
     renderAbsent();
     const list = document.getElementById('abs-home-list');
@@ -841,9 +844,10 @@
     const totalRows = absentRows();
     const deptEl = document.getElementById('abs-home-depts');
     if (deptEl) {
-      deptEl.innerHTML = getAbsentScopeDepts().map((dept) =>
+      const scopeD = getAbsentScopeDepts();
+      deptEl.innerHTML = (scopeD.length > 1 ? ['all'] : []).concat(scopeD).map((dept) =>
         '<button type="button" class="abs-dept" aria-pressed="' + (dept === _absDept) + '" onclick="MDRHomePanels.setAbsentDept(\'' + dept + '\')">' +
-        (dept === 'maktab' ? 'মক্তব' : 'কিতাব বিভাগ') + '</button>'
+        (dept === 'all' ? 'সব' : dept === 'maktab' ? 'মক্তব' : 'কিতাব বিভাগ') + '</button>'
       ).join('');
     }
     const tabsEl = document.getElementById('abs-home-tabs');
@@ -937,7 +941,8 @@
   function openAbsent(opts) {
     injectOnce();
     _absentDeptScope = (opts && Array.isArray(opts.depts) && opts.depts.length) ? opts.depts.slice() : null;
-    _absDept = getAbsentScopeDepts()[0] || null;
+    /* হোমের সংখ্যার সাথে মিলিয়ে দুই বিভাগ থাকলে প্রথমে «সব» */
+    _absDept = getAbsentScopeDepts().length > 1 ? 'all' : (getAbsentScopeDepts()[0] || null);
     _absTab = opts && opts.tab === 'total' ? 'total' : 'today';
     function show() {
       renderAbsent();

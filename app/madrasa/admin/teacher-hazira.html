@@ -53,6 +53,7 @@
   @media (max-width:640px) { .hza .hz-head .ui-title { display:none; } .hza .hza-bar { display:none; } }
   @media print { .hza .ui-stats { break-inside:avoid; } }
 </style>
+<script src="../../js/shared/mm-ui.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -117,7 +118,6 @@
   if (!MMSession.requireAdminPerm('teacher_hazira', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
 </script>
 <script src="../../js/madrasa/mdr-teacher-hazira-core.js"></script>
-<script src="../../js/shared/mm-ui.js"></script>
 <script src="../../js/madrasa/mdr-teacher-hazira-admin.js"></script>
 <script src="../../js/shared/admin-nav.js"></script>
 </body>

@@ -40,6 +40,7 @@
     .dars-tab { font-size: 13px; padding: 12px 8px; }
   }
 </style>
+<script src="../../js/shared/mm-ui.js"></script>
 </head>
 <body class="ui-skin">
 <div class="topbar">
@@ -101,7 +102,6 @@
 <script src="../../js/core/mm-session.js"></script>
 <script src="../../js/core/mm-shell.js"></script>
 <script src="../../js/madrasa/mdr-supabase-sync.js"></script>
-<script src="../../js/shared/mm-ui.js"></script>
 <script>
   if (!MMSession.requireAdminPerm('dars', '/admin/madrasa.html')) { throw new Error('admin permission denied'); }
   const toBn = n => String(n).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
