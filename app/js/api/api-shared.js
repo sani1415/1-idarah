@@ -278,6 +278,13 @@ const MMSharedAPI = (() => {
         p_pin: pin,
       });
     },
+    /** বিদায়ী ছাত্রদের তালিকা (দফতর / জিম্মাদার) — শুধু পড়া */
+    daftarWithdrawn(actorId, pin) {
+      return rpc('mdr_rel_daftar_withdrawn', {
+        p_actor_id: actorId,
+        p_pin: pin,
+      });
+    },
     daftarAttendanceForDate(actorId, pin, date) {
       return rpc('mdr_rel_daftar_attendance_for_date', {
         p_actor_id: actorId,

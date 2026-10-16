@@ -38,12 +38,10 @@
   @container (min-width: 1300px) { .st-list-inner { grid-template-columns: repeat(3, minmax(0, 1fr)); } .st-list-inner .ui-row { border-right: 1px solid var(--cream2); } }
   @container (max-width: 899px) {
     .st-side { order: -1; position: static; }
-    .st-side .ui-ph small { display: none; }
     #class-breakdown { display: flex; gap: 8px; overflow-x: auto; padding: 8px 10px 10px; }
     .st-cls { flex: 0 0 150px; border: 1px solid var(--ui-bd); border-radius: 12px; padding: 8px 10px; background: #fff; }
     .st-cls:last-child { border-bottom: 1px solid var(--ui-bd); }
   }
-  @media (max-width: 640px) { .st-head .ui-title { display: none; } }
 </style>
 <script src="../../js/shared/mm-ui.js"></script>
 </head>
@@ -60,9 +58,6 @@
 
 <div class="content content-nav-pad">
   <div class="ui-wide ui-cq">
-  <div class="ui-head st-head">
-    <div class="ui-head-l"><h2 class="ui-title">বর্তমান ছাত্র তালিকা</h2><span class="ui-sub" id="list-count">—</span></div>
-  </div>
   <div class="ui-stats is-compact" id="st-stats"></div>
   <div class="ui-box ui-filters is-compact">
     <label class="ui-field"><span>বিভাগ</span><select id="dept-filter" onchange="switchDept(this.value)"></select></label>
@@ -78,7 +73,7 @@
   </div>
   <div class="st-main">
     <section class="ui-box ui-panel st-list"><div class="ui-ph"><h3 id="list-title">ছাত্র</h3><small>নামে চাপলে বিবরণ</small></div><div class="st-list-inner" id="student-list"></div></section>
-    <aside class="ui-box ui-panel st-side"><div class="ui-ph"><h3>বর্ষভিত্তিক ছাত্র</h3><small>চাপলে শুধু সেই বর্ষ</small></div><div id="class-breakdown"></div></aside>
+    <aside class="ui-box ui-panel st-side" aria-label="বর্ষভিত্তিক ছাত্র — চাপলে শুধু সেই বর্ষ"><div id="class-breakdown"></div></aside>
   </div>
   </div>
   <div class="pb-safe"></div>
@@ -176,7 +171,6 @@
     const cMap = classMap();
     const list = filteredStudents();
     const cid = document.getElementById('class-filter').value;
-    document.getElementById('list-count').textContent = `${deptLabel(currentDept)} — ${bnNum(list.length)} জন বর্তমান ছাত্র`;
     document.getElementById('list-title').textContent = (cid && cMap[cid] ? cMap[cid].name : 'ছাত্র') + ` (${bnNum(list.length)} জন)`;
     renderBreakdown();
     if (!list.length) {

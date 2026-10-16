@@ -85,7 +85,7 @@
       <div class="audit-line" id="audit-line"></div>
     </div>
 
-    <div class="ui-stats dh-stats">
+    <div class="ui-stats is-compact dh-stats">
       <button type="button" class="ui-stat is-ok" id="hs-filter-present" onclick="setQFilter('present')" title="শুধু উপস্থিত দেখান" aria-label="উপস্থিত ফিল্টার">
         <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.2 4.2L19 7"/></svg></span>
         <span class="ui-stat-txt"><span class="ui-stat-lbl">উপস্থিত</span><span class="ui-stat-val" id="st-present">—</span><span class="ui-stat-bar"><span id="bar-present" style="width:0"></span></span></span>
@@ -96,12 +96,12 @@
       </button>
       <button type="button" class="ui-stat is-info" id="hs-filter-total" onclick="setQFilter('all')" title="সব ছাত্র দেখান" aria-label="মোট — ফিল্টার সরান">
         <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.2c2.4.1 4.1 1.7 4.7 4.3"/></svg></span>
-        <span class="ui-stat-txt"><span class="ui-stat-lbl">মোট ছাত্র</span><span class="ui-stat-val" id="st-total">—</span><span class="ui-stat-sub" id="st-holiday-sub"></span><span id="bar-total" hidden></span></span>
+        <span class="ui-stat-txt"><span class="ui-stat-lbl"><span class="ui-lf">মোট ছাত্র</span><span class="ui-ls">মোট</span></span><span class="ui-stat-val" id="st-total">—</span><span class="ui-stat-sub" id="st-holiday-sub"></span><span id="bar-total" hidden></span></span>
       </button>
-      <div class="ui-stat is-warn" id="hs-missing">
-        <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
-        <span class="ui-stat-txt"><span class="ui-stat-lbl">আজ সেভ বাকি</span><span class="ui-stat-val" id="st-missing">—</span><span class="ui-stat-sub" id="st-missing-sub"></span></span>
-      </div>
+      <button type="button" class="ui-stat is-deep" id="hs-withdrawn" onclick="openWithdrawnList()" title="বিদায়ী ছাত্রের তালিকা" aria-label="বিদায়ী ছাত্রের তালিকা">
+        <span class="ui-stat-ic"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></span>
+        <span class="ui-stat-txt"><span class="ui-stat-lbl"><span class="ui-lf">বিদায়ী ছাত্র</span><span class="ui-ls">বিদায়ী</span></span><span class="ui-stat-val" id="st-withdrawn">—</span><span class="ui-stat-sub">চাপলে তালিকা</span></span>
+      </button>
     </div>
 
     <div class="ui-note dh-notice">
@@ -153,6 +153,14 @@
     </div>
 
     <div class="pb-safe"></div>
+  </div>
+
+  <!-- বিদায়ী ছাত্র তালিকা -->
+  <div class="modal-bg" id="modal-withdrawn" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal">
+      <div class="modal-title">বিদায়ী ছাত্র <button class="modal-close" onclick="document.getElementById('modal-withdrawn').classList.remove('open')">✕</button></div>
+      <div id="withdrawn-body"></div>
+    </div>
   </div>
 
   <!-- CLASS SUMMARY PANEL -->

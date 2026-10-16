@@ -1094,4 +1094,52 @@
     if(typeof showToast==='function')showToast('PIN সফলভাবে পরিবর্তন হয়েছে');
   }
 
-  MMLoading.runDaftarPage(initDaftarPage);
+
+  /* ── বিদায়ী ছাত্র (আলাদা RPC — দফতরের bootstrap শুধু সক্রিয় ছাত্র দেয়) ── */
+  let withdrawnRows = null;
+  function withdrawnActor() {
+    if (MMSession.isAdmin && MMSession.isAdmin()) {
+      return { id: MMSession.getAdminUserId && MMSession.getAdminUserId(), pin: MMSession.getAdminPin && MMSession.getAdminPin() };
+    }
+    return { id: MMSession.getStaffUserId && MMSession.getStaffUserId(), pin: MMSession.getStaffPin && MMSession.getStaffPin() };
+  }
+  async function loadWithdrawn() {
+    const el = document.getElementById('st-withdrawn');
+    if (!el || !window.MMSharedAPI || !MMSharedAPI.daftarWithdrawn) return;
+    const a = withdrawnActor();
+    if (!a.id || !a.pin) return;
+    try {
+      const res = await MMSharedAPI.daftarWithdrawn(a.id, a.pin);
+      if (!res || !res.ok) { el.textContent = '—'; return; }
+      withdrawnRows = Array.isArray(res.rows) ? res.rows : [];
+      el.textContent = toBn(withdrawnRows.length);
+      if (document.getElementById('modal-withdrawn').classList.contains('open')) renderWithdrawnList();
+    } catch (e) {
+      console.warn('[daftar] withdrawn list failed', e);
+    }
+  }
+  function renderWithdrawnList() {
+    const body = document.getElementById('withdrawn-body');
+    if (!withdrawnRows) {
+      body.innerHTML = window.MMUI ? MMUI.skeleton({ rows: 3, panel: false }) : 'লোড হচ্ছে…';
+      return;
+    }
+    if (!withdrawnRows.length) {
+      body.innerHTML = window.MMUI ? MMUI.empty({ icon: 'check', title: 'কোনো বিদায়ী ছাত্র নেই' }) : 'কোনো বিদায়ী ছাত্র নেই';
+      return;
+    }
+    const fmt = (iso) => { const p = String(iso || '').slice(0, 10).split('-'); return p.length === 3 ? toBn(+p[2]) + '/' + toBn(+p[1]) + '/' + toBn(p[0]) : '—'; };
+    body.innerHTML = withdrawnRows.map((r) =>
+      `<div class="ui-row"><span class="ui-row-main"><span class="ui-row-name">${API.esc(r.name || '—')}</span>` +
+      `<span class="ui-row-meta">${API.esc(r.class_name || '—')}${r.division_code === 'maktab' ? ' · মক্তব' : ''} · দাখেলা ${API.escBn(r.permanent_id || '—')} · ${fmt(r.left_date)}</span>` +
+      (r.left_reason ? `<span class="ui-row-meta">কারণ: ${API.esc(r.left_reason)}</span>` : '') +
+      `</span></div>`).join('');
+  }
+  function openWithdrawnList() {
+    renderWithdrawnList();
+    document.getElementById('modal-withdrawn').classList.add('open');
+    if (!withdrawnRows) loadWithdrawn();
+  }
+  window.addEventListener('mm:student-status-changed', function () { loadWithdrawn(); });
+
+  Promise.resolve(MMLoading.runDaftarPage(initDaftarPage)).then(loadWithdrawn, loadWithdrawn);
