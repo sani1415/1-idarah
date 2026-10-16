@@ -46,17 +46,62 @@
 
   function clearReloadFlagIfCurrent() {
     if (!currentVersion) return;
-    if (readSession(RELOAD_KEY) === currentVersion) {
+    if (readSession(RELOAD_KEY).split('|')[0] === currentVersion) {
       try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) {}
     }
   }
 
-  function reloadWithVersion(version) {
-    if (!version || readSession(RELOAD_KEY) === version) return;
-    writeSession(RELOAD_KEY, version);
+  /* ইনস্টল করা অ্যাপে sessionStorage দিনের পর দিন থাকে — তাই «একবারই» নয়, একই সংস্করণে ২ মিনিটে একবার (লুপ ঠেকাতে) */
+  function recentlyTried(version) {
+    var raw = readSession(RELOAD_KEY);
+    if (!raw) return false;
+    var parts = raw.split('|');
+    return parts[0] === version && Date.now() - (Number(parts[1]) || 0) < 2 * 60 * 1000;
+  }
+
+  /* কেউ কিছু লিখছেন / খোলা ফর্মে আছেন — তখন হঠাৎ রিফ্রেশ নয়, বোতাম দেখাও */
+  function isBusy() {
+    try {
+      if (typeof window.MMAppBusy === 'function' && window.MMAppBusy()) return true;
+      var a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return true;
+      if (document.querySelector('.modal-bg.open, .cls-overlay.is-open, .kh-overlay.is-open, .mmc-bg')) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function goReload(version) {
+    writeSession(RELOAD_KEY, version + '|' + Date.now());
     var next = new URL(location.href);
     next.searchParams.set('_mmv', version);
     location.replace(next.toString());
+  }
+
+  function showBar(version, busy) {
+    var bar = document.getElementById('mm-update-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'mm-update-bar';
+      bar.setAttribute('role', 'status');
+      bar.style.cssText = 'position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:10070;' +
+        'display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:9px 10px 9px 14px;border-radius:999px;' +
+        'background:rgba(42,35,24,.94);color:#fff;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-family:inherit;white-space:nowrap';
+      document.body.appendChild(bar);
+    }
+    if (busy) {
+      bar.innerHTML = '<span>নতুন সংস্করণ এসেছে</span>' +
+        '<button type="button" style="border:none;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;background:#b5573a;color:#fff;cursor:pointer">হালনাগাদ করুন</button>';
+      bar.querySelector('button').onclick = function () { goReload(version); };
+    } else {
+      bar.innerHTML = '<span>নতুন সংস্করণ — হালনাগাদ হচ্ছে…</span>';
+    }
+  }
+
+  function reloadWithVersion(version) {
+    if (!version || recentlyTried(version)) return;
+    if (isBusy()) { showBar(version, true); return; }
+    showBar(version, false);
+    setTimeout(function () { goReload(version); }, 900);
   }
 
   async function checkForUpdate() {
@@ -95,6 +140,8 @@
     setTimeout(checkForUpdate, 0);
   }
   window.addEventListener('focus', checkForUpdate);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) checkForUpdate(); });
+  window.addEventListener('online', checkForUpdate);
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) checkForUpdate();
   });

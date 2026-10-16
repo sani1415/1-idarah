@@ -208,6 +208,8 @@ function _zh() { return window.innerHeight / _zf(); }
     TAB_ORDER.forEach(function (t) { S.rows[t].forEach(function (r) { if (isChanged(r, t)) n++; }); });
     return n;
   }
+  /* অ্যাপ আপডেট এলে (app-update.js) সেভ-না-করা কাজ থাকলে হঠাৎ রিফ্রেশ নয় */
+  (function () { var prev = window.MMAppBusy; window.MMAppBusy = function () { return (prev ? prev() : false) || dirtyCount() > 0; }; })();
 
   function ensureState() {
     if (!S.year) {

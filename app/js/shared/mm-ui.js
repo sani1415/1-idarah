@@ -47,13 +47,13 @@
   // শতকরা রং: ৭০+ সবুজ, ৫০–৬৯ হলুদ, ৫০-এর কম লাল
   function pctTone(p) { return p >= 70 ? 'ui-ok' : (p >= 50 ? 'ui-warn' : 'ui-bad'); }
 
-  /** রঙিন ঘর। o: { tone:'ok|bad|warn|info|deep', icon, label, value, sub, onclick, on, id, title } */
+  /** রঙিন ঘর। o: { tone:'ok|bad|warn|info|deep', icon, label, short (মোবাইল .is-compact-এ ছোট লেবেল), value, sub, onclick, on, id, title } */
   function stat(o) {
     var tag = o.onclick ? 'button' : 'div';
     return '<' + tag + (o.onclick ? ' type="button" onclick="' + o.onclick + '"' : '') + (o.id ? ' id="' + o.id + '"' : '') +
       ' class="ui-stat' + (o.tone ? ' is-' + o.tone : '') + (o.on ? ' is-on' : '') + '"' + (o.title ? ' title="' + esc(o.title) + '"' : '') + '>' +
       '<span class="ui-stat-ic">' + icon(o.icon || 'info', 18) + '</span>' +
-      '<span class="ui-stat-txt"><span class="ui-stat-lbl">' + o.label + '</span><span class="ui-stat-val">' + o.value + '</span>' +
+      '<span class="ui-stat-txt"><span class="ui-stat-lbl">' + (o.short ? '<span class="ui-lf">' + o.label + '</span><span class="ui-ls">' + o.short + '</span>' : o.label) + '</span><span class="ui-stat-val">' + o.value + '</span>' +
       (o.sub ? '<span class="ui-stat-sub">' + o.sub + '</span>' : '') + '</span></' + tag + '>';
   }
 

@@ -18,6 +18,8 @@
   function hasPendingEdits() {
     return Object.keys(attState).length > 0 || Object.keys(attReasonState).length > 0;
   }
+  /* অ্যাপ আপডেট এলে (app-update.js) সেভ-না-করা কাজ থাকলে হঠাৎ রিফ্রেশ নয় */
+  (function () { var prev = window.MMAppBusy; window.MMAppBusy = function () { return (prev ? prev() : false) || hasPendingEdits(); }; })();
 
   /* ── হাজিরা অডিট: সেশন শুরু → আজ ── */
   function getSessionStartISO() {

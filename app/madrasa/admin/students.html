@@ -63,18 +63,18 @@
   <div class="ui-head st-head">
     <div class="ui-head-l"><h2 class="ui-title">বর্তমান ছাত্র তালিকা</h2><span class="ui-sub" id="list-count">—</span></div>
   </div>
-  <div class="ui-stats" id="st-stats"></div>
-  <div class="ui-box ui-filters">
+  <div class="ui-stats is-compact" id="st-stats"></div>
+  <div class="ui-box ui-filters is-compact">
     <label class="ui-field"><span>বিভাগ</span><select id="dept-filter" onchange="switchDept(this.value)"></select></label>
-    <label class="ui-field"><span>বর্ষ/শ্রেণি</span><select id="class-filter" onchange="renderStudents()"><option value="">সব বর্ষ/শ্রেণি</option></select></label>
+    <label class="ui-field"><span>বর্ষ/শ্রেণি</span><select id="class-filter" onchange="renderStudents()"><option value="">সব বর্ষ</option></select></label>
     <label class="ui-field"><span>সাজানো</span><select id="sort-filter" onchange="renderStudents()">
-      <option value="class_roll">বর্ষ ও পরিচিতি অনুযায়ী</option>
-      <option value="name">নাম অনুযায়ী</option>
-      <option value="id">স্থায়ী দাখেলা অনুযায়ী</option>
+      <option value="class_roll">বর্ষ ও পরিচিতি</option>
+      <option value="name">নাম</option>
+      <option value="id">স্থায়ী দাখেলা</option>
     </select></label>
     <label class="ui-field st-search"><span>খুঁজুন</span>
       <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
-      <input id="search-box" type="search" placeholder="নাম / দাখেলা / পরিচিতি / ফোন" oninput="renderStudents()"></label>
+      <input id="search-box" type="search" placeholder="খুঁজুন" title="নাম, দাখেলা, পরিচিতি বা ফোন লিখে খুঁজুন" oninput="renderStudents()"></label>
   </div>
   <div class="st-main">
     <section class="ui-box ui-panel st-list"><div class="ui-ph"><h3 id="list-title">ছাত্র</h3><small>নামে চাপলে বিবরণ</small></div><div class="st-list-inner" id="student-list"></div></section>
@@ -150,7 +150,7 @@
     const depts = new Set(scopeDepts());
     const classes = API.Classes.getAll().filter(c => depts.has(c.dept));
     document.getElementById('class-filter').innerHTML =
-      '<option value="">সব বর্ষ/শ্রেণি</option>' +
+      '<option value="">সব বর্ষ</option>' +
       classes.map(c => `<option value="${API.esc(c.id)}">${currentDept==='all' ? deptLabel(c.dept)+' — ' : ''}${API.esc(c.name)}</option>`).join('');
   }
   function filteredStudents() {
@@ -213,10 +213,10 @@
     const maktab = all.filter(s => (cMap[s.class_id] || {}).dept === 'maktab').length;
     const hifz = all.filter(s => s.hifz).length;
     document.getElementById('st-stats').innerHTML =
-      U.stat({ tone: 'info', icon: 'users', label: 'মোট ছাত্র', value: bnNum(all.length), sub: deptLabel(currentDept) }) +
-      U.stat({ tone: 'ok', icon: 'book', label: 'কিতাব বিভাগ', value: bnNum(kitab), sub: bnNum(classes.filter(c => c.dept === 'kitab').length) + 'টি বর্ষ' }) +
-      U.stat({ tone: 'warn', icon: 'star', label: 'মক্তব বিভাগ', value: bnNum(maktab), sub: bnNum(classes.filter(c => c.dept === 'maktab').length) + 'টি শ্রেণি' }) +
-      U.stat({ tone: 'deep', icon: 'cal', label: 'হিফজে', value: bnNum(hifz), sub: 'হিফজে নির্বাচিত' });
+      U.stat({ tone: 'info', icon: 'users', label: 'মোট ছাত্র', short: 'মোট', value: bnNum(all.length), sub: deptLabel(currentDept) }) +
+      U.stat({ tone: 'ok', icon: 'book', label: 'কিতাব বিভাগ', short: 'কিতাব', value: bnNum(kitab), sub: bnNum(classes.filter(c => c.dept === 'kitab').length) + 'টি বর্ষ' }) +
+      U.stat({ tone: 'warn', icon: 'star', label: 'মক্তব বিভাগ', short: 'মক্তব', value: bnNum(maktab), sub: bnNum(classes.filter(c => c.dept === 'maktab').length) + 'টি শ্রেণি' }) +
+      U.stat({ tone: 'deep', icon: 'cal', label: 'হিফজে', short: 'হিফজ', value: bnNum(hifz), sub: 'হিফজে নির্বাচিত' });
   }
   function pickClass(id) {
     document.getElementById('class-filter').value = id;

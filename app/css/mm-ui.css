@@ -241,3 +241,24 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
   .ui-tbl th, .ui-tbl td { padding: 8px; }
   .ui-hide-sm { display: none !important; }
 }
+
+/* ── মোবাইলে ঘন বিন্যাস: .ui-stats.is-compact (৪ ঘর এক সারিতে) · .ui-filters.is-compact (৪ বাছাই এক সারিতে) ──
+   ছোট লেবেল: <span class="ui-lf">পুরো</span><span class="ui-ls">ছোট</span> (MMUI.stat-এ short দিলে নিজেই বসে) */
+.ui-ls { display: none; }
+@media (max-width: 760px) {
+  .ui-stats.is-compact { --ui-cols: 4; gap: 6px; }
+  .ui-stats.is-compact .ui-stat { flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 8px 4px; }
+  .ui-stats.is-compact .ui-stat-ic { width: 26px; height: 26px; }
+  .ui-stats.is-compact .ui-stat-ic svg { width: 14px; height: 14px; }
+  .ui-stats.is-compact .ui-stat-txt { align-items: center; width: 100%; min-width: 0; }
+  .ui-stats.is-compact .ui-stat-lbl { font-size: 11.5px; }
+  .ui-stats.is-compact .ui-stat-val { font-size: 18px; }
+  .ui-stats.is-compact .ui-stat-sub, .ui-stats.is-compact .ui-stat-bar { display: none; }
+  .ui-stats.is-compact .ui-lf { display: none; }
+  .ui-stats.is-compact .ui-ls { display: inline; }
+  .ui-filters.is-compact { --ui-cols: 4; gap: 5px; padding: 6px; }
+  .ui-filters.is-compact .ui-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .ui-filters.is-compact .ui-field select, .ui-filters.is-compact .ui-field input { height: 32px; font-size: 12px; padding: 0 4px; border-radius: 8px; }
+  .ui-filters.is-compact .ui-field svg { display: none; }
+  .ui-filters.is-compact .ui-field input { padding-left: 6px !important; }
+}
