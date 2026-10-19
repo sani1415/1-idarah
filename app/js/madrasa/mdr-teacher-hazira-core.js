@@ -16,6 +16,7 @@
     auto: 'অটো-বন্ধ',
     missed: 'অনুপস্থিত',
     holiday: 'ছুটি',
+    off: 'মওকুফ',
     untracked: '—',
   };
 
@@ -93,7 +94,7 @@
   function liveStatus(slot, nowMin, isToday) {
     var s = slot.status;
     if (!isToday) return s;
-    if (s === 'holiday' || s === 'untracked' || s === 'done') return s;
+    if (s === 'holiday' || s === 'off' || s === 'untracked' || s === 'done') return s;
     if (slot.session) {
       if (s === 'auto' || nowMin >= slot.end_min + RULES.auto_after) return 'auto';
       return 'live';
@@ -141,6 +142,10 @@
     pin_locked: 'অনেকবার ভুল পিন — ১৫ মিনিট পরে আবার চেষ্টা করুন',
     permission_denied: 'এই অংশে অনুমতি নেই',
     holiday: 'আজ ছুটি — হাজিরা বন্ধ',
+    dars_off: 'আজ এই দরস মওকুফ',
+    time_taken: 'এই সময়ে অন্য দরস আছে — অন্য সময় দিন',
+    invalid_kind: 'পরিবর্তনের ধরন সঠিক নয়',
+    invalid_input: 'তথ্য অসম্পূর্ণ',
     slot_not_found: 'নিজামে এই দরস পাওয়া যায়নি — পাতা রিফ্রেশ করুন',
     too_early: 'এখনো শুরুর সময় হয়নি',
     too_late: 'সময় পার হয়ে গেছে — জিম্মাদারকে জানান',

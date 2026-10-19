@@ -129,13 +129,15 @@
       case 'auto':
         return { dot: 'bad', label: 'অটো-বন্ধ', cls: 'hz-bad', info: 'শুরু ' + H.hm(s.started_min) + ' · শেষ চাপা হয়নি' + fixed };
       case 'missed':
-        return { dot: 'bad', label: 'অনুপস্থিত', cls: 'hz-bad', info: 'নিজাম ' + H.hm(sl.start_min) + ' · শুরু হয়নি' };
+        return { dot: 'bad', label: 'অনুপস্থিত', cls: 'hz-bad', info: 'নিজাম ' + H.hm(sl.start_min) + ' · শুরু হয়নি' + (sl.absent_reason ? ' · কারণ: ' + sl.absent_reason : '') + moved(sl) };
+      case 'off':
+        return { dot: '', label: 'মওকুফ', cls: 'hz-muted', info: 'আজ এই দরস হবে না' + (sl.override && sl.override.note ? ' · ' + sl.override.note : '') };
       case 'late':
-        return { dot: 'late', label: 'দেরি হচ্ছে', cls: 'hz-warn', info: 'নিজাম ' + H.hm(sl.start_min) + ' · এখনো শুরু হয়নি' };
+        return { dot: 'late', label: 'দেরি হচ্ছে', cls: 'hz-warn', info: 'নিজাম ' + H.hm(sl.start_min) + ' · এখনো শুরু হয়নি' + moved(sl) };
       case 'ready':
-        return { dot: '', label: 'সময় হয়েছে', cls: '', info: 'নিজাম ' + H.hm(sl.start_min) };
+        return { dot: '', label: 'সময় হয়েছে', cls: '', info: 'নিজাম ' + H.hm(sl.start_min) + moved(sl) };
       case 'upcoming':
-        return { dot: '', label: 'আসন্ন', cls: 'hz-muted', info: 'নিজাম ' + H.hm(sl.start_min) };
+        return { dot: '', label: 'আসন্ন', cls: 'hz-muted', info: 'নিজাম ' + H.hm(sl.start_min) + moved(sl) };
       case 'holiday':
         return { dot: '', label: 'ছুটি', cls: 'hz-muted', info: '' };
       default:
@@ -163,6 +165,11 @@
   }
 
   function canFix(st) { return st === 'done' || st === 'auto' || st === 'missed'; }
+  /* শুরু-না-হওয়া দরসে: মওকুফ / সময় বদল / অনুপস্থিতির কারণ */
+  function canChange(sl, st) { return sl.in_routine && !sl.session && st !== 'holiday' && st !== 'untracked'; }
+  function moved(sl) {
+    return sl.override && sl.override.kind === 'moved' ? ' · আজ সময় বদল (নিজামে ' + H.hm(sl.orig_start_min) + ')' : '';
+  }
 
   // ── আজকের বোর্ড ─────────────────────────────────────────────────────
 
@@ -197,6 +204,9 @@
       ? '<button type="button" class="hz-fix' + (st === 'done' ? ' soft' : '') + '" data-fix="' + esc(c.id) + '|' + esc(String(sl.start_min)) + '">' +
           (st === 'done' ? 'সংশোধন' : 'যাচাই') + '</button>'
       : '';
+    var chBtn = canChange(sl, st)
+      ? '<button type="button" class="hz-fix soft" data-change="' + esc(c.id) + '|' + esc(String(sl.orig_start_min != null ? sl.orig_start_min : sl.start_min)) + '">পরিবর্তন</button>'
+      : '';
     return (
       '<div class="hz-row">' +
         '<span class="hz-dot ' + info.dot + '"></span>' +
@@ -204,7 +214,7 @@
           '<span>' + esc(sl.teacher_name || '—') + (info.info ? ' · ' + esc(info.info) : '') +
           (sl.session && sl.session.fix_reason ? ' · কারণ: ' + esc(sl.session.fix_reason) : '') + '</span></div>' +
         '<span class="hz-row-st ' + info.cls + '">' + esc(info.label) + '</span>' +
-        fixBtn +
+        (st === 'missed' ? chBtn + fixBtn : fixBtn || chBtn) +
       '</div>'
     );
   }
@@ -288,6 +298,82 @@
         '<button type="button" class="hz-btn-main" data-s="save-fix">সংরক্ষণ</button>' +
       '</div>'
     );
+  }
+
+  function findBoardSlotOrig(classId, origStart) {
+    var c = ((state.board && state.board.classes) || []).find(function (x) { return x.id === classId; });
+    if (!c) return null;
+    var sl = (c.slots || []).find(function (x) {
+      return Number(x.orig_start_min != null ? x.orig_start_min : x.start_min) === Number(origStart);
+    });
+    return sl ? { c: c, sl: sl } : null;
+  }
+
+  function openChange(classId, origStart) {
+    var hit = findBoardSlotOrig(classId, origStart);
+    if (!hit) return;
+    var sl = hit.sl;
+    var ov = sl.override || {};
+    var st = H.liveStatus(sl, boardNow().min, boardNow().isToday);
+    var cur = ov.kind || (st === 'missed' ? 'reason' : 'off');
+    var origEn = sl.orig_end_min != null ? sl.orig_end_min : sl.end_min;
+    state.sheet = { kind: 'change', classId: classId, date: String(state.board.date).slice(0, 10), origStart: Number(origStart), hasOv: !!ov.kind };
+    function opt(v, lbl) {
+      return '<label class="hz-radio"><input type="radio" name="hz-ch-kind" value="' + v + '"' + (cur === v ? ' checked' : '') + '> ' + lbl + '</label>';
+    }
+    openSheet(
+      '<h3>দরসে পরিবর্তন</h3>' +
+      '<p>' + esc(hit.c.name) + ' · ' + esc(sl.label) + ' · ' + esc(sl.teacher_name || '') +
+        '<br>নিজাম ' + esc(H.hm(origStart)) + '–' + esc(H.hm(origEn)) + ' · ' + esc(H.shortDate(state.sheet.date)) + '</p>' +
+      '<div class="hz-field hz-ch-kinds">' +
+        opt('off', 'এই দরস মওকুফ (শুধু এই দিন)') +
+        opt('moved', 'অন্য সময়ে হবে') +
+        (st === 'missed' ? opt('reason', 'হয়নি — শিক্ষকের অনুপস্থিতির কারণ') : '') +
+      '</div>' +
+      '<div class="hz-inline hz-field" id="hz-ch-time"' + (cur === 'moved' ? '' : ' style="display:none"') + '>' +
+        '<div><label for="hz-ch-start">নতুন শুরু</label><input class="form-input" type="time" id="hz-ch-start" value="' + esc(minToTime(ov.kind === 'moved' ? sl.start_min : origStart)) + '"></div>' +
+        '<div><label for="hz-ch-end">নতুন শেষ</label><input class="form-input" type="time" id="hz-ch-end" value="' + esc(minToTime(ov.kind === 'moved' ? sl.end_min : origEn)) + '"></div>' +
+      '</div>' +
+      '<div class="hz-field"><label for="hz-ch-note">কারণ / নোট</label>' +
+        '<input class="form-input" type="text" id="hz-ch-note" maxlength="300" value="' + esc(ov.note || '') + '" placeholder="যেমন: শিক্ষক অসুস্থ, পরীক্ষার কারণে…"></div>' +
+      '<p>মওকুফ দরস রিপোর্টে অনুপস্থিত ধরা হয় না। সময় বদলালে কিয়স্কে নতুন সময়ে শুরু করা যাবে।</p>' +
+      '<div class="hz-sheet-actions">' +
+        (state.sheet.hasOv ? '<button type="button" class="hz-btn-ghost" data-s="clear-change">পরিবর্তন সরান</button>' : '<button type="button" class="hz-btn-ghost" data-s="close">বাতিল</button>') +
+        '<button type="button" class="hz-btn-main" data-s="save-change">সংরক্ষণ</button>' +
+      '</div>'
+    );
+    var box = $('hz-sheet');
+    if (box) box.querySelectorAll('input[name="hz-ch-kind"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var t = $('hz-ch-time');
+        if (t && r.checked) t.style.display = r.value === 'moved' ? '' : 'none';
+      });
+    });
+  }
+
+  async function saveChange(clear) {
+    var ctx = state.sheet;
+    if (!ctx || ctx.kind !== 'change') return;
+    var kindEl = doc.querySelector('input[name="hz-ch-kind"]:checked');
+    var kind = clear ? null : (kindEl ? kindEl.value : null);
+    var note = String(($('hz-ch-note') || {}).value || '').trim();
+    var st = null, en = null;
+    if (!clear && !kind) { toast('কী পরিবর্তন তা বাছাই করুন'); return; }
+    if (kind === 'moved') {
+      st = timeToMin(($('hz-ch-start') || {}).value);
+      en = timeToMin(($('hz-ch-end') || {}).value);
+      if (st == null || en == null) { toast('নতুন শুরু ও শেষের সময় দিন'); return; }
+      if (en <= st) { toast('শেষের সময় শুরুর পরে হতে হবে'); return; }
+    }
+    if (kind === 'reason' && !note) { toast('অনুপস্থিতির কারণ লিখুন'); return; }
+    await withSaving(async function () {
+      var a = actor();
+      var res = await API.darsAdminSlotSet(a.id, a.pin, ctx.classId, ctx.date, ctx.origStart, kind, st, en, note);
+      if (!res || !res.ok) { toast(H.errorText(res && res.error)); return; }
+      closeSheet();
+      toast(clear ? 'পরিবর্তন সরানো হয়েছে' : 'সংরক্ষিত');
+      await loadBoard();
+    });
   }
 
   async function saveFix() {
@@ -738,6 +824,11 @@
       if (act === 'new-teacher') { openTeacher(null); return; }
       if (act === 'add-holiday') { addHoliday(); return; }
       if (act === 'friday') { toggleFriday(); return; }
+      if (b.hasAttribute('data-change')) {
+        var q = b.getAttribute('data-change').split('|');
+        openChange(q[0], Number(q[1]));
+        return;
+      }
       if (b.hasAttribute('data-fix')) {
         var p = b.getAttribute('data-fix').split('|');
         openFix(p[0], Number(p[1]));
@@ -767,6 +858,8 @@
       var s = b.getAttribute('data-s');
       if (s === 'close') closeSheet();
       if (s === 'save-fix') saveFix();
+      if (s === 'save-change') saveChange(false);
+      if (s === 'clear-change') saveChange(true);
       if (s === 'save-teacher') saveTeacher();
     });
     doc.addEventListener('keydown', function (ev) {

@@ -1195,6 +1195,20 @@ const MMSharedAPI = (() => {
         p_reason: reason,
       });
     },
+    /** একটি দরসের ওই দিনের পরিবর্তন: kind = 'off' | 'moved' | 'reason' | null (সরাও) */
+    darsAdminSlotSet(actorId, pin, classId, date, slotStartMin, kind, newStartMin, newEndMin, note) {
+      return rpc('mdr_rel_dars_admin_slot_set', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_class_id: classId,
+        p_date: date,
+        p_slot_start_min: slotStartMin,
+        p_kind: kind || null,
+        p_new_start_min: newStartMin == null ? null : newStartMin,
+        p_new_end_min: newEndMin == null ? null : newEndMin,
+        p_note: note || null,
+      });
+    },
     darsAdminTeacherSave(actorId, pin, teacher) {
       return rpc('mdr_rel_dars_admin_teacher_save', {
         p_actor_id: actorId || null,

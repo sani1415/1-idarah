@@ -99,15 +99,21 @@
     if (d) d.textContent = H.dateLabel(p.date);
   }
 
+  /* জিম্মাদার আজকের জন্য সময় বদলালে */
+  function movedNote(sl) {
+    return sl.override && sl.override.kind === 'moved'
+      ? ' · <span class="hz-warn">আজ সময় বদল (নিজামে ' + H.esc(H.hm(sl.orig_start_min)) + ')</span>' : '';
+  }
+
   function slotMeta(sl, st, nowMin) {
     var s = sl.session || {};
     var late = Number(s.late_min) || 0;
     var lateTxt = late ? ' · <span class="hz-warn">' + H.esc(H.mins(late)) + ' দেরিতে শুরু</span>' : '';
     switch (st) {
       case 'upcoming':
-        return 'শুরু করা যাবে ' + H.esc(H.hm(sl.start_min - H.RULES.early)) + ' থেকে';
+        return 'শুরু করা যাবে ' + H.esc(H.hm(sl.start_min - H.RULES.early)) + ' থেকে' + movedNote(sl);
       case 'ready':
-        return 'নিজামের সময় ' + H.esc(H.hm(sl.start_min));
+        return 'নিজামের সময় ' + H.esc(H.hm(sl.start_min)) + movedNote(sl);
       case 'late':
         return 'নিজাম ' + H.esc(H.hm(sl.start_min)) + ' · <span class="hz-warn">' + H.esc(H.mins(nowMin - sl.start_min)) + ' পার হয়েছে</span>';
       case 'live':
@@ -120,7 +126,9 @@
       case 'auto':
         return 'শুরু ' + H.esc(H.hm(s.started_min)) + ' · শেষ চাপা হয়নি — <span class="hz-bad">অটো-বন্ধ, যাচাই বাকি</span>';
       case 'missed':
-        return '<span class="hz-bad">এই দরস শুরু করা হয়নি</span>';
+        return '<span class="hz-bad">এই দরস শুরু করা হয়নি</span>' + (sl.absent_reason ? ' · কারণ: ' + H.esc(sl.absent_reason) : '');
+      case 'off':
+        return 'আজ এই দরস মওকুফ' + (sl.override && sl.override.note ? ' · ' + H.esc(sl.override.note) : '');
       default:
         return '';
     }

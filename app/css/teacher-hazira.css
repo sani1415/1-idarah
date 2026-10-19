@@ -149,3 +149,10 @@ body.hz-kiosk { background:var(--cream); min-height:100vh; }
 @media (prefers-reduced-motion: reduce) {
   .hz-toggle::after { transition:none; }
 }
+
+/* দরসে পরিবর্তন (মওকুফ / সময় বদল / অনুপস্থিতির কারণ) */
+.hz-ch-kinds { display: flex; flex-direction: column; gap: 8px; }
+.hz-radio { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 8px 10px; border: 1px solid var(--cream3, #e8dcc6); border-radius: 10px; cursor: pointer; }
+.hz-radio input { width: 18px; height: 18px; accent-color: var(--ui-accent, #b5573a); }
+.hz-radio:has(input:checked) { border-color: var(--ui-accent, #b5573a); background: rgba(181, 87, 58, .06); }
+.st-off .hz-chip { opacity: .7; }
