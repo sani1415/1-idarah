@@ -121,5 +121,5 @@
     return { ok: true, student: st };
   }
 
-  global.MMStudentSave = { save: save, canEdit: canEdit, toLocal: toLocal };
+  global.MMStudentSave = { save: save, canEdit: canEdit, toLocal: toLocal, localClassOf: function (code) { return CODE_TO_LOCAL[code] || code || ''; } };
 })(typeof window !== 'undefined' ? window : this);

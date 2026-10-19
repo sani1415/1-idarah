@@ -165,10 +165,7 @@
     const absentRows = getClassAbsentRows();
     const avg = API.Khuluk.getClassAvg(classId);
 
-    const st = API.Settings.get();
-    const hy = st && st.hijri_year && String(st.hijri_year) !== '—' ? String(st.hijri_year) : null;
-    const leavers = API.Students.getWithdrawalsFromClass(classId, hy);
-    const leaveCount = leavers.length;
+    const leaveCount = classLeavers ? classLeavers.length : null;
 
     const bands = API.Khuluk.getClassKhulukBands(classId);
     const watchCount = students.filter(function (s) { return s.special_watch; }).length;
@@ -196,7 +193,7 @@
       U.stat({ tone: 'ok', icon: 'star', label: 'আলহামদুলিল্লাহ', value: toBn(ahCount), sub: 'প্রশংসিত ছাত্র', onclick: 'openAhListModal()' }) +
       U.stat({ tone: 'info', icon: 'user', label: 'হুসনুল খুলুক (গড়)', value: avgTxt,
         sub: 'মুস্তাহিদ ' + toBn(bands.high) + ' · মুতাওয়াস্সিত ' + toBn(bands.mid) + ' · মুজতাহিদ ' + toBn(bands.low), onclick: 'openKhulukCatModal()' }) +
-      U.stat({ tone: 'deep', icon: 'door', label: 'বিদায়ী', value: toBn(leaveCount), sub: 'এই শিক্ষাবর্ষে' });
+      U.stat({ tone: 'deep', icon: 'door', label: 'বিদায়ী', value: leaveCount == null ? '—' : toBn(leaveCount), sub: 'এই শিক্ষাবর্ষে', onclick: 'openLeaversModal()' });
     renderDutyAlerts();
   }
 
@@ -430,6 +427,56 @@
       }).join('');
     }
     openModal('modal-watch-list');
+  }
+
+  /* ── বিদায়ী ছাত্র — সার্ভার থেকে (বর্ষ দায়িত্বশীল শুধু নিজের বর্ষের পান) ── */
+  var classLeavers = null;
+  function sessionStartISO() {
+    try {
+      const st = API.Settings && API.Settings.get ? API.Settings.get() : null;
+      if (st && st.session_start_date) return String(st.session_start_date).slice(0, 10);
+    } catch (e) {}
+    try {
+      const cur = API.Sessions && API.Sessions.getCurrent ? API.Sessions.getCurrent() : null;
+      if (cur && cur.start_date) return String(cur.start_date).slice(0, 10);
+    } catch (e) {}
+    return '';
+  }
+  async function loadClassLeavers() {
+    if (!classId || !window.MMSharedAPI || !MMSharedAPI.daftarWithdrawn) return;
+    const S = window.MMSession;
+    const admin = S.isAdmin && S.isAdmin();
+    const id = admin ? S.getAdminUserId && S.getAdminUserId() : S.getStaffUserId && S.getStaffUserId();
+    const pin = admin ? S.getAdminPin && S.getAdminPin() : S.getStaffPin && S.getStaffPin();
+    if (!id || !pin) return;
+    try {
+      const res = await MMSharedAPI.daftarWithdrawn(id, pin);
+      if (!res || !res.ok) return;
+      const toLocal = (window.MMStudentSave && MMStudentSave.localClassOf) || ((c) => c);
+      const start = sessionStartISO();
+      classLeavers = (res.rows || []).filter((r) => toLocal(r.class_code) === classId &&
+        (!start || String(r.left_date || '') >= start));
+      renderStats();
+    } catch (e) {
+      console.warn('[class] leavers load failed', e);
+    }
+  }
+  function openLeaversModal() {
+    if (!classId) return;
+    const body = document.getElementById('leavers-body');
+    const sub = document.getElementById('leavers-sub');
+    if (!body) return;
+    const list = classLeavers || [];
+    if (sub) sub.textContent = classLeavers == null ? 'লোড হচ্ছে…' : (list.length ? 'এই শিক্ষাবর্ষে ' + toBn(list.length) + ' জন' : 'এই শিক্ষাবর্ষে কেউ বিদায় হয়নি');
+    const fmt = (iso) => { const p = String(iso || '').slice(0, 10).split('-'); return p.length === 3 ? toBn(+p[2]) + '/' + toBn(+p[1]) + '/' + toBn(p[0]) : '—'; };
+    body.innerHTML = list.length ? list.map(function (r) {
+      return '<div class="watch-list-item" style="flex-direction:column;align-items:flex-start;gap:2px">' +
+        '<b>' + API.esc(r.name || '—') + '</b>' +
+        '<small style="color:var(--ink3)">দাখেলা ' + API.escBn(r.permanent_id || '—') + ' · ' + fmt(r.left_date) + (r.left_reason ? ' · ' + API.esc(r.left_reason) : '') + '</small>' +
+        '</div>';
+    }).join('') : '<div class="log-panel-empty">এই বর্ষ থেকে এই শিক্ষাবর্ষে কোনো বিদায়ী ছাত্র নেই।</div>';
+    openModal('modal-leavers');
+    if (classLeavers == null) loadClassLeavers().then(function () { if (classLeavers) openLeaversModal(); });
   }
 
   function openAhListModal() {
@@ -1152,6 +1199,7 @@
     await refreshTeacherData();
     refreshTopbarClass();
     renderStats();
+    loadClassLeavers();
     if (window.MDRTeacherHaziraCard) {
       MDRTeacherHaziraCard.init({ getActor: teacherActor, notify: showToast });
     }
