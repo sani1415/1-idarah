@@ -202,6 +202,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 <script src="../js/api/api.js?v=20260517-attendance-consistency"></script>
 <script src="../js/madrasa/mdr-daftar-supabase.js"></script>
 <script src="../js/core/mm-hijri.js"></script>
+<script src="../js/shared/mm-student-save.js"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/core/mm-session.js"></script>
 <script src="../js/core/mm-shell.js"></script>
@@ -273,7 +274,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
       pidInp.placeholder = 'যেমন: ৪৭০১২';
     }
   }
-  function addStudent() {
+  async function addStudent() {
     const name = document.getElementById('add-name').value.trim();
     const roll = document.getElementById('add-roll').value.trim();
     const classId = document.getElementById('add-class').value;
@@ -284,16 +285,16 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     const pid = document.getElementById('add-pid').value.trim();
     if (!pid) { showToast('স্থায়ী দাখেলা আবশ্যক'); return; }
     if (API.Students.isPermanentIdTaken(pid)) { showToast('এই স্থায়ী দাখেলা ইতিমধ্যে কারো আছে'); return; }
-    API.Students.add({
+    const res = await MMStudentSave.save({
       name, roll, class_id: classId, permanent_id: pid,
       guardian: document.getElementById('add-guardian').value.trim(),
       guardian_job: document.getElementById('add-job').value.trim(),
       phone: document.getElementById('add-phone').value.trim(),
       district: document.getElementById('add-district').value.trim(),
       upazila: document.getElementById('add-upazila').value.trim(),
-      dept,
       hifz: document.getElementById('add-hifz').checked,
     });
+    if (!res.ok) { showToast(res.message); return; }
     showToast(name + ' — ভর্তি সম্পন্ন ✓');
     ['add-name','add-roll','add-pid','add-guardian','add-job','add-phone','add-district','add-upazila'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('add-hifz').checked = false;
@@ -406,21 +407,20 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     };
     reader.readAsText(file, 'utf-8');
   }
-  function confirmCsvImport() {
+  async function confirmCsvImport() {
     applyCsvPermanentIds();
     const ok = csvRows.filter((r) => !r.err && r.cls);
     if (!ok.length) { showToast('কোনো সঠিক সারি নেই'); return; }
-    let count = 0;
-    ok.forEach((r) => {
-      API.Students.add({
+    let count = 0, failed = 0;
+    for (const r of ok) {
+      const res = await MMStudentSave.save({
         name: r.name, roll: r.roll, class_id: r.cls.id, permanent_id: r.resolved_pid,
         guardian: r.guardian, guardian_job: r.job, phone: r.phone,
         district: (r.district || '').trim(), upazila: (r.upazila || '').trim(),
-        dept: r.cls.dept,
       });
-      count++;
-    });
-    showToast(toBn(count) + ' জন ছাত্র ভর্তি সম্পন্ন ✓');
+      if (res.ok) count++; else failed++;
+    }
+    showToast(toBn(count) + ' জন ছাত্র ভর্তি সম্পন্ন ✓' + (failed ? ' · ' + toBn(failed) + ' জন হয়নি' : ''));
     clearCsv();
     switchTab('list');
   }

@@ -253,6 +253,7 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
 <script src="../js/core/mm-session.js?v=20260723-daftar-absent"></script>
 <script src="../js/core/mm-shell.js"></script>
 <script src="../js/madrasa/mdr-daftar-attendance-gate.js?v=20260624-gate4"></script>
+<script src="../js/shared/mm-student-save.js"></script>
 <script src="../js/shared/mm-student-modal.js?v=20260717-photo-toolbar"></script>
 <script src="../js/core/monitor-mode.js"></script>
 <script src="../js/madrasa/mdr-home-panels.js?v=20261013-absent-total"></script>
@@ -400,7 +401,9 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
       pidInp.placeholder = 'যেমন: ৪৭০১২';
     }
   }
-  function addStudent() {
+  let addStudentBusy = false;
+  async function addStudent() {
+    if (addStudentBusy) return;
     const name = document.getElementById('add-name').value.trim();
     const roll = document.getElementById('add-roll').value.trim();
     const classId = document.getElementById('add-class').value;
@@ -410,16 +413,22 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     if (!classId) { showToast('বর্ষ নির্বাচন করুন'); return; }
     if (!pid) { showToast('স্থায়ী দাখেলা আবশ্যক'); return; }
     if (API.Students.isPermanentIdTaken(pid)) { showToast('এই স্থায়ী দাখেলা ইতিমধ্যে কারো আছে'); return; }
-    API.Students.add({
+    const btn = document.querySelector('[onclick="addStudent()"]');
+    addStudentBusy = true;
+    if (btn) { btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'সংরক্ষণ হচ্ছে…'; }
+    /* সার্ভারে ভর্তি (আগে শুধু ফোনে থাকত) */
+    const res = await MMStudentSave.save({
       name, roll, class_id: classId, permanent_id: pid,
       guardian: document.getElementById('add-guardian').value.trim(),
       guardian_job: document.getElementById('add-job').value.trim(),
       phone: document.getElementById('add-phone').value.trim(),
       district: document.getElementById('add-district').value.trim(),
       upazila: document.getElementById('add-upazila').value.trim(),
-      dept: document.getElementById('add-dept').value,
       hifz: document.getElementById('add-hifz').checked,
     });
+    addStudentBusy = false;
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label || 'ছাত্র ভর্তি করুন'; }
+    if (!res.ok) { showToast(res.message); return; }
     showToast(name + ' — ভর্তি সম্পন্ন ✓');
     ['add-name','add-roll','add-pid','add-guardian','add-job','add-phone','add-district','add-upazila'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('add-hifz').checked = false;
@@ -494,15 +503,29 @@ body.page-daftar .topbar-btn:not(.topbar-btn--icon) { padding:6px 10px; font-siz
     };
     reader.readAsText(file, 'utf-8');
   }
-  function confirmCsvImport() {
+  async function confirmCsvImport() {
     applyCsvPermanentIds();
     const ok = csvRows.filter((r) => !r.err && r.cls);
     if (!ok.length) { showToast('কোনো সঠিক সারি নেই'); return; }
-    ok.forEach((r) => API.Students.add({ name:r.name, roll:r.roll, class_id:r.cls.id, permanent_id:r.resolved_pid, guardian:r.guardian, guardian_job:r.job, phone:r.phone, district:(r.district||'').trim(), upazila:(r.upazila||'').trim(), dept:r.cls.dept }));
-    showToast(toBn(ok.length) + ' জন ছাত্র ভর্তি সম্পন্ন ✓');
-    clearCsv();
-    switchStudentToolTab('list');
+    const btn = document.getElementById('csv-confirm-btn');
+    if (btn) btn.disabled = true;
+    /* একে একে সার্ভারে — কোনো সারি আটকালে (যেমন একই রোল) সেটা তালিকায় দেখায় */
+    let done = 0;
+    for (const r of ok) {
+      if (btn) btn.textContent = 'সংরক্ষণ হচ্ছে… ' + toBn(done) + '/' + toBn(ok.length);
+      const res = await MMStudentSave.save({ name:r.name, roll:r.roll, class_id:r.cls.id, permanent_id:r.resolved_pid, guardian:r.guardian, guardian_job:r.job, phone:r.phone, district:(r.district||'').trim(), upazila:(r.upazila||'').trim() });
+      if (res.ok) { done++; r.saved = true; } else { r._baseErr = res.message; }
+    }
+    csvRows = csvRows.filter((r) => !r.saved);
     renderClassSummary();
+    if (!csvRows.length) {
+      showToast(toBn(done) + ' জন ছাত্র ভর্তি সম্পন্ন ✓');
+      clearCsv();
+      switchStudentToolTab('list');
+      return;
+    }
+    showToast(toBn(done) + ' জন ভর্তি হয়েছে · ' + toBn(csvRows.length) + ' জন বাকি — কারণ তালিকায় দেখুন');
+    renderCsvPreview();
   }
   async function initMadrasaHome() {
     var wasWarm = MMSession.isAppDataWarm && MMSession.isAppDataWarm();

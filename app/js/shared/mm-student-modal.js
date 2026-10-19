@@ -814,6 +814,66 @@
     open(_openSid);
   }
 
+  /* ── তথ্য সম্পাদনা (দফতর / জিম্মাদার) — নাম, বর্ষ, পরিচিতি, দাখেলা, অভিভাবক… → সার্ভারে ── */
+  function startEdit() {
+    var API = getApi();
+    var panel = document.getElementById('st-panel-info');
+    if (!API || !_openSid || !panel || !global.MMStudentSave) return;
+    var s = API.Students.getById(_openSid);
+    if (!s) return;
+    var e = API.esc;
+    var classes = (API.Classes.getAll() || []).filter(function (c) { return c.active !== false; });
+    var opts = classes.map(function (c) {
+      return '<option value="' + e(c.id) + '"' + (c.id === s.class_id ? ' selected' : '') + '>' +
+        (c.dept === 'maktab' ? 'মক্তব — ' : '') + e(c.name) + '</option>';
+    }).join('');
+    function f(id, lbl, val, extra) {
+      return '<div class="form-group"><label class="form-label" for="' + id + '">' + lbl + '</label>' +
+        '<input class="form-input" id="' + id + '" value="' + e(val || '') + '"' + (extra || '') + '></div>';
+    }
+    panel.innerHTML =
+      '<div class="st-block st-edit-form">' +
+      '<h4>তথ্য সম্পাদনা</h4>' +
+      f('ste-name', 'নাম *', s.name) +
+      '<div class="form-group"><label class="form-label" for="ste-class">বর্ষ *</label><select class="form-input form-select" id="ste-class">' + opts + '</select></div>' +
+      '<div class="ste-row">' + f('ste-roll', 'পরিচিতি *', s.roll) + f('ste-pid', 'স্থায়ী দাখেলা *', s.permanent_id) + '</div>' +
+      f('ste-guardian', 'অভিভাবক', s.guardian) +
+      '<div class="ste-row">' + f('ste-job', 'অভিভাবকের পেশা', s.guardian_job) + f('ste-phone', 'ফোন', s.phone, ' type="tel"') + '</div>' +
+      '<div class="ste-row">' + f('ste-district', 'জেলা', s.district) + f('ste-upazila', 'উপজেলা', s.upazila) + '</div>' +
+      '<label class="ste-check"><input type="checkbox" id="ste-hifz"' + (s.hifz ? ' checked' : '') + '> হিফজে</label>' +
+      '<p class="st-note" style="margin:8px 0 0">একই বর্ষে একই পরিচিতি নম্বর দুজনের হতে পারবে না।</p>' +
+      '<div class="ste-actions"><button type="button" class="submit-btn" id="ste-save" onclick="MMStudentModal.saveEdit()">সংরক্ষণ করুন</button>' +
+      '<button type="button" class="ui-pill" onclick="MMStudentModal.cancelEdit()">বাতিল</button></div>' +
+      '</div>';
+    var nm = document.getElementById('ste-name');
+    if (nm) nm.focus();
+  }
+
+  async function saveEdit() {
+    var sid = _openSid;
+    if (!sid || !global.MMStudentSave) return;
+    function v(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+    var btn = document.getElementById('ste-save');
+    if (btn) { btn.disabled = true; btn.textContent = 'সংরক্ষণ হচ্ছে…'; }
+    var res = await global.MMStudentSave.save({
+      name: v('ste-name'), class_id: v('ste-class'), roll: v('ste-roll'), permanent_id: v('ste-pid'),
+      guardian: v('ste-guardian'), guardian_job: v('ste-job'), phone: v('ste-phone'),
+      district: v('ste-district'), upazila: v('ste-upazila'),
+      hifz: !!(document.getElementById('ste-hifz') || {}).checked,
+    }, sid);
+    if (!res.ok) {
+      if (btn) { btn.disabled = false; btn.textContent = 'সংরক্ষণ করুন'; }
+      toast(res.message);
+      return;
+    }
+    toast('তথ্য সংরক্ষিত ✓');
+    if (_openSid === sid) open(sid);
+  }
+
+  function cancelEdit() {
+    if (_openSid) open(_openSid);
+  }
+
   function close() {
     _openSid = null;
     if (global.MMStudentDocuments && global.MMStudentDocuments.invalidate) {
@@ -1043,7 +1103,11 @@
     var addressRows = hasZillaUpazila
       ? kv('জেলা', API.esc(s.district || '—')) + kv('উপজেলা', API.esc(s.upazila || '—'))
       : kv('ঠিকানা', API.esc(s.address || '—'));
+    var canEditInfo = s.active && canChangeStatus() && global.MMStudentSave;
     var infoBlock =
+      (canEditInfo
+        ? '<div class="st-edit-bar"><button type="button" class="ui-pill" onclick="MMStudentModal.startEdit()">✎ তথ্য সম্পাদনা</button></div>'
+        : '') +
       '<div class="st-kv-grid">' +
       kv('স্থায়ী দাখেলা', API.escBn(s.permanent_id || '—')) +
       kv('পরিচিতি', API.escBn(s.roll || '—')) +
@@ -1405,6 +1469,9 @@
     switchTab: switchTab,
     submitStudentLog: submitStudentLog,
     submitStatusChange: submitStatusChange,
+    startEdit: startEdit,
+    saveEdit: saveEdit,
+    cancelEdit: cancelEdit,
     openPhotoPreview: openPhotoPreview,
     pickStudentPhoto: pickStudentPhoto,
     deleteStudentPhoto: deleteStudentPhoto,

@@ -345,6 +345,15 @@ const MMSharedAPI = (() => {
         p_reason: reason || null,
       });
     },
+    /** ছাত্র ভর্তি (studentUuid = null) বা তথ্য সম্পাদনা — দফতর / জিম্মাদার */
+    studentSave(actorId, pin, studentUuid, payload) {
+      return rpc('mdr_rel_student_save', {
+        p_actor_id: actorId,
+        p_pin: pin,
+        p_student_uuid: studentUuid || null,
+        p_payload: payload || {},
+      });
+    },
     alumniBootstrap(actorId, pin) {
       return rpc('mdr_rel_alumni_bootstrap', {
         p_actor_id: actorId,

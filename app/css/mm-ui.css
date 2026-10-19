@@ -262,3 +262,13 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
   .ui-filters.is-compact .ui-field svg { display: none; }
   .ui-filters.is-compact .ui-field input { padding-left: 6px !important; }
 }
+
+/* ── ছাত্রের বিবরণ: তথ্য সম্পাদনা ── */
+.st-edit-bar { display: flex; justify-content: flex-end; margin: 0 0 8px; }
+.st-edit-form .form-group { margin-bottom: 10px; }
+.st-edit-form .ste-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.st-edit-form .ste-check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 2px; }
+.st-edit-form .ste-check input { width: 18px; height: 18px; accent-color: var(--ui-accent); }
+.st-edit-form .ste-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.st-edit-form .ste-actions .submit-btn { flex: 1; margin: 0; }
+@media (max-width: 420px) { .st-edit-form .ste-row { grid-template-columns: 1fr; gap: 0; } }

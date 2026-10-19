@@ -892,7 +892,7 @@
       pidInp.placeholder = 'যেমন: ৪৭০১২';
     }
   }
-  function addStudent() {
+  async function addStudent() {
     const name = document.getElementById('add-name').value.trim();
     const roll = document.getElementById('add-roll').value.trim();
     const classId = document.getElementById('add-class').value;
@@ -902,16 +902,16 @@
     const pid = document.getElementById('add-pid').value.trim();
     if (!pid) { showToast('স্থায়ী দাখেলা আবশ্যক'); return; }
     if (API.Students.isPermanentIdTaken(pid)) { showToast('এই স্থায়ী দাখেলা ইতিমধ্যে কারো আছে'); return; }
-    API.Students.add({
+    const res = await MMStudentSave.save({
       name, roll, class_id: classId, permanent_id: pid,
       guardian: document.getElementById('add-guardian').value.trim(),
       guardian_job: document.getElementById('add-job').value.trim(),
       phone: document.getElementById('add-phone').value.trim(),
       district: document.getElementById('add-district').value.trim(),
       upazila: document.getElementById('add-upazila').value.trim(),
-      dept: document.getElementById('add-dept').value,
       hifz: document.getElementById('add-hifz').checked,
     });
+    if (!res.ok) { showToast(res.message); return; }
     showToast(name + ' — ভর্তি সম্পন্ন ✓');
     ['add-name','add-roll','add-pid','add-guardian','add-job','add-phone','add-district','add-upazila'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('add-hifz').checked = false;
@@ -987,12 +987,16 @@
     };
     reader.readAsText(file, 'utf-8');
   }
-  function confirmCsvImport() {
+  async function confirmCsvImport() {
     applyCsvPermanentIds();
     const ok = csvRows.filter((r) => !r.err && r.cls);
     if (!ok.length) { showToast('কোনো সঠিক সারি নেই'); return; }
-    ok.forEach((r) => API.Students.add({ name:r.name, roll:r.roll, class_id:r.cls.id, permanent_id:r.resolved_pid, guardian:r.guardian, guardian_job:r.job, phone:r.phone, district:(r.district||'').trim(), upazila:(r.upazila||'').trim(), dept:r.cls.dept }));
-    showToast(toBn(ok.length) + ' জন ছাত্র ভর্তি সম্পন্ন ✓');
+    let count = 0, failed = 0;
+    for (const r of ok) {
+      const res = await MMStudentSave.save({ name:r.name, roll:r.roll, class_id:r.cls.id, permanent_id:r.resolved_pid, guardian:r.guardian, guardian_job:r.job, phone:r.phone, district:(r.district||'').trim(), upazila:(r.upazila||'').trim() });
+      if (res.ok) count++; else failed++;
+    }
+    showToast(toBn(count) + ' জন ছাত্র ভর্তি সম্পন্ন ✓' + (failed ? ' · ' + toBn(failed) + ' জন হয়নি' : ''));
     clearCsv();
     switchStudentToolTab('list');
     renderClassSummary();
