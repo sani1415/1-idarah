@@ -59,7 +59,8 @@
 
   /* ── নিশ্চিতকরণ বাক্স: ব্রাউজারের confirm()-এর বদলে ──
      MMUI.confirm(msg, { title, ok, cancel, danger, note }) → Promise<boolean>
-     msg-এ "\n\n" থাকলে প্রথম অংশ শিরোনাম, বাকিটা বিবরণ। */
+     msg-এ "\n\n" থাকলে প্রথম অংশ শিরোনাম, বাকিটা বিবরণ।
+     MMUI.alert(msg, opts) — একই বাক্স, শুধু «ঠিক আছে» বোতাম (ব্রাউজারের alert()-এর বদলে) → Promise */
   var CONFIRM_CSS =
     '.mmc-bg{position:fixed;inset:0;z-index:10050;background:rgba(42,35,24,.42);display:flex;align-items:center;justify-content:center;padding:16px;animation:mmcIn .12s ease-out}' +
     '.mmc{width:100%;max-width:440px;max-height:calc(100vh - 32px);overflow:auto;background:var(--ui-card,#fffdf8);border-radius:20px;box-shadow:0 28px 80px rgba(26,18,8,.3);padding:22px 20px 16px;text-align:center;font-family:var(--font-bn,inherit)}' +
@@ -77,7 +78,10 @@
   var DANGER_RE = /মুছ|ডিলিট|বাদ |বাদ দ|বাতিল|সরিয়ে|লগআউট|পূর্বাবস্থা/;
   function confirmBox(msg, o) {
     o = o || {};
-    if (typeof document === 'undefined' || !document.body) return Promise.resolve(global.confirm(msg));
+    if (typeof document === 'undefined' || !document.body) {
+      if (o.alert) { global.alert(msg); return Promise.resolve(true); }
+      return Promise.resolve(global.confirm(msg));
+    }
     if (!document.getElementById('mmc-css')) {
       var st = document.createElement('style');
       st.id = 'mmc-css';
@@ -93,7 +97,7 @@
       else if (text.length <= 70) { title = text; body = ''; }
       else title = 'নিশ্চিত করুন';
     }
-    var danger = o.danger != null ? !!o.danger : DANGER_RE.test(text);
+    var danger = o.danger != null ? !!o.danger : (!o.alert && DANGER_RE.test(text));
     var prevFocus = document.activeElement;
     return new Promise(function (resolve) {
       var bg = document.createElement('div');
@@ -103,8 +107,8 @@
         '<h3 id="mmc-t">' + esc(title) + '</h3>' +
         (body ? '<p>' + esc(body) + '</p>' : '') +
         (o.note ? '<div class="mmc-note">⚠ ' + esc(o.note) + '</div>' : '') +
-        '<div class="mmc-bt"><button type="button" class="mmc-c">' + esc(o.cancel || 'না, থাক') + '</button>' +
-        '<button type="button" class="mmc-o">' + esc(o.ok || (danger ? 'হ্যাঁ, নিশ্চিত' : 'হ্যাঁ')) + '</button></div></div>';
+        '<div class="mmc-bt">' + (o.alert ? '' : '<button type="button" class="mmc-c">' + esc(o.cancel || 'না, থাক') + '</button>') +
+        '<button type="button" class="mmc-o">' + esc(o.ok || (o.alert ? 'ঠিক আছে' : (danger ? 'হ্যাঁ, নিশ্চিত' : 'হ্যাঁ'))) + '</button></div></div>';
       function done(v) {
         document.removeEventListener('keydown', onKey, true);
         if (bg.parentNode) bg.parentNode.removeChild(bg);
@@ -112,7 +116,7 @@
         resolve(v);
       }
       function onKey(e) {
-        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(!!o.alert); }
         else if (e.key === 'Tab') {
           var bs = bg.querySelectorAll('button');
           var i = Array.prototype.indexOf.call(bs, document.activeElement);
@@ -120,12 +124,12 @@
           bs[(i + (e.shiftKey ? bs.length - 1 : 1)) % bs.length].focus();
         }
       }
-      bg.querySelector('.mmc-c').onclick = function () { done(false); };
+      if (!o.alert) bg.querySelector('.mmc-c').onclick = function () { done(false); };
       bg.querySelector('.mmc-o').onclick = function () { done(true); };
-      bg.addEventListener('click', function (e) { if (e.target === bg) done(false); });
+      bg.addEventListener('click', function (e) { if (e.target === bg) done(!!o.alert); });
       document.addEventListener('keydown', onKey, true);
       document.body.appendChild(bg);
-      bg.querySelector(danger ? '.mmc-c' : '.mmc-o').focus();
+      bg.querySelector(danger && !o.alert ? '.mmc-c' : '.mmc-o').focus();
     });
   }
 
@@ -163,6 +167,8 @@
       '</div>';
   }
 
-  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat, confirm: confirmBox,
+  function alertBox(msg, o) { o = Object.assign({}, o || {}, { alert: true }); return confirmBox(msg, o); }
+
+  global.MMUI = { icon: icon, esc: esc, bn: bn, taka: taka, pctTone: pctTone, stat: stat, confirm: confirmBox, alert: alertBox,
     skeleton: skeleton, skRows: skRows, empty: empty };
 })(typeof window !== 'undefined' ? window : this);

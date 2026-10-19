@@ -658,7 +658,7 @@
     if (text === m.text) return;
     let res = null;
     try { res = await ChatAPI.editOwnRemote(chatActorId(), chatPin(), mid, text, isAdmin); } catch (e) { console.warn('Chat edit failed', e); }
-    if (!res || !res.ok) { alert(ownMsgError(res)); return; }
+    if (!res || !res.ok) { MMUI.alert(ownMsgError(res)); return; }
     ChatAPI.updateMessage(mid, x => ({ ...x, text, edited_at: new Date().toISOString() }));
     renderMsgs();
     notifToast('সম্পাদিত হয়েছে');
@@ -670,7 +670,7 @@
     if (!await MMUI.confirm('এই বার্তা দুই পক্ষের কাছ থেকেই মুছে যাবে। মুছবেন?')) return;
     let res = null;
     try { res = await ChatAPI.deleteOwnRemote(chatActorId(), chatPin(), mid, isAdmin); } catch (e) { console.warn('Chat delete failed', e); }
-    if (!res || !res.ok) { alert(ownMsgError(res)); return; }
+    if (!res || !res.ok) { MMUI.alert(ownMsgError(res)); return; }
     if (replyingTo && replyingTo.id === mid) cancelReply();
     ChatAPI.removeMessage(mid);
     renderMsgs();
@@ -777,42 +777,62 @@
     });
   })();
 
+  /* সার্ভারের error কোড → জিম্মাদারের জন্য বোঝার মতো কারণ */
+  function accountRequestError(code) {
+    const map = {
+      invalid_pin: 'আপনার লগইন মেয়াদ শেষ হয়েছে। আবার লগইন করে চেষ্টা করুন।',
+      forbidden: 'হিসাবের অনুরোধ অনুমোদনের অনুমতি শুধু প্রধান জিম্মাদারের।',
+      excel_mode: 'হিসাব এখন Excel মোডে — অ্যাপ থেকে এই এন্ট্রি বদলানো যাবে না। Excel ফাইলে সংশোধন করে আবার আপলোড করুন।',
+      entry_not_found: 'এন্ট্রিটি আর হিসাবে নেই (আগেই মোছা বা বদলানো হয়েছে)। অনুরোধটি রিজেক্ট করে দিতে পারেন।',
+      request_already_reviewed: 'এই অনুরোধ আগেই নিষ্পত্তি হয়েছে। পাতা রিফ্রেশ করুন।',
+      message_not_found: 'অনুরোধের বার্তাটি পাওয়া যায়নি। পাতা রিফ্রেশ করুন।',
+      invalid_request: 'অনুরোধে এন্ট্রির তথ্য অসম্পূর্ণ। দফতরকে আবার অনুরোধ পাঠাতে বলুন।',
+      not_found: 'লেনদেনটি আর নেই (আগেই মোছা হয়েছে)। অনুরোধটি রিজেক্ট করে দিতে পারেন।',
+      invalid_login: 'আপনার লগইন মেয়াদ শেষ হয়েছে। আবার লগইন করে চেষ্টা করুন।',
+    };
+    return map[code] || ('কারণ: ' + (code || 'অজানা') + '। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।');
+  }
+
+  let _decidingRequest = '';
   async function decideAccountRequest(messageId, decision) {
-    if (!isAdmin) return;
+    if (!isAdmin || _decidingRequest) return;
+    _decidingRequest = messageId;
+    try { await decideAccountRequestInner(messageId, decision); }
+    finally { _decidingRequest = ''; }
+  }
+
+  async function decideAccountRequestInner(messageId, decision) {
     const msg = ChatAPI.getThread(activeThread).find(m => m.id === messageId);
     const req = msg && msg.request;
     if (!req || req.status !== 'pending') return;
+    const isAcc = req.kind === 'account_entry_edit' || req.kind === 'account_entry_delete';
     if (decision === 'approved') {
       if (req.kind === 'dept_transaction_edit' || req.kind === 'dept_transaction_delete') {
         try {
+          let res;
           if (req.kind === 'dept_transaction_edit') {
-            const res = await MMSharedAPI.updateDeptTransaction(chatActorId(), chatPin(), req.deptCode, req.entryId, req.proposed || {});
-            if (!res || !res.ok) throw new Error((res && res.error) || 'dept_update_failed');
+            res = await MMSharedAPI.updateDeptTransaction(chatActorId(), chatPin(), req.deptCode, req.entryId, req.proposed || {});
           } else {
-            const res = await MMSharedAPI.deleteDeptTransaction(chatActorId(), chatPin(), req.deptCode, req.entryId);
-            if (!res || !res.ok) throw new Error((res && res.error) || 'dept_delete_failed');
+            res = await MMSharedAPI.deleteDeptTransaction(chatActorId(), chatPin(), req.deptCode, req.entryId);
           }
+          if (!res || !res.ok) throw new Error((res && res.error) || 'dept_apply_failed');
         } catch (e) {
           console.warn('Dept request apply failed', e);
-          alert('বিভাগের লেনদেন আপডেট/ডিলিট করা যায়নি।');
+          await MMUI.alert('বিভাগের লেনদেন আপডেট/ডিলিট করা যায়নি।\n\n' + accountRequestError(e && e.message), { danger: true });
           return;
         }
-      } else {
-        const entryType = req.entryType;
-        const entryId = req.entryId;
+      } else if (isAcc) {
+        /* এন্ট্রি বদল/মোছা আর অনুরোধ «অনুমোদিত» — সার্ভারে একসাথে হয় */
         try {
-          if (req.kind === 'account_entry_edit') {
-            if (entryType === 'income') await MdrAccAPI.Income.update(entryId, req.proposed || {});
-            else if (entryType === 'expense') await MdrAccAPI.Expense.update(entryId, req.proposed || {});
-          } else {
-            if (entryType === 'income') await MdrAccAPI.Income.del(entryId);
-            else if (entryType === 'expense') await MdrAccAPI.Expense.del(entryId);
-          }
+          const res = await MMSharedAPI.accountRequestApply(chatActorId(), chatPin(), messageId);
+          if (!res || !res.ok) throw new Error((res && res.error) || 'account_request_apply_failed');
         } catch (e) {
           console.warn('Account request apply failed', e);
-          alert('হিসাবের এন্ট্রি আপডেট/ডিলিট করা যায়নি।');
+          await MMUI.alert('হিসাবের এন্ট্রি আপডেট/ডিলিট করা যায়নি।\n\n' + accountRequestError(e && e.message), { danger: true });
           return;
         }
+        /* এই ডিভাইসে হিসাবের পুরনো ক্যাশ থাকলে পরের বার সার্ভার থেকে নতুন করে আসবে */
+        try { if (window.MdrAccAPI && MdrAccAPI.clearLocalCache) MdrAccAPI.clearLocalCache(); } catch (e2) {}
       }
     }
     const reviewedRequest = {
@@ -821,14 +841,16 @@
       reviewedAt: new Date().toISOString(),
       reviewedBy: 'জিম্মাদার',
     };
-    if (ChatAPI.updateRequestRemote) {
+    if (isAcc && decision === 'approved') {
+      await announceChatRealtime('request', activeThread, { message_id: messageId, status: decision });
+    } else if (ChatAPI.updateRequestRemote) {
       try {
         const res = await ChatAPI.updateRequestRemote(chatActorId(), chatPin(), messageId, decision);
         if (!res || !res.ok) throw new Error((res && res.error) || 'request_update_failed');
         await announceChatRealtime('request', activeThread, { message_id: messageId, status: decision });
       } catch (e) {
         console.warn('Chat request remote update failed', e);
-        alert('অনুরোধের অবস্থা সংরক্ষণ করা যায়নি। পাতা রিফ্রেশ করে আবার চেষ্টা করুন।');
+        await MMUI.alert('অনুরোধের অবস্থা সংরক্ষণ করা যায়নি।\n\n' + accountRequestError(e && e.message), { danger: true });
         return;
       }
     }
@@ -848,7 +870,7 @@
         remoteId = res.id ? String(res.id) : '';
       } catch (e) {
         console.warn('Chat request reply remote send failed', e);
-        alert('বার্তা পাঠানো যায়নি। ইন্টারনেট সংযোগ/ডাটাবেজ সংযোগ চেক করুন।');
+        MMUI.alert('বার্তা পাঠানো যায়নি। ইন্টারনেট সংযোগ/ডাটাবেজ সংযোগ চেক করুন।');
         return;
       }
     }
@@ -870,7 +892,7 @@
       }
     } catch (e) {
       console.warn('Resolve student tag failed', e);
-      alert('ট্যাগ সমাধান করা যায়নি।');
+      MMUI.alert('ট্যাগ সমাধান করা যায়নি।');
       return;
     }
     const reviewedRequest = { ...req, status: 'approved', reviewedAt: new Date().toISOString(), reviewedBy: 'জিম্মাদার' };
@@ -955,11 +977,11 @@
         replySnap = res.reply_to || null;
       } catch (e) {
         console.warn('Chat Supabase send failed', e);
-        alert('বার্তা পাঠানো যায়নি। ইন্টারনেট সংযোগ/ডাটাবেজ সংযোগ চেক করুন।');
+        MMUI.alert('বার্তা পাঠানো যায়নি। ইন্টারনেট সংযোগ/ডাটাবেজ সংযোগ চেক করুন।');
         return;
       }
     } else {
-      alert('ডাটাবেজ সংযোগ নেই। সংযোগ না থাকলে বার্তা পাঠানো যাবে না।');
+      MMUI.alert('ডাটাবেজ সংযোগ নেই। সংযোগ না থাকলে বার্তা পাঠানো যাবে না।');
       return;
     }
     const localExtra = (remoteId || tagRequest || replySnap)

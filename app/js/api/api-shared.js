@@ -493,6 +493,14 @@ const MMSharedAPI = (() => {
         p_status: status,
       });
     },
+    /** দফতরের হিসাব-সংশোধন অনুরোধ জিম্মাদার অনুমোদন: এন্ট্রি বদল/মোছা + অনুরোধ «অনুমোদিত» এক transaction-এ */
+    accountRequestApply(actorId, pin, messageId) {
+      return rpc('mdr_rel_account_request_apply', {
+        p_actor_id: actorId || null,
+        p_pin: pin,
+        p_message_id: messageId,
+      });
+    },
     chatMarkRead(actorId, pin, threadId, isAdmin) {
       return rpc('mdr_rel_chat_mark_read', {
         p_actor_id: actorId || null,
