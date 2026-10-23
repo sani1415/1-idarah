@@ -2928,19 +2928,12 @@ body #modal-account-details.acc-qard-detail-open .acc-desc-cell{white-space:norm
     if (gm > 12 && gd <= 12) { var tmp = gm; gm = gd; gd = tmp; }
     if (gm < 1 || gm > 12 || gd < 1 || gd > 31) return { err: 'format' };
     var iso = String(gy) + '-' + String(gm).padStart(2, '0') + '-' + String(gd).padStart(2, '0');
+    /* খ্রিস্টীয় তারিখ → হিজরী: অ্যাপের বাকি জায়গার মতোই «হিজরী তারিখ সমন্বয়» (সেটিংস) ধরে।
+       আগে সমন্বয় ছাড়া সরাসরি উম্মুল কুরা ধরত, আর তা না পারলে পুরনো আনুমানিক মাস-তালিকা (যা
+       ১০-১২ দিন সরে থাকে) — দুটোই বাদ। */
     var g = null;
-    try {
-      var dt = new Date(Date.UTC(gy, gm - 1, gd));
-      var parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
-        year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC'
-      }).formatToParts(dt);
-      var hp = {};
-      parts.forEach(function (part) { if (part.type !== 'literal') hp[part.type] = parseInt(part.value, 10); });
-      if (hp.year && hp.month && hp.day) {
-        g = { hijriYear: hp.year, month: A.monthFromNo(hp.month), day: hp.day };
-      }
-    } catch (e) {}
-    if (!g && A.gregorianISOToHijri) g = A.gregorianISOToHijri(iso);
+    var h = window.MMHijri && MMHijri.hijriOf ? MMHijri.hijriOf(iso) : null;
+    if (h) g = { hijriYear: h.year, month: A.monthFromNo(h.monthNo), day: h.day };
     if (!g) return { err: 'range' };
     return { year: g.hijriYear, month: g.month, day: g.day };
   }

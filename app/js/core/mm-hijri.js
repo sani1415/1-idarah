@@ -132,19 +132,27 @@
       return '';
     }
   }
-  function todayHijri() {
+  /** খ্রিস্টীয় ISO তারিখ → হিজরী সংখ্যা { year, monthNo, day } — «হিজরী তারিখ সমন্বয়» ধরে
+      (opts.skipOffset / opts.offsetDays দিয়ে বদলানো যায়)। Intl না থাকলে null। */
+  function hijriOf(iso, opts) {
+    if (!iso) return null;
     try {
-      const iso = applyOffset(isoFromDate(new Date()));
-      const d = new Date(iso + 'T12:00:00');
+      const eff = opts && opts.skipOffset ? iso : applyOffset(iso, opts && opts.offsetDays);
+      const d = new Date(eff + 'T12:00:00');
+      if (isNaN(d.getTime())) return null;
       const parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { year:'numeric', month:'numeric', day:'numeric' }).formatToParts(d);
-      const year = parseInt(parts.find(p => p.type === 'year').value, 10);
-      const monthNo = parseInt(parts.find(p => p.type === 'month').value, 10);
-      const day = parseInt(parts.find(p => p.type === 'day').value, 10);
-      return { year, monthNo, day };
+      const pick = (t) => { const p = parts.find(x => x.type === t); return p ? parseInt(p.value, 10) : NaN; };
+      const year = pick('year'), monthNo = pick('month'), day = pick('day');
+      return (year && monthNo && day) ? { year, monthNo, day } : null;
     } catch (e) {
-      const y = new Date().getFullYear();
-      return { year: Math.max(1440, y - 579), monthNo: 10, day: 1 };
+      return null;
     }
+  }
+  function todayHijri() {
+    const h = hijriOf(isoFromDate(new Date()));
+    if (h) return h;
+    const y = new Date().getFullYear();
+    return { year: Math.max(1440, y - 579), monthNo: 10, day: 1 };
   }
 
   global.MMHijri = {
@@ -155,6 +163,7 @@
     setOffsetDays,
     applyOffset,
     todayHijri,
+    hijriOf,
     hijriUmmalquraLongBn,
     dualLine,
     hijriOrFallback,
