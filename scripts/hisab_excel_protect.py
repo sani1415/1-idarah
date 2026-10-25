@@ -10,6 +10,9 @@ make-hisab-excel-template.py টেমপ্লেট বানানোর প�
   যাতে কেউ পরে নিজে শীট-সুরক্ষা দিলেও লেখা যায়।
 - তালাবদ্ধ: নির্দেশনা; বকেয়া (খোলা A10:A109 — সরবরাহকারীর তালিকা); ড্যাশবোর্ড (খোলা B21, D21
   বছর/মাস ও A25:A39 খাতের নাম)।
+- ড্রপডাউনের তালিকা: সরবরাহকারী = নাম «SupplierList» (বকেয়া!A10:A109); খাত = নাম «CategoryList»
+  (ড্যাশবোর্ড!A25:A39) → ব্যয়!C। দুটিই খোলা ঘর, লুকানো নয়; বাকিগুলো ড্রপডাউনের নিয়মেই লেখা।
+  ড্রপডাউনে ভুল-বার্তা বন্ধ — তালিকার বাইরের নামও লেখা যায়।
 - বই: শীটের নাম বদল/মোছা/সরানো বন্ধ — অ্যাপ শীট চেনে নাম দিয়ে।
 - ড্যাশবোর্ডের মাসিক টেবিল শিক্ষাবর্ষ (শাওয়াল–রমজান) ধরে; B21 = শিক্ষাবর্ষ শুরুর হিজরী বছর।
 - ব্যয়ের সূত্র-কলাম (G একক মূল্য, L/M হিজরী বছর/মাস), ড্রপডাউন এবং বকেয়া/ড্যাশবোর্ডের
@@ -242,6 +245,15 @@ NEW_APP_LINE = 'হিসাব → এক্সেল ↧ → এই ফাই�
 
 ACAD_ORDER = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # শিক্ষাবর্ষ: শাওয়াল → পরের রমজান
 
+# খাতের ড্রপডাউন: ড্যাশবোর্ডের «খাতভিত্তিক ব্যয়» তালিকা (A25:A39) → ব্যয় শীটের «খাত» (C) কলাম
+CATEGORY_LIST = "'ড্যাশবোর্ড'!$A$25:$A$39"
+TEXT_UPDATES = {
+    'নতুন/নিজস্ব খাত হলে উপরের খাতের নাম বদলে লিখুন; হিসাব অটো আপডেট হবে।':
+        'নতুন/নিজস্ব খাত হলে উপরের খাতের নাম বদলে লিখুন; হিসাব অটো আপডেট হবে, আর ব্যয় শীটের «খাত» ড্রপডাউনেও এই তালিকাই আসবে।',
+    'মাতবাখ/মাদরাসা/তামিরাত/সাধারণ। বাকি কেনাকাটায় পরিশোধ=বাকি + সরবরাহকারী নাম।':
+        'মাতবাখ/মাদরাসা/তামিরাত/সাধারণ। বাকি কেনাকাটায় পরিশোধ=বাকি + সরবরাহকারী নাম। «খাত» ড্রপডাউন থেকে বাছুন — তালিকা ড্যাশবোর্ডের «খাতভিত্তিক ব্যয়» অংশে; সেখানে নাম বদলালে ড্রপডাউনেও বদলায়।',
+}
+
 
 def _xe(t):
     return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
@@ -255,6 +267,35 @@ def _set_cell(x, ref, inner, t_attr=None):
     if t_attr:
         attrs += ' t="%s"' % t_attr
     return x[:m.start()] + '<c r="%s"%s>%s</c>' % (ref, attrs, inner) + x[m.end():]
+
+
+def add_category_dropdown(x):
+    """ব্যয় শীটের «খাত» (C) কলামে CategoryList ড্রপডাউন — আগে থেকে C-তে ড্রপডাউন থাকলে কিছু না"""
+    if re.search(r'<dataValidation\b[^>]*sqref="C2:', x):
+        return x
+    dv = ('<dataValidation sqref="C2:C%d" showDropDown="0" showInputMessage="0" showErrorMessage="0" '
+          'allowBlank="1" type="list"><formula1>CategoryList</formula1></dataValidation>' % LAST)
+    if '<dataValidations' in x:
+        x = re.sub(r'<dataValidations count="(\d+)"', lambda m: '<dataValidations count="%d"' % (int(m.group(1)) + 1), x, count=1)
+        return x.replace('</dataValidations>', dv + '</dataValidations>', 1)
+    # dataValidations-এর জায়গা: sheetData/autoFilter/mergeCells… এর পরে, pageMargins-এর আগে
+    m = re.search(r'<(?:hyperlinks|printOptions|pageMargins|pageSetup|headerFooter|drawing|legacyDrawing|tableParts|extLst)\b', x)
+    i = m.start() if m else x.index('</worksheet>')
+    return x[:i] + '<dataValidations count="1">' + dv + '</dataValidations>' + x[i:]
+
+
+def ensure_category_name(wb):
+    if 'name="CategoryList"' in wb:
+        return wb
+    dn = '<definedName name="CategoryList">%s</definedName>' % _xe(CATEGORY_LIST).replace('&quot;', '"')
+    if '<definedNames>' in wb:
+        return wb.replace('<definedNames>', '<definedNames>' + dn, 1)
+    return re.sub(r'(</sheets>)', r'\1<definedNames>' + dn.replace('\\', '\\\\') + '</definedNames>', wb, count=1)
+
+
+def update_texts(x):
+    return re.sub(r'(<t\b[^>]*>)([^<]*)(</t>)',
+                  lambda m: m.group(1) + (_xe(TEXT_UPDATES[unescape(m.group(2))]) if unescape(m.group(2)) in TEXT_UPDATES else m.group(2)) + m.group(3), x)
 
 
 def current_academic_start(today=None):
@@ -333,6 +374,7 @@ def protect_file(src, dst=None):
         x = parts[sheets[name]].decode('utf-8')
         if name == 'ব্যয়':
             x = fill_expense_formulas(x)
+            x = add_category_dropdown(x)
         x = unlock_cells(x, st, cols, 2, LAST)
         x = col_styles(x, st, cols)
         x = set_autofilter(x)
@@ -353,12 +395,14 @@ def protect_file(src, dst=None):
         col, row = re.match(r'([A-Z]+)(\d+)', ref).groups()
         x = unlock_cells(x, st, {col_num(col)}, int(row), int(row))
     x = ensure_cells(x, st, dash)
-    parts[sheets['ড্যাশবোর্ড']] = add_protection(x).encode('utf-8')
+    parts[sheets['ড্যাশবোর্ড']] = add_protection(update_texts(x)).encode('utf-8')
 
     x = parts[sheets['নির্দেশনা']].decode('utf-8')
-    parts[sheets['নির্দেশনা']] = add_protection(x).encode('utf-8')
+    parts[sheets['নির্দেশনা']] = add_protection(update_texts(x)).encode('utf-8')
 
     parts['xl/styles.xml'] = st.dump().encode('utf-8')
+    if 'xl/sharedStrings.xml' in parts:
+        parts['xl/sharedStrings.xml'] = update_texts(parts['xl/sharedStrings.xml'].decode('utf-8')).encode('utf-8')
     for n in ('xl/sharedStrings.xml', sheets['নির্দেশনা']):
         if n in parts:
             parts[n] = re.sub(r'(<t\b[^>]*>)([^<]*)(</t>)',
@@ -367,6 +411,7 @@ def protect_file(src, dst=None):
 
     if dash_changed and '<calcPr' in wb and 'fullCalcOnLoad' not in re.search(r'<calcPr\b[^>]*>', wb).group(0):
         wb = re.sub(r'<calcPr\b', '<calcPr fullCalcOnLoad="1"', wb, count=1)  # বদলানো সূত্র খোলার সময় নতুন করে হিসাব
+    wb = ensure_category_name(wb)
     wb = re.sub(r'<workbookProtection\b[^>]*/>', '', wb)
     wb = wb.replace('<bookViews>', '<workbookProtection lockStructure="1"/><bookViews>', 1)
     wb = re.sub(r'(<definedName name="_xlnm\._FilterDatabase"[^>]*>[^<]*!\$A\$1:\$)([A-Z]+)\$\d+',
