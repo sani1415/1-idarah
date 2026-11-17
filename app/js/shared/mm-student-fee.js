@@ -61,23 +61,27 @@
   }
 
   /* নাম মিলানো: একই নামের লেখার পার্থক্য (মো:/মুহাম্মদ উপসর্গ, «বিন …», বানান, বাড়তি নামাংশ) মাফ; শুধু সত্যিই আলাদা নাম ধরা */
-  var NM_PREFIX = /^(মোঃ?|মো|মুহাঃ?|মোহাঃ?|মোহাম্মদ|মোহাম্মাদ|মোহম্মদ|মোহম্মাদ|মুহাম্মদ|মুহাম্মাদ|মোহামমদ|হাফেজ|হাফেয|মাওলানা|md|mohammad|muhammad)$/;
+  var NM_PREFIX = /^(মোঃ?|মো|মুহাঃ?|মোহাঃ?|মোহাম্মদ|মোহাম্মাদ|মোহম্মদ|মোহম্মাদ|মুহাম্মদ|মুহাম্মাদ|মোহামমদ|হাফেজ|হাফেয|মাওলানা|হযরত|হজরত|md|mohammad|muhammad)$/;
   function nmTokens(name) {
     var t = String(name || '').normalize('NFC').replace(/[‌‍]/g, '')
       .replace(/^(মোঃ|মো:|মো\.)\s*/, 'মো ').replace(/[.,:;।'"()\-–_/\\]+/g, ' ').trim().toLowerCase();
     var tk = t.split(/\s+/).filter(Boolean);
     var cut = tk.findIndex(function (x, i) { return i > 0 && /^(বিন|ইবনে|ইবনু|ইবন|বিনতে)$/.test(x); });
     if (cut > 0) tk = tk.slice(0, cut);
-    var core = tk.filter(function (x) { return !NM_PREFIX.test(x); });
+    var core = tk.filter(function (x) { return !NM_PREFIX.test(x) && !/^(আল|আন|আর|আস|আত|আদ|আয|আজ|আশ|আয়)$/.test(x); });
     return (core.length ? core : tk).map(nmSkel).filter(Boolean);
   }
   function nmSkel(w) {
-    var s = w.normalize('NFD').replace(/়/g, '');            /* নুকতা */
-    s = s.replace(/[া-ৌৗ্ঁ-ঃ]/g, ''); /* কার, হসন্ত, চন্দ্রবিন্দু, ং ঃ */
-    s = s.charAt(0) + s.slice(1).replace(/[অআইঈউঊঋএঐওঔ]/g, '');   /* মাঝের স্বরবর্ণ */
+    var s = w.normalize('NFD')
+      .replace(/য়/g, '')                                   /* য় (অন্তঃস্থ য) */
+      .replace(/্[বয]/g, '')                           /* ব-ফলা, য-ফলা */
+      .replace(/়/g, '');                                        /* নুকতা */
+    s = s.replace(/[া-ৌৗ্ঁ-ঃ]/g, '');  /* কার, হসন্ত, চন্দ্রবিন্দু, ং ঃ */
+    s = s.charAt(0) + s.slice(1).replace(/[অআইঈউঊঋএঐওঔ]/g, '');     /* মাঝের স্বরবর্ণ */
     return s.replace(/[অআ]/g, 'অ').replace(/[ইঈ]/g, 'ই').replace(/[উঊ]/g, 'উ').replace(/[ওঔ]/g, 'ও').replace(/[এঐ]/g, 'এ')
       .replace(/[যজঝ]/g, 'জ').replace(/[শষসছ]/g, 'স').replace(/ণ/g, 'ন').replace(/[ড়ঢ়]/g, 'র').replace(/ৎ/g, 'ত')
-      .replace(/ক্ষ/g, 'কস').replace(/(.)\1+/g, '$1');
+      .replace(/ও/g, 'উ').replace(/দ/g, 'ত')          /* ওমর=উমর; দ/ত (সাজ্জাদ/সাজ্জাত) */
+      .replace(/(.)\1+/g, '$1');
   }
   function nmLev(a, b) {
     var m = a.length, n = b.length, d = [], i, j;
@@ -87,16 +91,20 @@
       d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
     return d[m][n];
   }
-  function nmTokEq(a, b) { return a === b || (Math.min(a.length, b.length) >= 5 && nmLev(a, b) <= 1); }
+  /* এক অক্ষরের ভেদ মাফ — শুধু ৪+ অক্ষরের শব্দে, আর প্রথম ও শেষ অক্ষর একই হলে (মেসবাহ/মেজবাহ, মুতাসিম/মুহতাসিম) */
+  function nmTokEq(a, b) {
+    return a === b || (Math.min(a.length, b.length) >= 4 && a[0] === b[0] && a[a.length - 1] === b[b.length - 1] && nmLev(a, b) <= 1);
+  }
   function nmSubset(A, B) { return A.length > 0 && A.every(function (a) { return B.some(function (b) { return nmTokEq(a, b); }); }); }
   function sameName(x, y) {
     var A = nmTokens(x), B = nmTokens(y);
     if (!A.length || !B.length) return true;                    /* তথ্য না থাকলে সতর্ক নয় */
     var ja = A.join(''), jb = B.join('');
     if (ja === jb || nmSubset(A, B) || nmSubset(B, A)) return true;
-    var lo = Math.min(ja.length, jb.length);
-    if (lo >= 4 && (ja.indexOf(jb) >= 0 || jb.indexOf(ja) >= 0)) return true;
-    return nmLev(ja, jb) <= Math.max(1, Math.floor(lo / 5));
+    /* জোড়া/ভাঙা লেখা («নেয়ামত উল্লাহ» ↔ «নেয়ামতুল্লাহ», «আহমাদুল্লাহ» ↔ «আহমাদ উল্লাহ …») — ছোট নামে নয় */
+    var va = ja.replace(/[অইউএও]/g, ''), vb = jb.replace(/[অইউএও]/g, '');
+    if (va === vb) return true;
+    return Math.min(va.length, vb.length) >= 6 && (va.indexOf(vb) >= 0 || vb.indexOf(va) >= 0);
   }
 
   function ensureStyles() {
