@@ -204,7 +204,7 @@
     (res.months || []).forEach(function (m) {
       if (!m.paid && !isFuture(m, now)) { due += m.amount; dueMonths++; }
     });
-    return { ok: true, due: due, dueMonths: dueMonths, text: taka(due) };
+    return { ok: true, due: due, dueMonths: dueMonths, text: taka(due), months: res.months || [] };
   }
 
   global.MMStudentFee = {

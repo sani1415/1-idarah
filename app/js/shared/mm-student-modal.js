@@ -976,13 +976,16 @@
     loadSiblingScript('mm-student-fee.js', function () { return !!global.MMStudentFee; }, function () {
       if (!global.MMStudentFee || !global.MMStudentFee.summary) return;
       global.MMStudentFee.summary(sid).then(function (r) {
+        if (_glance && _glance.sid === sid) { _glance.fee = r || { ok: false }; renderGlance(); }
         var el = document.getElementById('st-sum-fee');
         if (!el || _openSid !== sid) return;
         var val = el.querySelector('.ui-stat-val'), sub = el.querySelector('.ui-stat-sub');
         if (!r || !r.ok) { val.textContent = '—'; sub.textContent = 'আনা যায়নি'; el.className = 'ui-stat is-info'; return; }
         if (r.due > 0) { val.textContent = r.text; sub.textContent = toBn(r.dueMonths) + ' মাস বকেয়া'; el.className = 'ui-stat is-bad'; }
         else { val.textContent = 'বকেয়া নেই'; sub.textContent = 'সব পরিশোধিত'; el.className = 'ui-stat is-ok'; }
-      }).catch(function () { /* ঘর «…» থাকে */ });
+      }).catch(function () { /* ঘর «…» থাকে */
+        if (_glance && _glance.sid === sid) { _glance.fee = { ok: false }; renderGlance(); }
+      });
     });
   }
 
@@ -1057,6 +1060,181 @@
       document.head.appendChild(el);
       break;
     }
+  }
+
+  /* ── «এক নজরে» — প্রথম ট্যাব: হাজিরা ও ওজিফা (শিক্ষাবর্ষের ১২ মাস), উস্তাদদের মন্তব্য, পরীক্ষা; প্রিন্ট করা যায় ──
+     তথ্য অন্য ট্যাবের একই উৎস থেকে; পূর্ণ হাজিরা / নতুন খুলুক / ওজিফা পরে এলে _glance হালনাগাদ করে আবার আঁকা হয়। */
+  var _glance = null; /* { sid, s, khList, resList, examMap, logList, fee } */
+  var H_SHORT = ['মুহা', 'সফর', 'রবি১', 'রবি২', 'জুমা১', 'জুমা২', 'রজব', 'শাবা', 'রম', 'শাও', 'জি.ক', 'জি.হ'];
+  var H_FULL = ['মুহাররম', 'সফর', 'রবিউল আউয়াল', 'রবিউস সানি', 'জুমাদাল উলা', 'জুমাদাল উখরা', 'রজব', 'শাবান', 'রমজান', 'শাওয়াল', 'জিলকদ', 'জিলহজ'];
+  var _hFmt = null;
+  /* খ্রিস্টীয় ISO → { year, monthNo, day } — «হিজরী তারিখ সমন্বয়» সহ (MMHijri থাকলে) */
+  function hijriOfIso(iso) {
+    if (!iso) return null;
+    if (global.MMHijri && global.MMHijri.hijriOf) return global.MMHijri.hijriOf(String(iso).slice(0, 10));
+    try {
+      _hFmt = _hFmt || new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { year: 'numeric', month: 'numeric', day: 'numeric' });
+      var o = {};
+      _hFmt.formatToParts(new Date(String(iso).slice(0, 10) + 'T12:00:00')).forEach(function (p) { o[p.type] = parseInt(p.value, 10); });
+      return o.year && o.month && o.day ? { year: o.year, monthNo: o.month, day: o.day } : null;
+    } catch (e) { return null; }
+  }
+  /* চলতি শিক্ষাবর্ষের ১২ মাস: শাওয়াল → পরের রমজান */
+  function academicMonths() {
+    var t = hijriOfIso(new Date().toISOString().slice(0, 10));
+    if (!t) return null;
+    var y = t.monthNo >= 10 ? t.year : t.year - 1;
+    var out = [];
+    [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9].forEach(function (m) {
+      out.push({ y: m >= 10 ? y : y + 1, m: m, future: (m >= 10 ? y : y + 1) * 13 + m > t.year * 13 + t.monthNo });
+    });
+    return { start: y, list: out };
+  }
+  /* ISO তারিখ হলে «১২ জুমাদাল উলা ১৪৪৮», নইলে যেমন আছে (বাংলা অঙ্কে) */
+  function glanceDate(d) {
+    var t = String(d || '');
+    if (/^\d{4}-\d{2}-\d{2}/.test(t)) {
+      var h = hijriOfIso(t);
+      if (h) return toBn(h.day) + ' ' + H_FULL[h.monthNo - 1] + ' ' + toBn(h.year);
+    }
+    return toBn(t);
+  }
+  function glanceTone(p) { return p >= 90 ? 'ok' : p >= 75 ? 'warn' : 'bad'; }
+
+  function glanceHtml() {
+    var g = _glance, API = getApi();
+    if (!g || !API) return '';
+    var s = g.s, esc = API.esc;
+    var ac = academicMonths();
+
+    /* যোগাযোগ + প্রিন্ট */
+    var place = [s.upazila, s.district].filter(function (x) { return x && String(x).trim(); }).join(', ') || s.address || '';
+    var contact = '<div class="st-gl-contact">' +
+      '<div class="st-gl-guard">' + esc(s.guardian || 'অভিভাবকের নাম নেই') + (s.guardian_job ? ' · ' + esc(s.guardian_job) : '') +
+      (s.phone ? ' · <a href="tel:' + esc(String(s.phone).replace(/[^\d+০-৯]/g, '')) + '">📞 ' + esc(s.phone) + '</a>' : '') +
+      (place ? ' · ' + esc(place) : '') + '</div>' +
+      '<button type="button" class="st-gl-print" onclick="MMStudentModal.printGlance()">🖨 প্রিন্ট</button></div>';
+
+    /* হাজিরা: শিক্ষাবর্ষের প্রতি হিজরী মাসে উপস্থিত / (উপস্থিত + অনুপস্থিত + অচিহ্নিত) */
+    var rows = attTimelineFor(API, g.sid);
+    var att = {}, absences = [], inYear = {};
+    (ac ? ac.list : []).forEach(function (mm) { inYear[mm.y + '-' + mm.m] = 1; });
+    rows.forEach(function (r) {
+      var h = hijriOfIso(r.date);
+      if (!h) return;
+      var k = h.year + '-' + h.monthNo, key = attStatusMeta(API, r).key;
+      if (key === 'h' || !inYear[k]) return;
+      att[k] = att[k] || { p: 0, n: 0 };
+      att[k].n++;
+      if (key === 'p') att[k].p++;
+      if (key === 'a' && absences.length < 3) {
+        absences.push(toBn(h.day) + ' ' + H_FULL[h.monthNo - 1] + (r.absent_reason ? ': ' + esc(r.absent_reason) : ''));
+      }
+    });
+    var attCells = '', monCells = '', feeCells = '', absN = 0, presN = 0, totN = 0;
+    var fee = g.fee && g.fee.ok ? g.fee : null;
+    var feeBy = {};
+    if (fee) {
+      (fee.months || []).forEach(function (m) {
+        if (!/মাসিক/.test(String(m.reason || '')) || !m.year || !m.month_no) return;
+        var late = m.paid && m.paid_year && m.paid_month_no &&
+          (m.paid_year * 13 + m.paid_month_no) > (m.year * 13 + m.month_no);
+        feeBy[m.year + '-' + m.month_no] = m.paid ? (late ? 'late' : 'ok') : 'due';
+      });
+    }
+    (ac ? ac.list : []).forEach(function (mm) {
+      var a = att[mm.y + '-' + mm.m];
+      if (a && a.n) {
+        var p = Math.round(a.p * 100 / a.n);
+        presN += a.p; totN += a.n; absN += a.n - a.p;
+        attCells += '<div class="st-gl-att" title="' + H_FULL[mm.m - 1] + ': ' + toBn(a.p) + '/' + toBn(a.n) + ' দিন · ' + toBn(p) + '%">' +
+          '<i class="is-' + glanceTone(p) + '" style="height:' + Math.max(10, p) + '%"></i></div>';
+      } else {
+        attCells += '<div class="st-gl-att"><i class="is-na"></i></div>';
+      }
+      var fs = feeBy[mm.y + '-' + mm.m];
+      if (fs === 'due' && mm.future) fs = 'na';
+      feeCells += '<div class="st-gl-fee is-' + (fs || 'na') + '"></div>';
+      monCells += '<div class="st-gl-mon">' + H_SHORT[mm.m - 1] + '</div>';
+    });
+    var feeRow = !feeTabAllowed() ? '' : (fee
+      ? '<div class="st-gl-row"><div class="st-gl-lbl">ওজিফা</div>' + feeCells + '</div>'
+      : '<div class="st-gl-wait">ওজিফা ' + (g.fee ? 'আনা যায়নি' : 'আনা হচ্ছে…') + '</div>');
+    var attCard = '<div class="st-gl-card"><div class="st-gl-sec"><b>হাজিরা' + (feeTabAllowed() ? ' ও ওজিফা' : '') + '</b>' +
+      '<span>শিক্ষাবর্ষ ' + (ac ? toBn(ac.start) + '–' + toBn(String(ac.start + 1).slice(-2)) : '') + '</span></div>' +
+      '<div class="st-gl-row"><div class="st-gl-lbl">হাজিরা</div>' + attCells + '</div>' + feeRow +
+      '<div class="st-gl-row"><div></div>' + monCells + '</div>' +
+      '<div class="st-gl-legend"><span><i class="is-ok"></i>ভালো' + (fee ? ' / সময়মতো' : '') + '</span>' +
+      '<span><i class="is-warn"></i>মাঝারি' + (fee ? ' / দেরিতে' : '') + '</span><span><i class="is-bad"></i>কম' + (fee ? ' / বাকি' : '') + '</span></div>' +
+      (totN ? '<div class="st-gl-abs">' + (absN ? '<b>' + toBn(absN) + ' দিন অনুপস্থিত</b>' + (absences.length ? ' — সর্বশেষ: ' + absences.join(' · ') : '')
+        : 'এ শিক্ষাবর্ষে কোনো অনুপস্থিতি নেই') + '</div>' : '<div class="st-gl-abs">এ শিক্ষাবর্ষে হাজিরার রেকর্ড নেই</div>') +
+      '</div>';
+
+    /* উস্তাদদের মন্তব্য: হুসনুল খুলুক (নম্বরসহ) + ছাত্রের লগ — নতুন আগে */
+    var notes = [];
+    (g.khList || []).forEach(function (k) {
+      notes.push({ sort: String(k.at || k.date || ''), date: k.date, by: k.by, text: k.reason, score: Number(k.score) });
+    });
+    (g.logList || []).forEach(function (L) {
+      notes.push({ sort: String(L.at || L.created_at || L.date || ''), date: L.date, by: L.by, text: L.text, reply: L.adminReply });
+    });
+    notes.sort(function (a, b) { return b.sort.localeCompare(a.sort); });
+    function noteHtml(n) {
+      var isK = n.score != null && !isNaN(n.score);
+      var tone = isK ? (n.score >= 81 ? 'ok' : n.score >= 60 ? 'warn' : 'bad') : 'log';
+      return '<div class="st-gl-note"><div class="st-gl-score is-' + tone + '">' + (isK ? toBn(n.score) : '✎') + '</div><div>' +
+        '<p>' + (n.text ? esc(n.text) : '<span class="st-gl-dim">মন্তব্য লেখা হয়নি</span>') + '</p>' +
+        (n.reply ? '<p class="st-gl-reply">↳ জিম্মাদার: ' + esc(n.reply) + '</p>' : '') +
+        '<small>' + (isK ? 'হুসনুল খুলুক' : 'উস্তাদের লগ') + (n.by ? ' · ' + esc(n.by) : '') + (n.date ? ' · ' + esc(glanceDate(n.date)) : '') + '</small></div></div>';
+    }
+    var notesCard = '<div class="st-gl-card"><div class="st-gl-sec"><b>উস্তাদদের মন্তব্য</b><span>' +
+      (notes.length ? 'হুসনুল খুলুক ও লগ · ' + toBn(notes.length) + 'টি' : '') + '</span></div>' +
+      (notes.length
+        ? notes.slice(0, 2).map(noteHtml).join('') +
+          (notes.length > 2 ? '<details class="st-gl-more"><summary>আরও ' + toBn(notes.length - 2) + 'টি দেখুন</summary>' +
+            notes.slice(2).map(noteHtml).join('') + '</details>' : '')
+        : '<div class="st-gl-dim">এখনো কোনো মন্তব্য বা লগ নেই।</div>') + '</div>';
+
+    /* পরীক্ষা: সর্বশেষ ৩টি, আগেরটির তুলনায় ▲▼ */
+    var res = (g.resList || []).map(function (r) {
+      var ex = g.examMap.get(r.exam_id) || {};
+      return { name: ex.name || 'পরীক্ষা', date: String(ex.date || r.date || ''), pct: r.percentage != null ? Number(r.percentage) : null, grade: r.grade };
+    }).filter(function (r) { return r.pct != null && !isNaN(r.pct); })
+      .sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var examCard = '<div class="st-gl-card"><div class="st-gl-sec"><b>পরীক্ষা</b><span>' + (res.length ? 'সর্বশেষ ' + toBn(Math.min(3, res.length)) + 'টি' : '') + '</span></div>' +
+      (res.length ? res.slice(0, 3).map(function (r, i) {
+        var prev = res[i + 1], d = prev ? Math.round(r.pct - prev.pct) : 0;
+        return '<div class="st-gl-ex"><span>' + esc(r.name) + '</span><span><b class="is-' + (r.pct >= 70 ? 'ok' : r.pct >= 60 ? 'warn' : 'bad') + '">' +
+          toBn(Math.round(r.pct)) + '%</b>' + (r.grade ? ' · ' + esc(r.grade) : '') +
+          (d > 0 ? ' <em class="is-up">▲' + toBn(d) + '</em>' : d < 0 ? ' <em class="is-down">▼' + toBn(-d) + '</em>' : '') + '</span></div>';
+      }).join('') : '<div class="st-gl-dim">পরীক্ষার ফল নেই।</div>') + '</div>';
+
+    return contact + attCard + notesCard + examCard +
+      '<div class="st-gl-sign"><div>শ্রেণি-উস্তাদ</div><div>দফতর</div><div>অভিভাবক</div></div>';
+  }
+  function renderGlance() {
+    var panel = document.getElementById('st-panel-glance');
+    if (panel && _glance && _openSid === _glance.sid) panel.innerHTML = glanceHtml();
+  }
+  /* শুধু এই উইন্ডোর «এক নজরে» অংশ প্রিন্ট (CSS: mm-ui.css → body.st-printing) */
+  function printGlance() {
+    switchTab('glance');
+    var panel = document.getElementById('st-panel-glance');
+    var opened = [];
+    if (panel) panel.querySelectorAll('details:not([open])').forEach(function (d) { d.open = true; opened.push(d); });
+    document.body.classList.add('st-printing');
+    var done = false;
+    function cleanup() {
+      if (done) return;
+      done = true;
+      document.body.classList.remove('st-printing');
+      opened.forEach(function (d) { d.open = false; });
+      global.removeEventListener('afterprint', cleanup);
+    }
+    global.addEventListener('afterprint', cleanup);
+    try { global.print(); } catch (e) { cleanup(); return; }
+    /* afterprint না এলে (কিছু ফোনে) পাতায় ফিরে এলে পরিষ্কার */
+    setTimeout(function () { global.addEventListener('focus', cleanup, { once: true }); }, 800);
   }
 
   function open(sid) {
@@ -1338,14 +1516,18 @@
     if (global.MMStudentModal && global.MMStudentModal.switchTab) {
       escTab = 'MMStudentModal.switchTab';
     }
+    _glance = { sid: sid, s: s, khList: khList, resList: resList, examMap: examMap, logList: logList, fee: null };
     var tabs = document.getElementById('st-tabs-wrap');
     if (tabs) {
       tabs.innerHTML =
         buildSummary(API, sid, khList, resList, examMap) +
         '<div class="st-tabs" role="tablist">' +
-        '<button type="button" class="st-tab st-tab--on" data-tab="info" role="tab" aria-selected="true" onclick="' +
+        '<button type="button" class="st-tab st-tab--on" data-tab="glance" role="tab" aria-selected="true" onclick="' +
         escTab +
-        '(\'info\')">সম্পূর্ণ তথ্য</button>' +
+        '(\'glance\')">এক নজরে</button>' +
+        '<button type="button" class="st-tab" data-tab="info" role="tab" aria-selected="false" onclick="' +
+        escTab +
+        '(\'info\')">তথ্য</button>' +
         '<button type="button" class="st-tab" data-tab="att" role="tab" aria-selected="false" onclick="' +
         escTab +
         '(\'att\')">হাজিরা</button>' +
@@ -1359,7 +1541,8 @@
         escTab +
         '(\'more\')">মূল্যায়ন</button>' +
         '</div><div class="st-tab-panels">' +
-        '<div class="st-tab-panel st-tab-panel--on" data-panel="info" id="st-panel-info">' +
+        '<div class="st-tab-panel st-tab-panel--on" data-panel="glance" id="st-panel-glance">' + glanceHtml() + '</div>' +
+        '<div class="st-tab-panel" data-panel="info" id="st-panel-info">' +
         infoBlock +
         '</div>' +
         '<div class="st-tab-panel" data-panel="att" id="st-panel-att">' +
@@ -1394,6 +1577,7 @@
           if (panel) panel.innerHTML = buildAttendancePanel(API, sid);
           var attCard = document.getElementById('st-sum-att');
           if (attCard) attCard.outerHTML = attSummaryCard(API, sid);
+          renderGlance();
         }).catch(function () { /* ব্যর্থ হলে লোকাল ক্যাশের সাম্প্রতিক ডেটাই থাকবে */ });
       }
     }
@@ -1411,6 +1595,12 @@
           return;
         }
         var list = res.akhlaq || [];
+        if (_glance && _glance.sid === sid) {
+          _glance.khList = list.map(function (k) {
+            return { score: Number(k.score), reason: k.reason || '', date: String(k.date || ''), at: String(k.at || k.evaluated_at || k.created_at || k.date || ''), by: k.by || '' };
+          });
+          renderGlance();
+        }
         var khCard = document.getElementById('st-sum-kh');
         if (khCard && list.length) {
           var latest = list.slice().sort(function (x, y) { return String(y.date || '').localeCompare(String(x.date || '')); })[0];
@@ -1467,6 +1657,7 @@
     open: open,
     close: close,
     switchTab: switchTab,
+    printGlance: printGlance,
     submitStudentLog: submitStudentLog,
     submitStatusChange: submitStatusChange,
     startEdit: startEdit,

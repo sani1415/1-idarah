@@ -183,6 +183,68 @@ button.ui-stat:hover { box-shadow: 0 6px 18px -10px rgba(42,35,24,.3); }
 .modal--student .st-kv-grid .st-kv-item:nth-child(odd) { border-right: 1px solid var(--cream2); }
 .modal--student .st-kv-lbl { font-size: 11.5px; }
 .modal--student .st-kv-val { font-size: 14.5px; font-weight: 600; }
+/* «এক নজরে» ট্যাব (mm-student-modal.js → glanceHtml) */
+.st-gl-contact { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.st-gl-guard { flex: 1; min-width: 0; font-size: 13px; color: var(--ink2); line-height: 1.6; }
+.st-gl-guard a { color: var(--ui-deep, #2f5d50); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.st-gl-print { flex: 0 0 auto; border: 1px solid var(--ui-bd); background: #fff; color: var(--ink2); border-radius: 10px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.st-gl-card { background: #fff; border: 1px solid var(--ui-bd); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
+.st-gl-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.st-gl-sec b { font-size: 14px; }
+.st-gl-sec span { font-size: 11.5px; color: var(--ink3); text-align: right; }
+.st-gl-row { display: grid; grid-template-columns: 50px repeat(12, minmax(0, 1fr)); gap: 3px; align-items: end; margin-top: 3px; }
+.st-gl-lbl { font-size: 11.5px; font-weight: 600; color: var(--ink2); align-self: center; }
+.st-gl-att { height: 32px; display: flex; align-items: flex-end; }
+.st-gl-att i { display: block; width: 100%; border-radius: 4px 4px 2px 2px; }
+.st-gl-att i.is-na { height: 3px !important; background: #ddd3c2; }
+.st-gl-fee { height: 14px; border-radius: 4px; }
+.st-gl-fee.is-na { background: #ddd3c2; opacity: .55; }
+.st-gl-att i.is-ok, .st-gl-fee.is-ok, .st-gl-legend i.is-ok { background: var(--ui-ok, #2f7d4f); }
+.st-gl-att i.is-warn, .st-gl-fee.is-late, .st-gl-legend i.is-warn { background: var(--ui-warn, #b07a12); }
+.st-gl-att i.is-bad, .st-gl-fee.is-due, .st-gl-legend i.is-bad { background: var(--ui-bad, #b5573a); }
+.st-gl-mon { font-size: 9px; color: var(--ink3); text-align: center; white-space: nowrap; overflow: hidden; }
+.st-gl-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 11px; color: var(--ink3); margin-top: 6px; }
+.st-gl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 3px; vertical-align: -1px; }
+.st-gl-abs { margin-top: 6px; font-size: 12.5px; color: var(--ink2); line-height: 1.6; }
+.st-gl-abs b { color: var(--ui-bad, #b5573a); font-weight: 600; }
+.st-gl-wait, .st-gl-dim { font-size: 12px; color: var(--ink3); padding: 2px 0; }
+.st-gl-note { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--cream2); }
+.st-gl-card > .st-gl-note:first-of-type { border-top: 0; padding-top: 0; }
+.st-gl-note p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.st-gl-note .st-gl-reply { font-size: 12.5px; color: var(--ink2); }
+.st-gl-note small { display: block; color: var(--ink3); font-size: 11.5px; }
+.st-gl-score { flex: 0 0 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.st-gl-score.is-ok { background: var(--ui-ok-bg, #e3f1e6); color: var(--ui-ok, #2f7d4f); }
+.st-gl-score.is-warn { background: var(--ui-warn-bg, #fbefd6); color: var(--ui-warn, #b07a12); }
+.st-gl-score.is-bad { background: var(--ui-bad-bg, #fbe6e1); color: var(--ui-bad, #b5573a); }
+.st-gl-score.is-log { background: var(--ui-info-bg, #e3eff6); color: var(--ui-info, #2c6a8e); }
+.st-gl-more summary { cursor: pointer; color: var(--ui-deep, #2f5d50); font-size: 12.5px; font-weight: 600; padding: 4px 0; list-style: none; }
+.st-gl-more summary::-webkit-details-marker { display: none; }
+.st-gl-more[open] summary { display: none; }
+.st-gl-more .st-gl-note:first-of-type { border-top: 1px solid var(--cream2); padding-top: 7px; }
+.st-gl-ex { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--cream2); }
+.st-gl-card > .st-gl-ex:first-of-type { border-top: 0; }
+.st-gl-ex b.is-ok { color: var(--ui-ok, #2f7d4f); } .st-gl-ex b.is-warn { color: var(--ui-warn, #b07a12); } .st-gl-ex b.is-bad { color: var(--ui-bad, #b5573a); }
+.st-gl-ex em { font-style: normal; font-size: 11px; } .st-gl-ex em.is-up { color: var(--ui-ok, #2f7d4f); } .st-gl-ex em.is-down { color: var(--ui-bad, #b5573a); }
+.st-gl-sign { display: none; }
+@media (max-width: 400px) {
+  .st-gl-row { grid-template-columns: 42px repeat(12, minmax(0, 1fr)); gap: 2px; }
+  .st-gl-mon { font-size: 8px; }
+}
+/* প্রিন্ট: শুধু ছাত্রের উইন্ডোর মাথা, চার ঘর আর «এক নজরে» */
+@media print {
+  body.st-printing > *:not(#modal-student-detail) { display: none !important; }
+  body.st-printing #modal-student-detail { position: static !important; display: block !important; background: none !important; padding: 0 !important; animation: none !important; }
+  body.st-printing #st-modal-inner { position: static !important; max-width: none !important; width: 100% !important; max-height: none !important; height: auto !important; overflow: visible !important; box-shadow: none !important; border: 0 !important; animation: none !important; transform: none !important; }
+  body.st-printing .st-tab-panels { overflow: visible !important; }
+  body.st-printing .st-tabs, body.st-printing .modal-close, body.st-printing .st-gl-print, body.st-printing .st-avatar-badge,
+  body.st-printing .st-tab-panel:not([data-panel="glance"]) { display: none !important; }
+  body.st-printing .st-tab-panel[data-panel="glance"] { display: block !important; }
+  body.st-printing .st-gl-card, body.st-printing .ui-stat { break-inside: avoid; }
+  body.st-printing .st-gl-sign { display: flex; justify-content: space-between; margin-top: 28px; font-size: 12.5px; }
+  body.st-printing .st-gl-sign div { border-top: 1px solid #999; padding-top: 4px; width: 30%; text-align: center; }
+  body.st-printing * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (max-width: 640px) {
   .modal--student .st-sum { margin: 10px 12px 2px; }
   .modal--student .st-tabs { margin: 8px 12px 0; }
