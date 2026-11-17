@@ -67,18 +67,24 @@ export function compactMonths(months: FeeMonth[]) {
   });
 }
 
-// ফি-সফটওয়্যার ভবিষ্যতে ছাত্রের নাম/পিতার নাম/জামাত পাঠালে মিলিয়ে দেখার জন্য
+// ফি-সফটওয়্যারের পাঠানো ছাত্রের নাম/অভিভাবক/জামাত — অ্যাপের নামের সাথে মিলিয়ে দেখার জন্য।
+// API-র আসল চাবি বানান-ভুলসহ: data.studnet_name, data.gurdians_info{guardian_name, guardian_relation},
+// data.more_info{reg_id, jamaat}; ঠিক বানানের চাবিগুলোও মানা হয়, ভবিষ্যতে ঠিক করলে যেন না ভাঙে।
 export function vendorStudent(d: Record<string, unknown>): Record<string, string> | null {
-  const src = (d.student && typeof d.student === "object" ? d.student : d) as Record<string, unknown>;
-  const pick = (keys: string[]) => {
-    for (const k of keys) if (str(src[k])) return str(src[k]);
+  const obj = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? v : {}) as Record<string, unknown>;
+  const src = obj(d.student && typeof d.student === "object" ? d.student : d);
+  const g = obj(src.gurdians_info ?? src.guardians_info ?? d.gurdians_info);
+  const mi = obj(src.more_info ?? d.more_info);
+  const pick = (o: Record<string, unknown>, keys: string[]) => {
+    for (const k of keys) if (str(o[k])) return str(o[k]);
     return "";
   };
   const out: Record<string, string> = {
-    name: pick(["student_name", "name", "name_bn", "full_name"]),
-    father_name: pick(["father_name", "fathers_name", "guardian_name"]),
-    class_name: pick(["class_name", "class", "jamat", "class_title"]),
-    reg_id: pick(["reg_id", "student_id", "registration_no", "roll"]),
+    name: pick(src, ["studnet_name", "student_name", "name", "name_bn", "full_name"]),
+    father_name: pick(src, ["father_name", "fathers_name", "guardian_name"]) || pick(g, ["guardian_name", "name"]),
+    guardian_relation: pick(g, ["guardian_relation", "relation"]),
+    class_name: pick(src, ["class_name", "class", "jamat", "jamaat", "class_title"]) || pick(mi, ["jamaat", "jamat", "class_name"]),
+    reg_id: pick(src, ["reg_id", "student_id", "registration_no"]) || pick(mi, ["reg_id"]),
   };
   return Object.values(out).some(Boolean) ? out : null;
 }

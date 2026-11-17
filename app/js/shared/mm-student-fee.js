@@ -60,8 +60,43 @@
     return m.year > now.year || (m.year === now.year && m.month_no > now.monthNo);
   }
 
-  function normName(s) {
-    return String(s || '').normalize('NFC').replace(/[‌‍]/g, '').replace(/[\s.\-()]+/g, '').toLowerCase();
+  /* নাম মিলানো: একই নামের লেখার পার্থক্য (মো:/মুহাম্মদ উপসর্গ, «বিন …», বানান, বাড়তি নামাংশ) মাফ; শুধু সত্যিই আলাদা নাম ধরা */
+  var NM_PREFIX = /^(মোঃ?|মো|মুহাঃ?|মোহাঃ?|মোহাম্মদ|মোহাম্মাদ|মোহম্মদ|মোহম্মাদ|মুহাম্মদ|মুহাম্মাদ|মোহামমদ|হাফেজ|হাফেয|মাওলানা|md|mohammad|muhammad)$/;
+  function nmTokens(name) {
+    var t = String(name || '').normalize('NFC').replace(/[‌‍]/g, '')
+      .replace(/^(মোঃ|মো:|মো\.)\s*/, 'মো ').replace(/[.,:;।'"()\-–_/\\]+/g, ' ').trim().toLowerCase();
+    var tk = t.split(/\s+/).filter(Boolean);
+    var cut = tk.findIndex(function (x, i) { return i > 0 && /^(বিন|ইবনে|ইবনু|ইবন|বিনতে)$/.test(x); });
+    if (cut > 0) tk = tk.slice(0, cut);
+    var core = tk.filter(function (x) { return !NM_PREFIX.test(x); });
+    return (core.length ? core : tk).map(nmSkel).filter(Boolean);
+  }
+  function nmSkel(w) {
+    var s = w.normalize('NFD').replace(/়/g, '');            /* নুকতা */
+    s = s.replace(/[া-ৌৗ্ঁ-ঃ]/g, ''); /* কার, হসন্ত, চন্দ্রবিন্দু, ং ঃ */
+    s = s.charAt(0) + s.slice(1).replace(/[অআইঈউঊঋএঐওঔ]/g, '');   /* মাঝের স্বরবর্ণ */
+    return s.replace(/[অআ]/g, 'অ').replace(/[ইঈ]/g, 'ই').replace(/[উঊ]/g, 'উ').replace(/[ওঔ]/g, 'ও').replace(/[এঐ]/g, 'এ')
+      .replace(/[যজঝ]/g, 'জ').replace(/[শষসছ]/g, 'স').replace(/ণ/g, 'ন').replace(/[ড়ঢ়]/g, 'র').replace(/ৎ/g, 'ত')
+      .replace(/ক্ষ/g, 'কস').replace(/(.)\1+/g, '$1');
+  }
+  function nmLev(a, b) {
+    var m = a.length, n = b.length, d = [], i, j;
+    for (i = 0; i <= m; i++) d[i] = [i];
+    for (j = 0; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[m][n];
+  }
+  function nmTokEq(a, b) { return a === b || (Math.min(a.length, b.length) >= 5 && nmLev(a, b) <= 1); }
+  function nmSubset(A, B) { return A.length > 0 && A.every(function (a) { return B.some(function (b) { return nmTokEq(a, b); }); }); }
+  function sameName(x, y) {
+    var A = nmTokens(x), B = nmTokens(y);
+    if (!A.length || !B.length) return true;                    /* তথ্য না থাকলে সতর্ক নয় */
+    var ja = A.join(''), jb = B.join('');
+    if (ja === jb || nmSubset(A, B) || nmSubset(B, A)) return true;
+    var lo = Math.min(ja.length, jb.length);
+    if (lo >= 4 && (ja.indexOf(jb) >= 0 || jb.indexOf(ja) >= 0)) return true;
+    return nmLev(ja, jb) <= Math.max(1, Math.floor(lo / 5));
   }
 
   function ensureStyles() {
@@ -133,9 +168,11 @@
     var vs = res.vendor_student;
     var API = global.API;
     var s = API && API.Students && API.Students.getById ? API.Students.getById(studentId) : null;
-    if (vs && vs.name && s && s.name && normName(vs.name) !== normName(s.name)) {
-      warn = '<div class="st-fee-warn"><b>নাম মিলছে না:</b> ফি-সফটওয়্যারে এই আইডিতে «' + esc(vs.name) + '» লেখা। ' +
-        'ভুল ছাত্রের সাথে আইডি বসানো হয়ে থাকতে পারে — ফি-সফটওয়্যারে যাচাই করুন।</div>';
+    if (vs && vs.name && s && s.name && !sameName(vs.name, s.name)) {
+      var vg = vs.father_name ? ' (অভিভাবক: ' + esc(vs.father_name) + (vs.guardian_relation ? ', ' + esc(vs.guardian_relation) : '') + ')' : '';
+      warn = '<div class="st-fee-warn"><b>নাম মিলছে না:</b> ফি-সফটওয়্যারের তথ্যে এই আইডিতে «' + esc(vs.name) + '»' + vg + ' লেখা, ' +
+        'অথচ এখানে «' + esc(s.name) + '»। দাখেলা নম্বর কোনো এক জায়গায় ভুল থাকতে পারে, অথবা ফি-সফটওয়্যারের তথ্যে ভুল — ' +
+        'দাখেলা খাতা ও ফি-সফটওয়্যারে যাচাই করুন। নিচের হিসাব অন্য ছাত্রের হতে পারে।</div>';
     }
 
     var cards =
